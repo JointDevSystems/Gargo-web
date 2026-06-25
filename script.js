@@ -39,16 +39,18 @@ const CONTAINER_SIZE_RATE = {
 
 const STORAGE_RATE_PER_TEU_DAY = 350;
 
-
+/* ---------------------------------------------------------
+FAQ DATA
+--------------------------------------------------------- */
 const FAQ_DATA = [
- <!-- { cat: 'depot', q: 'What are your depot storage rates?', a: 'Our standard depot storage rate is KES 350 per TEU per day, which includes CCTV-monitored yard storage, gate-in/gate-out service, and EIR documentation. Bulk and long-term rates are available on request.' },-->
+  { cat: 'depot', q: 'What are your depot storage rates?', a: 'Our standard depot storage rate is KES 350 per TEU per day, which includes CCTV-monitored yard storage, gate-in/gate-out service, and EIR documentation. Bulk and long-term rates are available on request.' },
   { cat: 'depot', q: 'Do you store both empty and laden containers?', a: 'Gargo Haven primarily specialises in empty container storage and depot management. We do not store laden cargo containers, but we can arrange short-term holding for containers awaiting stuffing or de-stuffing through our partner facilities.' },
   { cat: 'depot', q: 'What is your gate-in / gate-out turnaround time?', a: 'Our digital gate management system processes containers in under 30 minutes on average. With 4 gate lanes and biometric access control, we keep queues to a minimum even during peak vessel discharge periods.' },
   { cat: 'tracking', q: 'How do I track my container?', a: 'Visit the Track page and search by container number, booking reference, truck registration, or EIR number. You will see real-time GPS location, current status, and a full movement timeline.' },
   { cat: 'tracking', q: 'How often is GPS location updated?', a: 'All trucks in our fleet are fitted with GPS telematics that update location every 60 seconds while in transit. Depot yard positions are updated in real time as containers are moved by our reach stackers.' },
   { cat: 'tracking', q: 'Can I get SMS or email alerts on container status?', a: 'Yes. Clients with a registered account can opt in to SMS and email notifications for key milestones — gate-in, gate-out, dispatch, and delivery. Contact our support team to enable alerts on your account.' },
   { cat: 'transport', q: 'Which routes do you cover in Mombasa?', a: 'We cover all major Mombasa container corridors, including Mombasa Port (KPA), APM Terminals, Consolebase ICD, Hakika Depot, Kibarani Depot, and Fortune Container Depot, plus direct delivery to client yards.' },
-<!--  { cat: 'transport', q: 'How much does port haulage cost?', a: 'Port haulage starts from KES 8,500 per move depending on origin, destination, and container size. Use the Cost Estimator on our homepage or the live quote calculator on the Booking page for an instant estimate.' }, -->
+  { cat: 'transport', q: 'How much does port haulage cost?', a: 'Port haulage starts from KES 8,500 per move depending on origin, destination, and container size. Use the Cost Estimator on our homepage or the live quote calculator on the Booking page for an instant estimate.' },
   { cat: 'transport', q: 'Do you offer reefer truck transport?', a: 'Yes, we operate genset-equipped reefer trucks capable of maintaining temperatures as low as -25°C, suitable for pharmaceutical and perishable cargo movements across all our service corridors.' },
   { cat: 'docs', q: 'What documentation do I receive after a move?', a: 'You will receive a digital Equipment Interchange Receipt (EIR), a gate pass, and a movement/delivery receipt for every transaction. All documents are paperless and accessible through your client portal.' },
   { cat: 'docs', q: 'Are you KPA licensed and IICL certified?', a: 'Yes. Gargo Haven is a KPA-licensed depot operator, IICL-certified for container inspection and repair, KRA-compliant for customs documentation, and ISO 9001 certified for quality management.' },
@@ -69,8 +71,9 @@ const TICKER_ITEMS = [
   '🕐 24/7 DEPOT OPERATIONS'
 ];
 
-
-
+/* ---------------------------------------------------------
+SAMPLE TRACKING DATA
+--------------------------------------------------------- */
 const TRACK_SAMPLES = {
   container: {
     'MSCU1234567': {
@@ -111,14 +114,18 @@ const TRACK_SAMPLES = {
   }
 };
 
-
+/* ---------------------------------------------------------
+UTILITIES
+--------------------------------------------------------- */
 function fmt(num) {
   return Math.round(num).toLocaleString('en-US');
 }
 function $(sel) { return document.querySelector(sel); }
 function $$(sel) { return Array.from(document.querySelectorAll(sel)); }
 
-
+/* ---------------------------------------------------------
+LOADER
+--------------------------------------------------------- */
 function initLoader() {
   const loader = document.getElementById('loader');
   if (!loader) return;
@@ -130,7 +137,9 @@ function initLoader() {
   }, 1100);
 }
 
-
+/* ---------------------------------------------------------
+NOTIFICATIONS (toast)
+--------------------------------------------------------- */
 function showNotification(title, sub, icon) {
   const notif = document.getElementById('notification');
   const textEl = document.getElementById('notif-text');
@@ -147,8 +156,9 @@ function showNotification(title, sub, icon) {
   }, 4200);
 }
 
-
-
+/* ---------------------------------------------------------
+MODAL
+--------------------------------------------------------- */
 function openModal(title, html) {
   const overlay = document.getElementById('modalOverlay');
   const titleEl = document.getElementById('modalTitle');
@@ -177,7 +187,9 @@ function initModal() {
   });
 }
 
-
+/* ---------------------------------------------------------
+TICKER BAR
+--------------------------------------------------------- */
 function initTicker() {
   const inner = document.getElementById('tickerInner');
   if (!inner) return;
@@ -187,7 +199,10 @@ function initTicker() {
   }).join('<span class="ticker-sep">  •  </span>');
 }
 
-
+/* ---------------------------------------------------------
+HERO SLIDESHOW SYNC
+Syncs text content with background images (6s per slide)
+--------------------------------------------------------- */
 function initHeroSlideshow() {
   const slides = $$('.hero-slide-content');
   const indicators = $$('.indicator');
@@ -269,7 +284,9 @@ function navigateToPage(pageId) {
 }
 window.navigateToPage = navigateToPage;
 
-
+/* ---------------------------------------------------------
+MOBILE MENU
+--------------------------------------------------------- */
 function openMobileMenu() {
   const panel = document.getElementById('mobileMenuPanel');
   if (panel) panel.classList.add('open');
@@ -288,7 +305,9 @@ function initMobileMenu() {
   if (closeBtn) closeBtn.addEventListener('click', closeMobileMenu);
 }
 
-
+/* ---------------------------------------------------------
+SCROLL TOP BUTTON
+--------------------------------------------------------- */
 function initScrollTop() {
   const btn = document.getElementById('scrollTop');
   if (!btn) return;
@@ -301,7 +320,9 @@ function initScrollTop() {
   });
 }
 
-
+/* ---------------------------------------------------------
+CHATBOT BUTTON
+--------------------------------------------------------- */
 function initChatbot() {
   const btn = document.getElementById('chatbotBtn');
   if (!btn) return;
@@ -309,9 +330,9 @@ function initChatbot() {
     openModal('Gargo Haven Support', [
       '<p style="margin-bottom:14px;color:var(--gray-pale);line-height:1.7;">Hi there 👋 Need help with a booking, tracking, or a general enquiry? Reach our 24/7 team directly, or jump to the right page below.</p>',
       '<div style="display:flex;flex-direction:column;gap:10px;">',
-      '<a href="tel:+254116307751" style="color:var(--gold);font-weight:600;">📞 Call 24/7 Operations: +254 7116307751</a>',
-      '<a href="https://wa.me/254108613789" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600;">💬 WhatsApp: +254 108613789</a>',
-      '<a href="mailto:info@gargo.co.ke" style="color:var(--gold);font-weight:600;">📧 info@gargo.co.ke</a>',
+      '<a href="tel:+254700888444" style="color:var(--gold);font-weight:600;">📞 Call 24/7 Operations: +254 700 888 444</a>',
+      '<a href="https://wa.me/254700000000" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600;">💬 WhatsApp: +254 700 000 000</a>',
+      '<a href="mailto:info@gargohaven.co.ke" style="color:var(--gold);font-weight:600;">📧 info@gargohaven.co.ke</a>',
       '</div>',
       '<div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;">',
       '<button class="btn-primary" onclick="closeModal();navigateToPage(\'booking\')">Make a Booking</button>',
@@ -321,8 +342,9 @@ function initChatbot() {
   });
 }
 
-
-
+/* ---------------------------------------------------------
+HOME PAGE — COST ESTIMATOR CALCULATOR
+--------------------------------------------------------- */
 function runCalc() {
   const originEl = document.getElementById('calcOrigin');
   const destEl = document.getElementById('calcDest');
@@ -356,7 +378,9 @@ function runCalc() {
 }
 window.runCalc = runCalc;
 
-
+/* ---------------------------------------------------------
+FAQ — RENDER, FILTER, ACCORDION
+--------------------------------------------------------- */
 function renderFaq() {
   const list = document.getElementById('faqList');
   if (!list) return;
@@ -395,7 +419,9 @@ function faqFilter(cat, btnEl) {
 }
 window.faqFilter = faqFilter;
 
-
+/* ---------------------------------------------------------
+BOOKING PAGE
+--------------------------------------------------------- */
 function generateBookingRef() {
   const num = Math.floor(1000 + Math.random() * 8999);
   return 'GH-2024-' + num;
@@ -507,8 +533,9 @@ function submitBooking() {
 }
 window.submitBooking = submitBooking;
 
-
-
+/* ---------------------------------------------------------
+TRACKING PAGE
+--------------------------------------------------------- */
 function switchTrackTab(btnEl, paneId) {
   $$('.track-tab').forEach(function (b) { b.classList.remove('active'); });
   btnEl.classList.add('active');
@@ -612,7 +639,9 @@ function initTrackPage() {
   }
 }
 
-
+/* ---------------------------------------------------------
+FLEET LIVE PANEL
+--------------------------------------------------------- */
 const FLEET_LIVE_SAMPLE = [
   { reg: 'KCB 421G', status: 'En Route', loc: 'Makupa Causeway' },
   { reg: 'KDB 889T', status: 'Loading', loc: 'Gargo Haven Depot — Gate 2' },
@@ -637,7 +666,9 @@ function initFleetLivePanel() {
   }).join('');
 }
 
-
+/* ---------------------------------------------------------
+CONTACT PAGE
+--------------------------------------------------------- */
 function sendContact() {
   const name = document.getElementById('cName');
   const email = document.getElementById('cEmail');
@@ -663,7 +694,9 @@ function sendContact() {
 }
 window.sendContact = sendContact;
 
-
+/* ---------------------------------------------------------
+INIT — runs once DOM is ready
+--------------------------------------------------------- */
 function init() {
   initLoader();
   initTicker();
@@ -697,10 +730,15 @@ if (document.readyState === 'loading') {
 }
 })();
 
+/* ═══════════════════════════════════════════════════════════════
+   GARGO HAVEN — SUB-PAGE NAVIGATION & CONTENT ENGINE
+   Adds full content to every nav dropdown item link
+   ═══════════════════════════════════════════════════════════════ */
 
+// ─── SUB-PAGE REGISTRY ───────────────────────────────────────────
 const SUBPAGES = {
 
-  
+  /* ══ ABOUT ══════════════════════════════════════════════════════ */
 
   'company-overview': {
     parent: 'about',
@@ -713,7 +751,7 @@ const SUBPAGES = {
           <div class="intro-grid">
             <div class="intro-body">
               <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">A Decade of Container Excellence</h2>
-              <p>Gargo Haven Ltd is Mombasa's premier empty container depot and transport company, incorporated in 2024 and headquartered at Changamwe, Mombasa. We serve shipping lines, freight forwarders, customs agents, importers, and exporters operating through Mombasa Port — East Africa's largest and busiest gateway.</p>
+              <p>Gargo Haven Ltd is Mombasa's premier empty container depot and transport company, incorporated in 2014 and headquartered at Changamwe, Mombasa. We serve shipping lines, freight forwarders, customs agents, importers, and exporters operating through Mombasa Port — East Africa's largest and busiest gateway.</p>
               <p>Our core business spans two pillars: <strong>Empty Container Depot Operations</strong> and <strong>Port Haulage & Transport</strong>. The depot business provides secure, digitally managed yard storage, repairs, washing, and reefer management. The transport business connects containers between Mombasa Port (KPA), APM Terminals, and all inland container depots (ICDs) using our GPS-tracked truck fleet.</p>
               <p>Today, Gargo Haven processes over 5,000 TEUs per month, operates 120+ trucks, and maintains depot alliance agreements with Consolebase ICD, Hakika Depot, Kibarani, and Fortune Container Depot — giving our clients the widest container movement coverage in Mombasa.</p>
               <p>We are KPA-licensed, IICL-certified, ISO 9001:2015 certified, and fully KRA-compliant. Our proprietary digital platform provides clients with real-time container and truck GPS tracking, digital EIR issuance, online booking, and live depot capacity dashboards.</p>
@@ -724,8 +762,8 @@ const SUBPAGES = {
             </div>
             <div class="sidebar-box">
               <h4>Company Snapshot</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Incorporated</div><p>2024 — Mombasa, Kenya</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Registration</div><p>RC No. 2024/XXXXX</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">Incorporated</div><p>2014 — Mombasa, Kenya</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">Registration</div><p>RC No. 2014/XXXXX</p></div>
               <div class="sidebar-item"><div class="sidebar-label">Business Lines</div><p>Empty Container Depot · Port Haulage · Container Repair · Reefer Management</p></div>
               <div class="sidebar-item"><div class="sidebar-label">Depot Locations</div><p>Changamwe Main · Consolebase ICD · Hakika · Kibarani · Fortune Depot</p></div>
               <div class="sidebar-item"><div class="sidebar-label">Fleet Size</div><p>120+ GPS-tracked trucks · 6 reach stackers · 20 forklifts</p></div>
@@ -2116,18 +2154,18 @@ window.navigateToSubpage = function(key) {
     document.body.appendChild(container);
   }
 
-
+  // Hide all pages
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
 
-
+  // Show subpage
   container.classList.add('active-page');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
- 
+  // Run afterRender if defined
   if (sp.afterRender) setTimeout(sp.afterRender, 100);
 };
 
-
+// ─── WIRE UP ALL NAV DROPDOWN LINKS ─────────────────────────────
 function wireNavLinks() {
   const linkMap = {
     // ABOUT
@@ -2195,7 +2233,7 @@ function wireNavLinks() {
   });
 }
 
-
+// ─── OVERRIDE navigateToPage to clear subpage panel ─────────────
 const _origNavigate = window.navigateToPage;
 window.navigateToPage = function(page) {
   // Remove active from subpages
@@ -2203,13 +2241,13 @@ window.navigateToPage = function(page) {
   if (_origNavigate) _origNavigate(page);
 };
 
-
+// ─── INIT ─────────────────────────────────────────────────────────
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', wireNavLinks);
 } else {
   wireNavLinks();
 }
-
+// Make ALL dropdown nav links behave like Booking page
 function makeAllDropdownsWorkLikeBooking() {
   const dropdownLinks = document.querySelectorAll('.mega-menu a, .small-menu a');
   
@@ -2217,16 +2255,16 @@ function makeAllDropdownsWorkLikeBooking() {
     link.addEventListener('click', function(e) {
       const text = this.textContent.trim();
       
-     
+      // Close dropdown
       const dropdown = this.closest('.nav-dropdown');
-      if (dropdown) dropdown.classList.remove('hover');
+      if (dropdown) dropdown.classList.remove('hover'); // optional
       
-   
+      // If it's already wired to subpage, let it work
       if (this.onclick && this.onclick.toString().includes('navigateToSubpage')) {
         return;
       }
       
-     
+      // Default behavior - go to main section
       if (text.includes('Company Overview') || text.includes('About Gargo')) {
         navigateToSubpage('company-overview');
       } else if (text.includes('Storage') || text.includes('Depot')) {
@@ -2236,16 +2274,16 @@ function makeAllDropdownsWorkLikeBooking() {
       } else if (text.includes('Repair') || text.includes('Washing')) {
         navigateToPage('services');
       } else {
-      
+        // Fallback
         navigateToPage(this.closest('.nav-dropdown').querySelector('a').textContent.toLowerCase().trim());
       }
     });
   });
 }
 
-
+// Run after DOM loads
 document.addEventListener('DOMContentLoaded', makeAllDropdownsWorkLikeBooking);
-
+/* ─── TRACK TAB SWITCHING ─── */
 function switchTrackTab(type, btn) {
   document.querySelectorAll('.track-tab').forEach(function(t){ t.classList.remove('active'); });
   btn.classList.add('active');
@@ -2291,962 +2329,293 @@ window.demoTrack = demoTrack;
     initReveal();
   }
 })();
+/* ─────────────────────────────────────────────────
+   CINEMATIC ENHANCEMENTS — Advanced Image Displays
+───────────────────────────────────────────────── */
 
+/* ── HERO: Full cinematic slideshow controller ── */
+(function initCinematicHero() {
+  function run() {
+    var slides = document.querySelectorAll('.hero-slide');
+    var contents = document.querySelectorAll('.hero-slide-content');
+    var indicators = document.querySelectorAll('.indicator');
+    var flash = document.querySelector('.hero-slide-flash');
+    if (!slides.length) return;
 
-/* ═══════════════════════════════════════════════════
-   GARGO HAVEN — CLIENT AUTH MODAL
-   Login · Create Account · Forgot Password
-═══════════════════════════════════════════════════ */
+    var current = 0;
+    var total = slides.length;
+    var timer = null;
+    var DURATION = 6000;
 
-(function () {
-  'use strict';
-
-  /* ── Simulated user store (localStorage for persistence) ── */
-  function getUsers() {
-    try { return JSON.parse(localStorage.getItem('gh_users') || '[]'); } catch { return []; }
-  }
-  function saveUsers(users) {
-    localStorage.setItem('gh_users', JSON.stringify(users));
-  }
-  function getCurrentUser() {
-    try { return JSON.parse(sessionStorage.getItem('gh_session') || 'null'); } catch { return null; }
-  }
-  function setCurrentUser(user) {
-    sessionStorage.setItem('gh_session', JSON.stringify(user));
-  }
-  function clearCurrentUser() {
-    sessionStorage.removeItem('gh_session');
-  }
-
-  /* ── Inject CSS ── */
-  const style = document.createElement('style');
-  style.textContent = `
-    /* AUTH OVERLAY */
-    #gh-auth-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.88);
-      z-index: 9500;
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.35s ease;
-      backdrop-filter: blur(6px);
-    }
-    #gh-auth-overlay.open {
-      opacity: 1; pointer-events: all;
-    }
-
-    /* AUTH PANEL */
-    .gh-auth-panel {
-      background: #111;
-      border: 1px solid rgba(201,162,39,0.35);
-      border-radius: 14px;
-      width: 100%;
-      max-width: 480px;
-      padding: 0;
-      overflow: hidden;
-      transform: translateY(24px) scale(0.97);
-      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
-      box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(201,162,39,0.1);
-      position: relative;
-      max-height: 92vh;
-      overflow-y: auto;
-    }
-    #gh-auth-overlay.open .gh-auth-panel {
-      transform: translateY(0) scale(1);
-    }
-
-    /* PANEL HEADER */
-    .gh-auth-header {
-      background: linear-gradient(135deg, #0d0d0d 0%, #1a1400 100%);
-      border-bottom: 1px solid rgba(201,162,39,0.2);
-      padding: 28px 32px 24px;
-      position: relative;
-    }
-    .gh-auth-logo {
-      display: flex; align-items: center; gap: 12px;
-      margin-bottom: 20px;
-    }
-    .gh-auth-logo-mark {
-      width: 36px; height: 36px;
-      background: #c9a227;
-      color: #000;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 14px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 6px;
-      letter-spacing: 0.5px;
-      flex-shrink: 0;
-    }
-    .gh-auth-logo-text {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 16px; font-weight: 700;
-      letter-spacing: 2px;
-      color: #fff;
-    }
-    .gh-auth-logo-text span { color: #c9a227; }
-    .gh-auth-close {
-      position: absolute; top: 20px; right: 20px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: #888; font-size: 14px;
-      width: 32px; height: 32px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
-    }
-    .gh-auth-close:hover { background: rgba(201,162,39,0.12); color: #c9a227; border-color: rgba(201,162,39,0.3); }
-
-    /* TABS */
-    .gh-auth-tabs {
-      display: flex; gap: 0;
-    }
-    .gh-auth-tab {
-      flex: 1;
-      background: transparent;
-      border: none; border-bottom: 2px solid transparent;
-      color: #666;
-      font-family: 'DM Mono', monospace;
-      font-size: 10px; font-weight: 500;
-      letter-spacing: 1.5px; text-transform: uppercase;
-      padding: 12px 16px;
-      cursor: pointer;
-      transition: all 0.25s;
-    }
-    .gh-auth-tab.active {
-      color: #c9a227;
-      border-bottom-color: #c9a227;
-      background: rgba(201,162,39,0.04);
-    }
-    .gh-auth-tab:hover:not(.active) { color: #aaa; }
-
-    /* PANEL BODY */
-    .gh-auth-body {
-      padding: 28px 32px 32px;
-    }
-
-    /* VIEW (login / register / forgot) */
-    .gh-auth-view { display: none; }
-    .gh-auth-view.active { display: block; }
-
-    /* FORM FIELDS */
-    .gh-field {
-      margin-bottom: 16px;
-    }
-    .gh-field label {
-      display: block;
-      font-family: 'DM Mono', monospace;
-      font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
-      color: #c9a227;
-      margin-bottom: 6px;
-    }
-    .gh-field input, .gh-field select {
-      width: 100%;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid #333;
-      color: #fff;
-      font-family: 'Outfit', sans-serif;
-      font-size: 13px;
-      padding: 11px 14px;
-      border-radius: 6px;
-      outline: none;
-      transition: border-color 0.2s, background 0.2s;
-      box-sizing: border-box;
-    }
-    .gh-field input:focus, .gh-field select:focus {
-      border-color: #c9a227;
-      background: rgba(201,162,39,0.04);
-    }
-    .gh-field input::placeholder { color: #555; }
-    .gh-field input.error { border-color: #ef4444; }
-    .gh-field .gh-error-msg {
-      font-size: 11px; color: #ef4444;
-      margin-top: 4px; display: none;
-    }
-    .gh-field .gh-error-msg.show { display: block; }
-
-    /* PASSWORD WRAPPER */
-    .gh-pw-wrap { position: relative; }
-    .gh-pw-wrap input { padding-right: 42px; }
-    .gh-pw-toggle {
-      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-      background: none; border: none; color: #555; cursor: pointer;
-      font-size: 14px; padding: 0; line-height: 1;
-      transition: color 0.2s;
-    }
-    .gh-pw-toggle:hover { color: #c9a227; }
-
-    /* TWO-COLUMN GRID */
-    .gh-field-row {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-    }
-
-    /* SUBMIT BUTTON */
-    .gh-auth-submit {
-      width: 100%;
-      background: #c9a227;
-      color: #000;
-      font-family: 'Outfit', sans-serif;
-      font-size: 12px; font-weight: 700;
-      letter-spacing: 1.5px; text-transform: uppercase;
-      padding: 14px;
-      border: none; border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 8px;
-      position: relative;
-      overflow: hidden;
-    }
-    .gh-auth-submit:hover { background: #e8c44a; transform: translateY(-1px); }
-    .gh-auth-submit:active { transform: translateY(0); }
-    .gh-auth-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-    .gh-auth-submit .gh-btn-spinner {
-      display: none;
-      width: 16px; height: 16px;
-      border: 2px solid rgba(0,0,0,0.3);
-      border-top-color: #000;
-      border-radius: 50%;
-      animation: ghSpin 0.7s linear infinite;
-      margin: 0 auto;
-    }
-    .gh-auth-submit.loading .gh-btn-text { display: none; }
-    .gh-auth-submit.loading .gh-btn-spinner { display: block; }
-    @keyframes ghSpin { to { transform: rotate(360deg); } }
-
-    /* DIVIDER */
-    .gh-divider {
-      display: flex; align-items: center; gap: 12px;
-      margin: 20px 0;
-    }
-    .gh-divider::before, .gh-divider::after {
-      content: ''; flex: 1; height: 1px; background: #2a2a2a;
-    }
-    .gh-divider span {
-      font-size: 10px; color: #555;
-      font-family: 'DM Mono', monospace; letter-spacing: 0.8px;
-      white-space: nowrap;
-    }
-
-    /* SWITCH LINK */
-    .gh-switch-link {
-      text-align: center;
-      font-size: 12px; color: #666;
-      margin-top: 20px;
-    }
-    .gh-switch-link button {
-      background: none; border: none;
-      color: #c9a227;
-      font-size: 12px; font-weight: 600;
-      cursor: pointer; padding: 0;
-      text-decoration: underline; text-underline-offset: 2px;
-      transition: color 0.2s;
-    }
-    .gh-switch-link button:hover { color: #e8c44a; }
-
-    /* FORGOT LINK */
-    .gh-forgot-link {
-      background: none; border: none;
-      color: #888; font-size: 11px;
-      cursor: pointer; padding: 0;
-      float: right; margin-top: 6px;
-      font-family: 'Outfit', sans-serif;
-      transition: color 0.2s;
-    }
-    .gh-forgot-link:hover { color: #c9a227; }
-
-    /* PASSWORD STRENGTH */
-    .gh-pw-strength {
-      margin-top: 8px;
-    }
-    .gh-pw-strength-bar {
-      height: 3px; background: #222; border-radius: 2px; overflow: hidden;
-      margin-bottom: 4px;
-    }
-    .gh-pw-strength-fill {
-      height: 100%; width: 0%; border-radius: 2px;
-      transition: width 0.3s ease, background 0.3s ease;
-    }
-    .gh-pw-strength-label {
-      font-size: 10px; color: #555; font-family: 'DM Mono', monospace;
-      letter-spacing: 0.8px;
-    }
-
-    /* TERMS CHECKBOX */
-    .gh-checkbox-row {
-      display: flex; align-items: flex-start; gap: 10px;
-      margin: 16px 0;
-    }
-    .gh-checkbox-row input[type="checkbox"] {
-      width: 16px; height: 16px;
-      min-width: 16px;
-      accent-color: #c9a227;
-      margin-top: 2px;
-      cursor: pointer;
-    }
-    .gh-checkbox-row label {
-      font-size: 11px; color: #888; line-height: 1.5;
-      cursor: pointer;
-    }
-    .gh-checkbox-row label a {
-      color: #c9a227; text-decoration: none;
-    }
-    .gh-checkbox-row label a:hover { text-decoration: underline; }
-
-    /* SUCCESS STATE */
-    .gh-success-state {
-      text-align: center; padding: 20px 0 8px;
-    }
-    .gh-success-icon {
-      width: 60px; height: 60px;
-      background: rgba(34,197,94,0.12);
-      border: 1px solid rgba(34,197,94,0.3);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 24px; margin: 0 auto 20px;
-    }
-    .gh-success-state h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 22px; font-weight: 700;
-      color: #fff; margin-bottom: 10px;
-    }
-    .gh-success-state p {
-      font-size: 12px; color: #888; line-height: 1.7; margin-bottom: 24px;
-    }
-
-    /* LOGGED-IN STATE — NAV BUTTON */
-    .nav-login.logged-in {
-      background: rgba(201,162,39,0.12) !important;
-      border: 1px solid rgba(201,162,39,0.3) !important;
-      color: #c9a227 !important;
-    }
-
-    /* USER BADGE (nav area) */
-    #gh-user-badge {
-      display: none;
-      align-items: center; gap: 10px;
-    }
-    #gh-user-badge.show { display: flex; }
-    .gh-user-avatar {
-      width: 32px; height: 32px;
-      background: #c9a227;
-      color: #000;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 13px; font-weight: 700;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .gh-user-name {
-      font-size: 11px; color: #fff; font-weight: 600;
-      max-width: 100px;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .gh-user-logout {
-      background: none; border: 1px solid #333;
-      color: #888; font-size: 10px;
-      font-family: 'DM Mono', monospace; letter-spacing: 0.8px;
-      padding: 5px 10px; border-radius: 4px;
-      cursor: pointer; transition: all 0.2s;
-      white-space: nowrap;
-    }
-    .gh-user-logout:hover { border-color: #ef4444; color: #ef4444; }
-
-    /* DASHBOARD PANEL */
-    #gh-dashboard-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.9);
-      z-index: 9400;
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.35s ease;
-      backdrop-filter: blur(6px);
-    }
-    #gh-dashboard-overlay.open { opacity: 1; pointer-events: all; }
-    .gh-dashboard-panel {
-      background: #111;
-      border: 1px solid rgba(201,162,39,0.3);
-      border-radius: 14px;
-      width: 100%; max-width: 680px;
-      max-height: 88vh; overflow-y: auto;
-      transform: translateY(20px) scale(0.97);
-      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
-      box-shadow: 0 32px 80px rgba(0,0,0,0.7);
-    }
-    #gh-dashboard-overlay.open .gh-dashboard-panel { transform: none; }
-    .gh-dash-header {
-      background: linear-gradient(135deg, #0d0d0d 0%, #1a1400 100%);
-      border-bottom: 1px solid rgba(201,162,39,0.2);
-      padding: 24px 28px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .gh-dash-greeting {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 22px; font-weight: 700; color: #fff;
-    }
-    .gh-dash-greeting span { color: #c9a227; font-style: italic; }
-    .gh-dash-body { padding: 24px 28px 28px; }
-    .gh-dash-quick {
-      display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
-      margin-bottom: 24px;
-    }
-    .gh-dash-tile {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid #2a2a2a;
-      border-radius: 8px; padding: 18px 14px;
-      text-align: center; cursor: pointer;
-      transition: all 0.2s;
-    }
-    .gh-dash-tile:hover { border-color: rgba(201,162,39,0.4); background: rgba(201,162,39,0.04); }
-    .gh-dash-tile-icon { font-size: 22px; margin-bottom: 8px; }
-    .gh-dash-tile-label {
-      font-size: 11px; font-weight: 600; color: #fff;
-      font-family: 'Outfit', sans-serif; margin-bottom: 2px;
-    }
-    .gh-dash-tile-sub { font-size: 10px; color: #666; }
-    .gh-dash-section-title {
-      font-family: 'DM Mono', monospace;
-      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
-      color: #c9a227; margin-bottom: 14px;
-      border-bottom: 1px solid #1e1e1e; padding-bottom: 8px;
-    }
-    .gh-dash-empty {
-      background: rgba(255,255,255,0.02);
-      border: 1px dashed #2a2a2a;
-      border-radius: 8px; padding: 32px;
-      text-align: center;
-    }
-    .gh-dash-empty p { font-size: 12px; color: #555; line-height: 1.7; }
-    .gh-dash-account-info {
-      background: rgba(201,162,39,0.04);
-      border: 1px solid rgba(201,162,39,0.15);
-      border-radius: 8px; padding: 16px 20px;
-      margin-top: 20px;
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-    }
-    .gh-ai-item { }
-    .gh-ai-label { font-size: 10px; color: #666; font-family: 'DM Mono', monospace; letter-spacing: 0.8px; margin-bottom: 3px; }
-    .gh-ai-value { font-size: 12px; color: #fff; font-weight: 500; }
-
-    @media(max-width:560px) {
-      .gh-auth-panel { margin: 0 12px; }
-      .gh-auth-body { padding: 20px; }
-      .gh-auth-header { padding: 20px; }
-      .gh-field-row { grid-template-columns: 1fr; }
-      .gh-dash-quick { grid-template-columns: repeat(2,1fr); }
-    }
-  `;
-  document.head.appendChild(style);
-
-  /* ── Inject HTML ── */
-  const authHTML = `
-  <!-- AUTH MODAL -->
-  <div id="gh-auth-overlay" role="dialog" aria-modal="true" aria-label="Client Login">
-    <div class="gh-auth-panel">
-      <div class="gh-auth-header">
-        <div class="gh-auth-logo">
-          <div class="gh-auth-logo-mark">GH</div>
-          <div class="gh-auth-logo-text">GARGO <span>HAVEN</span></div>
-        </div>
-        <div class="gh-auth-tabs">
-          <button class="gh-auth-tab active" data-tab="login" onclick="ghAuthTab('login')">CLIENT LOGIN</button>
-          <button class="gh-auth-tab" data-tab="register" onclick="ghAuthTab('register')">CREATE ACCOUNT</button>
-        </div>
-        <button class="gh-auth-close" onclick="ghAuthClose()" aria-label="Close">✕</button>
-      </div>
-
-      <div class="gh-auth-body">
-
-        <!-- LOGIN VIEW -->
-        <div class="gh-auth-view active" id="gh-view-login">
-          <div class="gh-field">
-            <label for="gh-login-email">Email Address</label>
-            <input type="email" id="gh-login-email" placeholder="you@company.com" autocomplete="email">
-            <div class="gh-error-msg" id="gh-login-email-err"></div>
-          </div>
-          <div class="gh-field">
-            <label for="gh-login-pw">Password</label>
-            <button class="gh-forgot-link" onclick="ghAuthView('forgot')" type="button">Forgot password?</button>
-            <div class="gh-pw-wrap">
-              <input type="password" id="gh-login-pw" placeholder="Your password" autocomplete="current-password">
-              <button class="gh-pw-toggle" type="button" onclick="ghTogglePw('gh-login-pw', this)" aria-label="Show password">👁</button>
-            </div>
-            <div class="gh-error-msg" id="gh-login-pw-err"></div>
-          </div>
-          <div class="gh-error-msg" id="gh-login-general-err" style="margin-bottom:12px;font-size:12px;"></div>
-          <button class="gh-auth-submit" id="gh-login-btn" onclick="ghDoLogin()">
-            <span class="gh-btn-text">ACCESS CLIENT PORTAL →</span>
-            <div class="gh-btn-spinner"></div>
-          </button>
-          <div class="gh-switch-link">Don't have an account? <button onclick="ghAuthTab('register')">Create one free</button></div>
-        </div>
-
-        <!-- REGISTER VIEW -->
-        <div class="gh-auth-view" id="gh-view-register">
-          <div class="gh-field-row">
-            <div class="gh-field">
-              <label for="gh-reg-fname">First Name</label>
-              <input type="text" id="gh-reg-fname" placeholder="First name" autocomplete="given-name">
-              <div class="gh-error-msg" id="gh-reg-fname-err"></div>
-            </div>
-            <div class="gh-field">
-              <label for="gh-reg-lname">Last Name</label>
-              <input type="text" id="gh-reg-lname" placeholder="Last name" autocomplete="family-name">
-              <div class="gh-error-msg" id="gh-reg-lname-err"></div>
-            </div>
-          </div>
-          <div class="gh-field">
-            <label for="gh-reg-company">Company Name</label>
-            <input type="text" id="gh-reg-company" placeholder="Your company or shipping line" autocomplete="organization">
-            <div class="gh-error-msg" id="gh-reg-company-err"></div>
-          </div>
-          <div class="gh-field">
-            <label for="gh-reg-role">Your Role</label>
-            <select id="gh-reg-role">
-              <option value="">Select role…</option>
-              <option>Freight Forwarder</option>
-              <option>Shipping Line Agent</option>
-              <option>Importer / Exporter</option>
-              <option>Customs Agent</option>
-              <option>Logistics Manager</option>
-              <option>Transport Operator</option>
-              <option>Other</option>
-            </select>
-            <div class="gh-error-msg" id="gh-reg-role-err"></div>
-          </div>
-          <div class="gh-field-row">
-            <div class="gh-field">
-              <label for="gh-reg-email">Email Address</label>
-              <input type="email" id="gh-reg-email" placeholder="you@company.com" autocomplete="email">
-              <div class="gh-error-msg" id="gh-reg-email-err"></div>
-            </div>
-            <div class="gh-field">
-              <label for="gh-reg-phone">Phone / WhatsApp</label>
-              <input type="tel" id="gh-reg-phone" placeholder="+254 7XX XXX XXX" autocomplete="tel">
-              <div class="gh-error-msg" id="gh-reg-phone-err"></div>
-            </div>
-          </div>
-          <div class="gh-field">
-            <label for="gh-reg-pw">Password</label>
-            <div class="gh-pw-wrap">
-              <input type="password" id="gh-reg-pw" placeholder="Create a password" autocomplete="new-password" oninput="ghCheckStrength(this.value)">
-              <button class="gh-pw-toggle" type="button" onclick="ghTogglePw('gh-reg-pw', this)" aria-label="Show password">👁</button>
-            </div>
-            <div class="gh-pw-strength">
-              <div class="gh-pw-strength-bar"><div class="gh-pw-strength-fill" id="gh-strength-fill"></div></div>
-              <div class="gh-pw-strength-label" id="gh-strength-label">Enter a password</div>
-            </div>
-            <div class="gh-error-msg" id="gh-reg-pw-err"></div>
-          </div>
-          <div class="gh-field">
-            <label for="gh-reg-pw2">Confirm Password</label>
-            <div class="gh-pw-wrap">
-              <input type="password" id="gh-reg-pw2" placeholder="Repeat your password" autocomplete="new-password">
-              <button class="gh-pw-toggle" type="button" onclick="ghTogglePw('gh-reg-pw2', this)" aria-label="Show password">👁</button>
-            </div>
-            <div class="gh-error-msg" id="gh-reg-pw2-err"></div>
-          </div>
-          <div class="gh-checkbox-row">
-            <input type="checkbox" id="gh-reg-terms">
-            <label for="gh-reg-terms">I agree to the <a href="#" onclick="return false;">Terms of Service</a> and <a href="#" onclick="return false;">Privacy Policy</a>. Gargo Haven may contact me about my account and bookings.</label>
-          </div>
-          <div class="gh-error-msg" id="gh-reg-general-err" style="margin-bottom:12px;font-size:12px;"></div>
-          <button class="gh-auth-submit" id="gh-reg-btn" onclick="ghDoRegister()">
-            <span class="gh-btn-text">CREATE MY ACCOUNT →</span>
-            <div class="gh-btn-spinner"></div>
-          </button>
-          <div class="gh-switch-link">Already have an account? <button onclick="ghAuthTab('login')">Sign in</button></div>
-        </div>
-
-        <!-- FORGOT PASSWORD VIEW -->
-        <div class="gh-auth-view" id="gh-view-forgot">
-          <div style="margin-bottom:20px;">
-            <button onclick="ghAuthView('login')" style="background:none;border:none;color:#888;font-size:11px;cursor:pointer;padding:0;font-family:'DM Mono',monospace;letter-spacing:0.8px;">← BACK TO LOGIN</button>
-          </div>
-          <p style="font-size:13px;color:#888;line-height:1.7;margin-bottom:20px;">Enter your registered email address and we'll send a password reset link to your inbox.</p>
-          <div class="gh-field">
-            <label for="gh-forgot-email">Registered Email</label>
-            <input type="email" id="gh-forgot-email" placeholder="you@company.com">
-            <div class="gh-error-msg" id="gh-forgot-err"></div>
-          </div>
-          <button class="gh-auth-submit" id="gh-forgot-btn" onclick="ghDoForgot()">
-            <span class="gh-btn-text">SEND RESET LINK →</span>
-            <div class="gh-btn-spinner"></div>
-          </button>
-        </div>
-
-        <!-- REGISTER SUCCESS VIEW -->
-        <div class="gh-auth-view" id="gh-view-success">
-          <div class="gh-success-state">
-            <div class="gh-success-icon">✅</div>
-            <h3>Account Created</h3>
-            <p id="gh-success-msg">Welcome to Gargo Haven's client portal. Your account is active and ready to use.</p>
-            <button class="gh-auth-submit" onclick="ghOpenDashboard()">
-              <span class="gh-btn-text">GO TO MY DASHBOARD →</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- FORGOT SUCCESS VIEW -->
-        <div class="gh-auth-view" id="gh-view-forgot-sent">
-          <div class="gh-success-state">
-            <div class="gh-success-icon">📧</div>
-            <h3>Reset Link Sent</h3>
-            <p>Check your inbox for a password reset link. If you don't see it within 5 minutes, check your spam folder or contact our support team.</p>
-            <button class="gh-auth-submit" onclick="ghAuthView('login')">
-              <span class="gh-btn-text">BACK TO LOGIN →</span>
-            </button>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- DASHBOARD MODAL -->
-  <div id="gh-dashboard-overlay" role="dialog" aria-modal="true" aria-label="Client Dashboard">
-    <div class="gh-dashboard-panel">
-      <div class="gh-dash-header">
-        <div>
-          <div class="gh-dash-greeting" id="gh-dash-greeting">Welcome, <span>Client</span></div>
-          <div style="font-size:11px;color:#666;margin-top:4px;font-family:'DM Mono',monospace;letter-spacing:0.8px;">CLIENT PORTAL · GARGO HAVEN</div>
-        </div>
-        <button class="gh-auth-close" onclick="ghDashClose()" aria-label="Close">✕</button>
-      </div>
-      <div class="gh-dash-body">
-        <div class="gh-dash-section-title" style="margin-bottom:16px;">QUICK ACTIONS</div>
-        <div class="gh-dash-quick">
-          <div class="gh-dash-tile" onclick="ghDashClose();navigateToPage('booking')">
-            <div class="gh-dash-tile-icon">📦</div>
-            <div class="gh-dash-tile-label">New Booking</div>
-            <div class="gh-dash-tile-sub">Storage or transport</div>
-          </div>
-          <div class="gh-dash-tile" onclick="ghDashClose();navigateToPage('track')">
-            <div class="gh-dash-tile-icon">📍</div>
-            <div class="gh-dash-tile-label">Track Container</div>
-            <div class="gh-dash-tile-sub">Live GPS status</div>
-          </div>
-          <div class="gh-dash-tile" onclick="ghDashClose();navigateToPage('contact')">
-            <div class="gh-dash-tile-icon">💬</div>
-            <div class="gh-dash-tile-label">Support</div>
-            <div class="gh-dash-tile-sub">Talk to our team</div>
-          </div>
-        </div>
-
-        <div class="gh-dash-section-title">MY BOOKINGS</div>
-        <div class="gh-dash-empty">
-          <p>No bookings yet. Submit a depot storage or transport request to get started — your booking history will appear here.</p>
-          <button class="gh-auth-submit" style="margin-top:16px;max-width:240px;" onclick="ghDashClose();navigateToPage('booking')">
-            <span class="gh-btn-text">CREATE FIRST BOOKING →</span>
-          </button>
-        </div>
-
-        <div class="gh-dash-account-info" id="gh-dash-account-info">
-          <div class="gh-ai-item">
-            <div class="gh-ai-label">Account Holder</div>
-            <div class="gh-ai-value" id="gh-dash-name">—</div>
-          </div>
-          <div class="gh-ai-item">
-            <div class="gh-ai-label">Company</div>
-            <div class="gh-ai-value" id="gh-dash-company">—</div>
-          </div>
-          <div class="gh-ai-item">
-            <div class="gh-ai-label">Email</div>
-            <div class="gh-ai-value" id="gh-dash-email">—</div>
-          </div>
-          <div class="gh-ai-item">
-            <div class="gh-ai-label">Role</div>
-            <div class="gh-ai-value" id="gh-dash-role">—</div>
-          </div>
-          <div class="gh-ai-item">
-            <div class="gh-ai-label">Member Since</div>
-            <div class="gh-ai-value" id="gh-dash-since">—</div>
-          </div>
-          <div class="gh-ai-item">
-            <div class="gh-ai-label">Account Status</div>
-            <div class="gh-ai-value" style="color:#22c55e;">● Active</div>
-          </div>
-        </div>
-
-        <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="gh-auth-submit" style="max-width:160px;background:transparent;color:#ef4444;border:1px solid #ef4444;" onclick="ghDoLogout()">
-            <span class="gh-btn-text">SIGN OUT</span>
-          </button>
-        </div>
-
-      </div>
-    </div>
-  </div>
-  `;
-
-  document.body.insertAdjacentHTML('beforeend', authHTML);
-
-  /* ── Close on overlay click ── */
-  document.getElementById('gh-auth-overlay').addEventListener('click', function(e) {
-    if (e.target === this) ghAuthClose();
-  });
-  document.getElementById('gh-dashboard-overlay').addEventListener('click', function(e) {
-    if (e.target === this) ghDashClose();
-  });
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') { ghAuthClose(); ghDashClose(); }
-  });
-
-  /* ── Public API ── */
-  window.ghAuthOpen = function(tab) {
-    const overlay = document.getElementById('gh-auth-overlay');
-    overlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    if (tab) ghAuthTab(tab);
-  };
-
-  window.ghAuthClose = function() {
-    document.getElementById('gh-auth-overlay').classList.remove('open');
-    document.body.style.overflow = '';
-  };
-
-  window.ghDashOpen = function() {
-    const u = getCurrentUser();
-    if (!u) { ghAuthOpen('login'); return; }
-    populateDashboard(u);
-    document.getElementById('gh-dashboard-overlay').classList.add('open');
-    document.body.style.overflow = 'hidden';
-  };
-
-  window.ghDashClose = function() {
-    document.getElementById('gh-dashboard-overlay').classList.remove('open');
-    document.body.style.overflow = '';
-  };
-
-  window.ghOpenDashboard = function() {
-    ghAuthClose();
-    setTimeout(ghDashOpen, 200);
-  };
-
-  window.ghAuthTab = function(tab) {
-    document.querySelectorAll('.gh-auth-tab').forEach(function(t) {
-      t.classList.toggle('active', t.dataset.tab === tab);
-    });
-    ghAuthView(tab);
-  };
-
-  window.ghAuthView = function(view) {
-    document.querySelectorAll('.gh-auth-view').forEach(function(v) {
-      v.classList.remove('active');
-    });
-    var el = document.getElementById('gh-view-' + view);
-    if (el) el.classList.add('active');
-    clearErrors();
-  };
-
-  window.ghTogglePw = function(inputId, btn) {
-    var inp = document.getElementById(inputId);
-    if (!inp) return;
-    var show = inp.type === 'password';
-    inp.type = show ? 'text' : 'password';
-    btn.textContent = show ? '🙈' : '👁';
-  };
-
-  window.ghCheckStrength = function(pw) {
-    var fill = document.getElementById('gh-strength-fill');
-    var label = document.getElementById('gh-strength-label');
-    if (!fill || !label) return;
-    var score = 0;
-    if (pw.length >= 8) score++;
-    if (/[A-Z]/.test(pw)) score++;
-    if (/[0-9]/.test(pw)) score++;
-    if (/[^A-Za-z0-9]/.test(pw)) score++;
-    var pct = score * 25;
-    var colors = ['#ef4444','#f59e0b','#eab308','#22c55e'];
-    var labels = ['WEAK','FAIR','GOOD','STRONG'];
-    fill.style.width = pct + '%';
-    fill.style.background = score > 0 ? colors[score - 1] : '#333';
-    label.textContent = score > 0 ? labels[score - 1] : 'Enter a password';
-    label.style.color = score > 0 ? colors[score - 1] : '#555';
-  };
-
-  function clearErrors() {
-    document.querySelectorAll('.gh-error-msg').forEach(function(el) {
-      el.textContent = ''; el.classList.remove('show');
-    });
-    document.querySelectorAll('.gh-field input').forEach(function(el) {
-      el.classList.remove('error');
-    });
-  }
-
-  function showErr(fieldId, errId, msg) {
-    var field = document.getElementById(fieldId);
-    var err = document.getElementById(errId);
-    if (field) field.classList.add('error');
-    if (err) { err.textContent = msg; err.classList.add('show'); }
-  }
-
-  function setLoading(btnId, loading) {
-    var btn = document.getElementById(btnId);
-    if (!btn) return;
-    btn.disabled = loading;
-    btn.classList.toggle('loading', loading);
-  }
-
-  
-  window.ghDoLogin = function() {
-    clearErrors();
-    var email = (document.getElementById('gh-login-email').value || '').trim().toLowerCase();
-    var pw = (document.getElementById('gh-login-pw').value || '');
-    var ok = true;
-    if (!email) { showErr('gh-login-email','gh-login-email-err','Email is required.'); ok = false; }
-    else if (!/^\S+@\S+\.\S+$/.test(email)) { showErr('gh-login-email','gh-login-email-err','Enter a valid email.'); ok = false; }
-    if (!pw) { showErr('gh-login-pw','gh-login-pw-err','Password is required.'); ok = false; }
-    if (!ok) return;
-
-    setLoading('gh-login-btn', true);
-    setTimeout(function() {
-      var users = getUsers();
-      var user = users.find(function(u) { return u.email === email && u.pw === btoa(pw); });
-      setLoading('gh-login-btn', false);
-      if (!user) {
-        var errEl = document.getElementById('gh-login-general-err');
-        if (errEl) { errEl.textContent = 'Incorrect email or password. Please try again.'; errEl.classList.add('show'); }
-        return;
+    function goTo(idx) {
+      // Flash effect
+      if (flash) {
+        flash.classList.remove('flashing');
+        void flash.offsetWidth;
+        flash.classList.add('flashing');
       }
-      setCurrentUser(user);
-      updateNavForUser(user);
-      ghAuthClose();
-      setTimeout(function() { ghDashOpen(); }, 200);
-    }, 900);
-  };
 
-  
-  window.ghDoRegister = function() {
-    clearErrors();
-    var fname = (document.getElementById('gh-reg-fname').value || '').trim();
-    var lname = (document.getElementById('gh-reg-lname').value || '').trim();
-    var company = (document.getElementById('gh-reg-company').value || '').trim();
-    var role = (document.getElementById('gh-reg-role').value || '').trim();
-    var email = (document.getElementById('gh-reg-email').value || '').trim().toLowerCase();
-    var phone = (document.getElementById('gh-reg-phone').value || '').trim();
-    var pw = (document.getElementById('gh-reg-pw').value || '');
-    var pw2 = (document.getElementById('gh-reg-pw2').value || '');
-    var terms = document.getElementById('gh-reg-terms').checked;
-    var ok = true;
+      // Slides
+      slides.forEach(function(s, i) {
+        s.classList.remove('slide-active', 'slide-prev');
+        if (i === current && i !== idx) s.classList.add('slide-prev');
+      });
+      setTimeout(function() {
+        slides[idx].classList.add('slide-active');
+      }, 80);
 
-    if (!fname) { showErr('gh-reg-fname','gh-reg-fname-err','First name is required.'); ok = false; }
-    if (!lname) { showErr('gh-reg-lname','gh-reg-lname-err','Last name is required.'); ok = false; }
-    if (!company) { showErr('gh-reg-company','gh-reg-company-err','Company name is required.'); ok = false; }
-    if (!role) { showErr('gh-reg-role','gh-reg-role-err','Please select your role.'); ok = false; }
-    if (!email) { showErr('gh-reg-email','gh-reg-email-err','Email is required.'); ok = false; }
-    else if (!/^\S+@\S+\.\S+$/.test(email)) { showErr('gh-reg-email','gh-reg-email-err','Enter a valid email address.'); ok = false; }
-    if (!pw) { showErr('gh-reg-pw','gh-reg-pw-err','Create a password.'); ok = false; }
-    else if (pw.length < 8) { showErr('gh-reg-pw','gh-reg-pw-err','Password must be at least 8 characters.'); ok = false; }
-    if (pw !== pw2) { showErr('gh-reg-pw2','gh-reg-pw2-err','Passwords do not match.'); ok = false; }
-    if (!terms) {
-      var errEl = document.getElementById('gh-reg-general-err');
-      if (errEl) { errEl.textContent = 'Please accept the Terms of Service to continue.'; errEl.classList.add('show'); }
-      ok = false;
+      // Contents
+      contents.forEach(function(c) {
+        c.classList.remove('active');
+        c.style.pointerEvents = 'none';
+      });
+      setTimeout(function() {
+        if (contents[idx]) {
+          contents[idx].classList.add('active');
+          contents[idx].style.pointerEvents = 'auto';
+        }
+      }, 300);
+
+      // Indicators
+      indicators.forEach(function(ind, i) {
+        ind.classList.toggle('active', i === idx);
+      });
+
+      current = idx;
     }
-    if (!ok) return;
 
-    setLoading('gh-reg-btn', true);
-    setTimeout(function() {
-      var users = getUsers();
-      if (users.find(function(u) { return u.email === email; })) {
-        setLoading('gh-reg-btn', false);
-        showErr('gh-reg-email','gh-reg-email-err','An account with this email already exists.');
-        return;
-      }
-      var newUser = {
-        id: 'GH-' + Date.now(),
-        fname: fname, lname: lname,
-        name: fname + ' ' + lname,
-        company: company, role: role,
-        email: email, phone: phone,
-        pw: btoa(pw),
-        since: new Date().toLocaleDateString('en-KE', { day:'numeric', month:'long', year:'numeric' })
+    function next() {
+      goTo((current + 1) % total);
+    }
+
+    function startAuto() {
+      clearInterval(timer);
+      timer = setInterval(next, DURATION);
+    }
+
+    // Indicator clicks
+    indicators.forEach(function(ind, i) {
+      ind.onclick = function() {
+        goTo(i);
+        startAuto();
       };
-      users.push(newUser);
-      saveUsers(users);
-      setCurrentUser(newUser);
-      setLoading('gh-reg-btn', false);
-      updateNavForUser(newUser);
+    });
 
-      var msg = document.getElementById('gh-success-msg');
-      if (msg) msg.textContent = 'Welcome, ' + fname + '. Your Gargo Haven client account is ready. You can now book services, track containers, and manage your operations from your dashboard.';
-      ghAuthView('success');
-    }, 1100);
-  };
+    // Arrow keys
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight') { goTo((current+1)%total); startAuto(); }
+      if (e.key === 'ArrowLeft')  { goTo((current-1+total)%total); startAuto(); }
+    });
 
-  
-  window.ghDoForgot = function() {
-    clearErrors();
-    var email = (document.getElementById('gh-forgot-email').value || '').trim().toLowerCase();
-    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      showErr('gh-forgot-email','gh-forgot-err','Enter a valid email address.');
-      return;
+    // Touch swipe
+    var touchX = null;
+    var heroEl = document.querySelector('.hero-bg');
+    if (heroEl) {
+      heroEl.addEventListener('touchstart', function(e) { touchX = e.touches[0].clientX; }, {passive:true});
+      heroEl.addEventListener('touchend', function(e) {
+        if (touchX === null) return;
+        var dx = e.changedTouches[0].clientX - touchX;
+        if (Math.abs(dx) > 50) {
+          dx > 0 ? goTo((current-1+total)%total) : goTo((current+1)%total);
+          startAuto();
+        }
+        touchX = null;
+      }, {passive:true});
     }
-    setLoading('gh-forgot-btn', true);
-    setTimeout(function() {
-      setLoading('gh-forgot-btn', false);
-      // Always show success (don't reveal account existence)
-      ghAuthView('forgot-sent');
-    }, 1000);
-  };
 
-  
-  window.ghDoLogout = function() {
-    clearCurrentUser();
-    ghDashClose();
-    resetNavForGuest();
-    if (typeof showNotification === 'function') {
-      showNotification('Signed Out', 'You have been logged out of your account.', '👋');
-    }
-  };
-
-  function updateNavForUser(user) {
-    var loginBtn = document.querySelector('.nav-login');
-    if (!loginBtn) return;
-    loginBtn.textContent = user.fname;
-    loginBtn.classList.add('logged-in');
-    loginBtn.onclick = function() { ghDashOpen(); };
-  }
-
-  function resetNavForGuest() {
-    var loginBtn = document.querySelector('.nav-login');
-    if (!loginBtn) return;
-    loginBtn.textContent = 'CLIENT LOGIN';
-    loginBtn.classList.remove('logged-in');
-    loginBtn.onclick = function() { ghAuthOpen('login'); };
-  }
-
-  function populateDashboard(user) {
-    var el = function(id) { return document.getElementById(id); };
-    var greeting = el('gh-dash-greeting');
-    if (greeting) greeting.innerHTML = 'Welcome back, <span>' + user.fname + '</span>';
-    if (el('gh-dash-name')) el('gh-dash-name').textContent = user.name;
-    if (el('gh-dash-company')) el('gh-dash-company').textContent = user.company;
-    if (el('gh-dash-email')) el('gh-dash-email').textContent = user.email;
-    if (el('gh-dash-role')) el('gh-dash-role').textContent = user.role || '—';
-    if (el('gh-dash-since')) el('gh-dash-since').textContent = user.since || '—';
-  }
-
-  
-  function wireLoginButton() {
-    var loginBtn = document.querySelector('.nav-login');
-    if (!loginBtn) return;
-
-    var user = getCurrentUser();
-    if (user) {
-      updateNavForUser(user);
-    } else {
-      loginBtn.onclick = function(e) {
-        e.preventDefault();
-        ghAuthOpen('login');
-      };
-    }
+    // Init
+    goTo(0);
+    startAuto();
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', wireLoginButton);
+    document.addEventListener('DOMContentLoaded', run);
   } else {
-    wireLoginButton();
+    run();
+  }
+})();
+
+/* ── SCROLL REVEAL: Universal observer ── */
+(function initScrollReveal() {
+  function run() {
+    var selectors = [
+      '.svc-img-card',
+      '.gallery-item',
+      '.testi-card',
+      '.value-card',
+      '.rate-card',
+      '.stat-block-img',
+      '.about-photo-grid-section',
+      '.depot-gallery-grid',
+      '.dgg-item',
+      '.apg-img',
+      '.reveal-on-scroll',
+      '.fleet-card',
+      '.depot-location-card',
+      '.cert-card'
+    ];
+
+    // Mark individual items for stagger on container elements
+    var containers = document.querySelectorAll('.about-photo-grid-section, .depot-gallery-grid');
+    containers.forEach(function(container) {
+      var containerObs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+            containerObs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+      containerObs.observe(container);
+    });
+
+    // Individual card stagger
+    var cardGroups = document.querySelectorAll('.svc-img-card, .testi-card, .value-card, .rate-card, .fleet-card, .depot-location-card, .cert-card, .gallery-item');
+    cardGroups.forEach(function(card) {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(24px)';
+      card.style.transition = 'opacity 0.6s ease, transform 0.6s cubic-bezier(0.34,1.2,0.64,1)';
+    });
+
+    var cardObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          var el = entry.target;
+          // Stagger siblings
+          var parent = el.parentElement;
+          var siblings = Array.from(parent.children).filter(function(c) {
+            return c.classList.contains(el.classList[0]);
+          });
+          var idx = siblings.indexOf(el);
+          setTimeout(function() {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+          }, idx * 80);
+          cardObs.unobserve(el);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    cardGroups.forEach(function(card) { cardObs.observe(card); });
+
+    // Stat blocks counter animation
+    var statNums = document.querySelectorAll('.stat-block-img .stat-num');
+    var statObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          animateStatNum(entry.target);
+          statObs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    statNums.forEach(function(el) { statObs.observe(el); });
   }
 
+  function animateStatNum(el) {
+    var text = el.textContent;
+    var num = parseFloat(text.replace(/[^0-9.]/g, ''));
+    var suffix = text.replace(/[0-9.]/g, '');
+    if (isNaN(num)) return;
+    var start = 0;
+    var duration = 1800;
+    var startTime = null;
+    function step(ts) {
+      if (!startTime) startTime = ts;
+      var progress = Math.min((ts - startTime) / duration, 1);
+      var ease = 1 - Math.pow(1 - progress, 3);
+      var current = Math.round(ease * num);
+      if (num < 100) current = Math.round(ease * num * 10) / 10;
+      el.textContent = current + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+      else el.textContent = text;
+    }
+    requestAnimationFrame(step);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    setTimeout(run, 200);
+  }
+})();
+
+/* ── NAV: Scroll-reactive ── */
+(function initNavScroll() {
+  function run() {
+    var nav = document.querySelector('.nav');
+    if (!nav) return;
+    window.addEventListener('scroll', function() {
+      if (window.scrollY > 60) {
+        nav.classList.add('scrolled');
+      } else {
+        nav.classList.remove('scrolled');
+      }
+    }, { passive: true });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})();
+
+/* ── GALLERY STRIP: Drag scroll ── */
+(function initGalleryDrag() {
+  function run() {
+    var strips = document.querySelectorAll('.gallery-strip');
+    strips.forEach(function(strip) {
+      var isDown = false;
+      var startX, scrollLeft;
+      strip.addEventListener('mousedown', function(e) {
+        isDown = true;
+        strip.style.animationPlayState = 'paused';
+        startX = e.pageX - strip.offsetLeft;
+        scrollLeft = strip.scrollLeft;
+      });
+      strip.addEventListener('mouseleave', function() { isDown = false; });
+      strip.addEventListener('mouseup', function() { isDown = false; });
+      strip.addEventListener('mousemove', function(e) {
+        if (!isDown) return;
+        e.preventDefault();
+        var x = e.pageX - strip.offsetLeft;
+        strip.scrollLeft = scrollLeft - (x - startX) * 1.5;
+      });
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})();
+
+/* ── SERVICE CARDS: Lazy Ken Burns on BG images ── */
+(function initServiceCardKenBurns() {
+  function run() {
+    var cards = document.querySelectorAll('.svc-img-card');
+    cards.forEach(function(card, i) {
+      var directions = [
+        'scale(1.08) translate(-1%,0.5%)',
+        'scale(1.06) translate(1%,-0.5%)',
+        'scale(1.08) translate(0.5%,1%)',
+        'scale(1.07) translate(-0.5%,-1%)',
+        'scale(1.09) translate(0.5%,0.5%)',
+        'scale(1.06) translate(-1%,-0.5%)'
+      ];
+      card.style.backgroundSize = '105%';
+      card.style.backgroundPosition = 'center';
+      card.style.transition = 'background-size 10s ease, transform 0.5s cubic-bezier(0.34,1.2,0.64,1), box-shadow 0.4s ease';
+      
+      var obs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (e.isIntersecting) {
+            setTimeout(function() {
+              card.style.backgroundSize = '115%';
+            }, i * 150);
+          }
+        });
+      }, { threshold: 0.2 });
+      obs.observe(card);
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
 })();
