@@ -1,7 +1,4 @@
-/* ═══════════════════════════════════════════
-GARGO HAVEN — Black & Gold Theme (Editorial Serif)
-Container Depot & Transport · Mombasa
-═══════════════════════════════════════════ */
+
 :root {
   --gold: #c9a227;
   --gold-light: #e8c44a;
@@ -29,7 +26,7 @@ body {
   overflow-x: hidden;
 }
 
-/* ── LOADER ── */
+
 .loader {
   position: fixed; inset: 0;
   background: white;
@@ -69,7 +66,7 @@ body {
   letter-spacing: 1.7px;
 }
 
-/* ── NOTIFICATION ── */
+
 .notification {
   position: fixed; top: 80px; right: 24px;
   background: var(--black-3);
@@ -88,7 +85,7 @@ body {
 .notif-text { font-weight: 600; color: var(--white); margin-bottom: 2px; }
 .notif-sub { font-size: 10px; color: var(--gold); font-family: var(--font-mono); }
 
-/* ── MODAL ── */
+
 .modal-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.85);
@@ -120,7 +117,7 @@ body {
 }
 .modal-close:hover { color: var(--gold); }
 
-/* ── TICKER ── */
+
 .ticker-bar {
   background: var(--gold);
   color: var(--black);
@@ -139,7 +136,7 @@ body {
 }
 @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-/* ── NAVIGATION ── */
+
 .nav {
   position: fixed; top: 0; left: 0; right: 0;
   z-index: 1000;
@@ -209,14 +206,12 @@ body {
   cursor: pointer;
 }
 
-/* ==========================================
-MEGA MENU
-========================================== */
+
 .nav-dropdown {
   position: relative;
   padding: 12px 0;
 }
-/* ── MEGA MENU - Fixed Z-Index ── */
+
 .mega-menu {
   position: absolute;
   top: 100%;
@@ -235,7 +230,7 @@ MEGA MENU
   transition: .35s ease;
   box-shadow: 0 20px 60px rgba(0,0,0,.5);
   
-  /* FIX: Higher z-index than footer */
+ 
   z-index: 1050 !important;
 }
 
@@ -252,12 +247,12 @@ footer.footer {
   transform: translateX(-50%) translateY(0);
 }
 
-/* Ensure nav itself is above everything */
+
 .nav {
-  z-index: 1100;           /* Increased */
+  z-index: 1100;          
 }
 
-/* Make sure footer stays below */
+
 .footer {
   position: relative;
   z-index: 10;
@@ -337,7 +332,7 @@ footer.footer {
   .mega-menu { display: none !important; }
 }
 
-/* Mobile menu */
+
 .mobile-menu {
   display: none;
   position: fixed;
@@ -369,11 +364,11 @@ footer.footer {
   cursor: pointer;
 }
 
-/* ── PAGES ── */
+
 .page { display: none; }
 .page.active-page { display: block; }
 
-/* ── HERO ── */
+
 .hero-bg {
   position: relative;
   min-height: 100vh;
@@ -406,7 +401,7 @@ footer.footer {
   position: relative; 
 }
 
-/* ── CINEMATIC HERO SLIDESHOW ── */
+
 .hero-slideshow {
   position: absolute; 
   inset: 0;
@@ -450,7 +445,7 @@ footer.footer {
   100% { opacity: 0; transform: scale(1); }
 }
 
-/* ── HERO SLIDE CONTENT (Dynamic Text) ── */
+
 .hero-slide-content {
   position: absolute;
   top: 0; left: 0;
@@ -467,7 +462,7 @@ footer.footer {
   position: relative;
 }
 
-/* Slide Indicators */
+
 .hero-slide-indicators {
   display: flex;
   gap: 8px;
@@ -490,7 +485,7 @@ footer.footer {
   background: rgba(201,162,39,0.5);
 }
 
-/* Live badge */
+
 .live-badge {
   display: inline-flex; align-items: center; gap: 8px;
   background: rgba(201,162,39,0.1);
@@ -542,7 +537,7 @@ footer.footer {
 }
 .hero-desc em { color: var(--gold-light); font-style: normal; font-weight: 600; }
 
-/* CTA buttons */
+
 .hero-cta { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 48px; }
 .cta-primary {
   background: var(--gold);
@@ -574,7 +569,7 @@ footer.footer {
 }
 .cta-secondary:hover { border-color: var(--gold); color: var(--gold); }
 
-/* Hero stats */
+
 .hero-stats { display: flex; gap: 32px; flex-wrap: wrap; }
 .stat { }
 .stat-number {
@@ -586,7 +581,7 @@ footer.footer {
 .stat-number span { font-size: 19px; }
 .stat-label { font-size: 10px; color: var(--gray-light); letter-spacing: 0.6px; text-transform: uppercase; margin-top: 2px; }
 
-/* Route card */
+
 .route-card {
   background: rgba(0,0,0,0.7);
   border: 1px solid rgba(201,162,39,0.3);
@@ -631,7 +626,7 @@ footer.footer {
   border: 1px solid rgba(34,197,94,0.3);
 }
 
-/* Scroll hint */
+
 .scroll-hint {
   position: relative; z-index: 2;
   display: flex; flex-direction: column;
@@ -660,7 +655,7 @@ footer.footer {
 }
 @keyframes scrollDown { 0%,100%{opacity:0;transform:translate(-50%,0)} 50%{opacity:1;transform:translate(-50%,6px)} }
 
-/* ── PARTNERS / TICKER STRIP ── */
+
 .partner-area {
   background: var(--black-2);
   border-top: 1px solid var(--gray-dark);
@@ -700,11 +695,11 @@ footer.footer {
 }
 .partner-chip:hover { color: var(--gold); border-color: var(--gold-dark); }
 
-/* ── DIVIDER ── */
+
 .divider { border: none; border-top: 1px solid var(--gray-dark); margin: 0; }
 .divider-gold { border: none; border-top: 2px solid var(--gold); width: 60px; margin: 16px 0 24px; }
 
-/* ── SECTIONS ── */
+
 .section-inner { max-width: 1300px; margin: 0 auto; padding: 80px 40px; }
 .section-dark { background: var(--black-2); }
 .section-light { background: var(--black-3); }
@@ -761,7 +756,6 @@ footer.footer {
   width: 100%;
 }
 
-/* ── DEPOT NETWORK ── */
 .depot-map-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -811,7 +805,7 @@ footer.footer {
 .ds span { font-size: 10px; color: var(--gray-light); }
 .depot-contact { font-size: 10px; color: var(--gray-light); margin-top: 8px; }
 
-/* ── TESTIMONIALS ── */
+
 .testimonials-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -850,7 +844,7 @@ footer.footer {
 .testi-name { font-weight: 600; font-size: 12px; color: var(--white); }
 .testi-company { font-size: 10px; color: var(--gold); letter-spacing: 0.6px; margin-top: 2px; }
 
-/* Partners row */
+
 .partners-row {
   display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 40px;
 }
@@ -975,7 +969,7 @@ footer.footer {
 .calc-result-price { font-family: var(--font-main); font-size: 25px; font-weight: 700; color: var(--gold); }
 .calc-result-unit { font-size: 14px; }
 
-/* ── FORMS ── */
+
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group.full { grid-column: 1 / -1; }
 .form-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.1px; color: var(--gold); text-transform: uppercase; }
@@ -1064,7 +1058,7 @@ footer.footer {
 .faq-bottom-cta h4 { font-family: var(--font-body); font-size: 16px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
 .faq-bottom-cta p { font-size: 11px; color: var(--gray-light); }
 
-/* CTA Band */
+
 .cta-band {
   background: var(--gold);
   text-align: center;
@@ -1075,7 +1069,7 @@ footer.footer {
 .cta-band .btn-primary { background: var(--black); color: var(--gold); }
 .cta-band .btn-primary:hover { background: var(--black-3); }
 
-/* ── ABOUT INTRO ── */
+
 .intro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
 .intro-body p { 
   font-size: 12px; 
@@ -1095,7 +1089,7 @@ footer.footer {
 .sidebar-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.1px; color: var(--gold); margin-bottom: 8px; text-transform: uppercase; }
 .sidebar-item p { font-size: 11px; color: var(--gray-pale); line-height: 1.6; }
 
-/* Stats band */
+
 .stats-band { background: var(--gold); padding: 40px; }
 .stats-inner { max-width: 1300px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
 .stat-block { text-align: center; }
@@ -1103,7 +1097,7 @@ footer.footer {
 .stat-lbl { font-family: var(--font-body); font-size: 12px; font-weight: 700; color: rgba(0,0,0,0.7); margin-top: 4px; }
 .stat-desc { font-size: 10px; color: rgba(0,0,0,0.5); margin-top: 4px; }
 
-/* Values */
+
 .values-bg { padding: 80px 40px; }
 .values-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-top: 40px; }
 .value-card {
@@ -1116,7 +1110,7 @@ footer.footer {
 .value-card h5 { font-family: var(--font-body); font-size: 16px; font-weight: 600; color: var(--gold); margin-bottom: 12px; }
 .value-card p { font-size: 11px; color: var(--gray-pale); line-height: 1.7; }
 
-/* Timeline */
+
 .timeline-section { padding: 80px 40px; }
 .timeline { max-width: 800px; margin: 40px auto 0; position: relative; }
 .timeline::before { content: ''; position: absolute; left: 90px; top: 0; bottom: 0; width: 2px; background: var(--gray-dark); }
@@ -1135,7 +1129,7 @@ footer.footer {
 .tl-content h4 { font-family: var(--font-body); font-size: 14px; font-weight: 600; color: var(--white); margin-bottom: 8px; }
 .tl-content p { font-size: 11px; color: var(--gray-pale); line-height: 1.7; }
 
-/* Team */
+
 .team-section { padding: 80px 40px; }
 .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-top: 40px; }
 .team-card {
@@ -1150,7 +1144,7 @@ footer.footer {
 .role { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.6px; color: var(--gold); display: block; margin-bottom: 8px; }
 .team-info p { font-size: 10px; color: var(--gray-light); line-height: 1.6; }
 
-/* Certs */
+
 .cert-band { padding: 80px 40px; }
 .cert-inner { max-width: 1300px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
 .cert-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.7px; color: var(--gold); text-transform: uppercase; margin-bottom: 16px; }
@@ -1169,7 +1163,7 @@ footer.footer {
 .cert-card h5 { font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--gold); margin-bottom: 4px; }
 .cert-card span { font-size: 10px; color: var(--gray-light); }
 
-/* Contact strip */
+
 .contact-strip { background: var(--black-4); padding: 60px 40px; }
 .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 40px; }
 .contact-card { display: flex; gap: 16px; align-items: flex-start; }
@@ -1178,7 +1172,7 @@ footer.footer {
 .contact-card p { font-size: 10px; color: var(--gray-light); line-height: 1.7; }
 .contact-card a { color: var(--gold); text-decoration: none; }
 
-/* ── SERVICES ── */
+
 .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
 .service-card {
   background: var(--black-3);
@@ -1208,7 +1202,7 @@ footer.footer {
 }
 .service-link:hover { opacity: 0.7; }
 
-/* ── DEPOT DETAIL ── */
+
 .depot-stats-mega { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 48px; }
 .dsm { background: var(--black-4); border: 1px solid var(--gray-dark); border-radius: 8px; padding: 20px; text-align: center; }
 .dsm strong { display: block; font-family: var(--font-main); font-size: 28px; font-weight: 700; color: var(--gold); }
@@ -1218,7 +1212,7 @@ footer.footer {
 .zone-label { font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--gold); margin-bottom: 8px; }
 .zone-desc { font-size: 11px; color: var(--gray-pale); line-height: 1.6; }
 
-/* ── BOOKING PAGE ── */
+
 .booking-layout { display: grid; grid-template-columns: 1fr 380px; gap: 40px; align-items: start; }
 .booking-form-container { background: var(--black-3); border: 1px solid var(--gray-dark); border-radius: 8px; overflow: hidden; }
 .form-header { background: var(--black-4); border-bottom: 1px solid var(--gold-dark); padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; }
@@ -1270,7 +1264,7 @@ footer.footer {
 }
 .form-submit:hover { background: var(--gold-light); }
 
-/* Booking info side */
+
 .booking-info { position: sticky; top: 90px; }
 .info-feature-box { background: var(--black-4); border: 1px solid var(--gold-dark); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
 .trusted-banner { display: flex; align-items: center; gap: 16px; }
@@ -1579,12 +1573,7 @@ footer.footer {
 .footer {
   display: none !important;
 }
-/* ═══════════════════════════════════════════════════
-GARGO HAVEN — expand.css
-Image-rich expansion styles
-═══════════════════════════════════════════════════ */
 
-/* ── CINEMATIC PAGE HERO ── */
 .cinematic-hero {
   min-height: 55vh !important;
   background-size: cover !important;
