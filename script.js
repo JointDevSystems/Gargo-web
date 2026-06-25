@@ -1,13 +1,8 @@
-/* =========================================================
-GARGO HAVEN — script.js
-Container Depot & Transport Website — Main Application JS
-========================================================= */
+
 (function () {
 'use strict';
 
-/* ---------------------------------------------------------
-GLOBAL STATE
---------------------------------------------------------- */
+
 const state = {
   currentPage: 'home',
   bookingRefNumber: null,
@@ -18,7 +13,7 @@ const state = {
   heroSlideInterval: null
 };
 
-/* Rough distance/effort factor between corridors */
+
 const ROUTE_FACTOR = {
   'Mombasa Port (KPA)': 0,
   'APM Terminals': 1,
@@ -44,9 +39,7 @@ const CONTAINER_SIZE_RATE = {
 
 const STORAGE_RATE_PER_TEU_DAY = 350;
 
-/* ---------------------------------------------------------
-FAQ DATA
---------------------------------------------------------- */
+
 const FAQ_DATA = [
   { cat: 'depot', q: 'What are your depot storage rates?', a: 'Our standard depot storage rate is KES 350 per TEU per day, which includes CCTV-monitored yard storage, gate-in/gate-out service, and EIR documentation. Bulk and long-term rates are available on request.' },
   { cat: 'depot', q: 'Do you store both empty and laden containers?', a: 'Gargo Haven primarily specialises in empty container storage and depot management. We do not store laden cargo containers, but we can arrange short-term holding for containers awaiting stuffing or de-stuffing through our partner facilities.' },
@@ -76,9 +69,8 @@ const TICKER_ITEMS = [
   '🕐 24/7 DEPOT OPERATIONS'
 ];
 
-/* ---------------------------------------------------------
-SAMPLE TRACKING DATA
---------------------------------------------------------- */
+
+
 const TRACK_SAMPLES = {
   container: {
     'MSCU1234567': {
@@ -119,18 +111,14 @@ const TRACK_SAMPLES = {
   }
 };
 
-/* ---------------------------------------------------------
-UTILITIES
---------------------------------------------------------- */
+
 function fmt(num) {
   return Math.round(num).toLocaleString('en-US');
 }
 function $(sel) { return document.querySelector(sel); }
 function $$(sel) { return Array.from(document.querySelectorAll(sel)); }
 
-/* ---------------------------------------------------------
-LOADER
---------------------------------------------------------- */
+
 function initLoader() {
   const loader = document.getElementById('loader');
   if (!loader) return;
@@ -142,9 +130,7 @@ function initLoader() {
   }, 1100);
 }
 
-/* ---------------------------------------------------------
-NOTIFICATIONS (toast)
---------------------------------------------------------- */
+
 function showNotification(title, sub, icon) {
   const notif = document.getElementById('notification');
   const textEl = document.getElementById('notif-text');
@@ -161,9 +147,8 @@ function showNotification(title, sub, icon) {
   }, 4200);
 }
 
-/* ---------------------------------------------------------
-MODAL
---------------------------------------------------------- */
+
+
 function openModal(title, html) {
   const overlay = document.getElementById('modalOverlay');
   const titleEl = document.getElementById('modalTitle');
@@ -192,9 +177,7 @@ function initModal() {
   });
 }
 
-/* ---------------------------------------------------------
-TICKER BAR
---------------------------------------------------------- */
+
 function initTicker() {
   const inner = document.getElementById('tickerInner');
   if (!inner) return;
@@ -204,10 +187,7 @@ function initTicker() {
   }).join('<span class="ticker-sep">  •  </span>');
 }
 
-/* ---------------------------------------------------------
-HERO SLIDESHOW SYNC
-Syncs text content with background images (6s per slide)
---------------------------------------------------------- */
+
 function initHeroSlideshow() {
   const slides = $$('.hero-slide-content');
   const indicators = $$('.indicator');
@@ -289,9 +269,7 @@ function navigateToPage(pageId) {
 }
 window.navigateToPage = navigateToPage;
 
-/* ---------------------------------------------------------
-MOBILE MENU
---------------------------------------------------------- */
+
 function openMobileMenu() {
   const panel = document.getElementById('mobileMenuPanel');
   if (panel) panel.classList.add('open');
@@ -325,9 +303,7 @@ function initScrollTop() {
   });
 }
 
-/* ---------------------------------------------------------
-CHATBOT BUTTON
---------------------------------------------------------- */
+
 function initChatbot() {
   const btn = document.getElementById('chatbotBtn');
   if (!btn) return;
@@ -347,9 +323,8 @@ function initChatbot() {
   });
 }
 
-/* ---------------------------------------------------------
-HOME PAGE — COST ESTIMATOR CALCULATOR
---------------------------------------------------------- */
+
+
 function runCalc() {
   const originEl = document.getElementById('calcOrigin');
   const destEl = document.getElementById('calcDest');
@@ -383,9 +358,7 @@ function runCalc() {
 }
 window.runCalc = runCalc;
 
-/* ---------------------------------------------------------
-FAQ — RENDER, FILTER, ACCORDION
---------------------------------------------------------- */
+
 function renderFaq() {
   const list = document.getElementById('faqList');
   if (!list) return;
@@ -424,9 +397,7 @@ function faqFilter(cat, btnEl) {
 }
 window.faqFilter = faqFilter;
 
-/* ---------------------------------------------------------
-BOOKING PAGE
---------------------------------------------------------- */
+
 function generateBookingRef() {
   const num = Math.floor(1000 + Math.random() * 8999);
   return 'GH-2024-' + num;
@@ -538,9 +509,8 @@ function submitBooking() {
 }
 window.submitBooking = submitBooking;
 
-/* ---------------------------------------------------------
-TRACKING PAGE
---------------------------------------------------------- */
+
+
 function switchTrackTab(btnEl, paneId) {
   $$('.track-tab').forEach(function (b) { b.classList.remove('active'); });
   btnEl.classList.add('active');
@@ -644,9 +614,7 @@ function initTrackPage() {
   }
 }
 
-/* ---------------------------------------------------------
-FLEET LIVE PANEL
---------------------------------------------------------- */
+
 const FLEET_LIVE_SAMPLE = [
   { reg: 'KCB 421G', status: 'En Route', loc: 'Makupa Causeway' },
   { reg: 'KDB 889T', status: 'Loading', loc: 'Gargo Haven Depot — Gate 2' },
@@ -671,9 +639,7 @@ function initFleetLivePanel() {
   }).join('');
 }
 
-/* ---------------------------------------------------------
-CONTACT PAGE
---------------------------------------------------------- */
+
 function sendContact() {
   const name = document.getElementById('cName');
   const email = document.getElementById('cEmail');
@@ -699,9 +665,7 @@ function sendContact() {
 }
 window.sendContact = sendContact;
 
-/* ---------------------------------------------------------
-INIT — runs once DOM is ready
---------------------------------------------------------- */
+
 function init() {
   initLoader();
   initTicker();
@@ -735,15 +699,10 @@ if (document.readyState === 'loading') {
 }
 })();
 
-/* ═══════════════════════════════════════════════════════════════
-   GARGO HAVEN — SUB-PAGE NAVIGATION & CONTENT ENGINE
-   Adds full content to every nav dropdown item link
-   ═══════════════════════════════════════════════════════════════ */
 
-// ─── SUB-PAGE REGISTRY ───────────────────────────────────────────
 const SUBPAGES = {
 
-  /* ══ ABOUT ══════════════════════════════════════════════════════ */
+  
 
   'company-overview': {
     parent: 'about',
@@ -2159,18 +2118,18 @@ window.navigateToSubpage = function(key) {
     document.body.appendChild(container);
   }
 
-  // Hide all pages
+
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
 
-  // Show subpage
+
   container.classList.add('active-page');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // Run afterRender if defined
+ 
   if (sp.afterRender) setTimeout(sp.afterRender, 100);
 };
 
-// ─── WIRE UP ALL NAV DROPDOWN LINKS ─────────────────────────────
+
 function wireNavLinks() {
   const linkMap = {
     // ABOUT
@@ -2238,7 +2197,7 @@ function wireNavLinks() {
   });
 }
 
-// ─── OVERRIDE navigateToPage to clear subpage panel ─────────────
+
 const _origNavigate = window.navigateToPage;
 window.navigateToPage = function(page) {
   // Remove active from subpages
@@ -2246,13 +2205,13 @@ window.navigateToPage = function(page) {
   if (_origNavigate) _origNavigate(page);
 };
 
-// ─── INIT ─────────────────────────────────────────────────────────
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', wireNavLinks);
 } else {
   wireNavLinks();
 }
-// Make ALL dropdown nav links behave like Booking page
+
 function makeAllDropdownsWorkLikeBooking() {
   const dropdownLinks = document.querySelectorAll('.mega-menu a, .small-menu a');
   
@@ -2260,16 +2219,16 @@ function makeAllDropdownsWorkLikeBooking() {
     link.addEventListener('click', function(e) {
       const text = this.textContent.trim();
       
-      // Close dropdown
+     
       const dropdown = this.closest('.nav-dropdown');
-      if (dropdown) dropdown.classList.remove('hover'); // optional
+      if (dropdown) dropdown.classList.remove('hover');
       
-      // If it's already wired to subpage, let it work
+   
       if (this.onclick && this.onclick.toString().includes('navigateToSubpage')) {
         return;
       }
       
-      // Default behavior - go to main section
+     
       if (text.includes('Company Overview') || text.includes('About Gargo')) {
         navigateToSubpage('company-overview');
       } else if (text.includes('Storage') || text.includes('Depot')) {
@@ -2279,16 +2238,16 @@ function makeAllDropdownsWorkLikeBooking() {
       } else if (text.includes('Repair') || text.includes('Washing')) {
         navigateToPage('services');
       } else {
-        // Fallback
+      
         navigateToPage(this.closest('.nav-dropdown').querySelector('a').textContent.toLowerCase().trim());
       }
     });
   });
 }
 
-// Run after DOM loads
+
 document.addEventListener('DOMContentLoaded', makeAllDropdownsWorkLikeBooking);
-/* ─── TRACK TAB SWITCHING ─── */
+
 function switchTrackTab(type, btn) {
   document.querySelectorAll('.track-tab').forEach(function(t){ t.classList.remove('active'); });
   btn.classList.add('active');
