@@ -309,9 +309,9 @@ function initChatbot() {
     openModal('Gargo Haven Support', [
       '<p style="margin-bottom:14px;color:var(--gray-pale);line-height:1.7;">Hi there 👋 Need help with a booking, tracking, or a general enquiry? Reach our 24/7 team directly, or jump to the right page below.</p>',
       '<div style="display:flex;flex-direction:column;gap:10px;">',
-      '<a href="tel:+254700888444" style="color:var(--gold);font-weight:600;">📞 Call 24/7 Operations: +254 700 888 444</a>',
-      '<a href="https://wa.me/254700000000" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600;">💬 WhatsApp: +254 700 000 000</a>',
-      '<a href="mailto:info@gargohaven.co.ke" style="color:var(--gold);font-weight:600;">📧 info@gargohaven.co.ke</a>',
+      '<a href="tel:+254116307751" style="color:var(--gold);font-weight:600;">📞 Call 24/7 Operations: +254 7116307751</a>',
+      '<a href="https://wa.me/254108613789" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600;">💬 WhatsApp: +254 108613789</a>',
+      '<a href="mailto:info@gargo.co.ke" style="color:var(--gold);font-weight:600;">📧 info@gargo.co.ke</a>',
       '</div>',
       '<div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;">',
       '<button class="btn-primary" onclick="closeModal();navigateToPage(\'booking\')">Make a Booking</button>',
