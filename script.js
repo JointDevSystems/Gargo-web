@@ -756,7 +756,7 @@ const SUBPAGES = {
           <div class="intro-grid">
             <div class="intro-body">
               <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">A Decade of Container Excellence</h2>
-              <p>Gargo Haven Ltd is Mombasa's premier empty container depot and transport company, incorporated in 2014 and headquartered at Changamwe, Mombasa. We serve shipping lines, freight forwarders, customs agents, importers, and exporters operating through Mombasa Port — East Africa's largest and busiest gateway.</p>
+              <p>Gargo Haven Ltd is Mombasa's premier empty container depot and transport company, incorporated in 2024 and headquartered at Changamwe, Mombasa. We serve shipping lines, freight forwarders, customs agents, importers, and exporters operating through Mombasa Port — East Africa's largest and busiest gateway.</p>
               <p>Our core business spans two pillars: <strong>Empty Container Depot Operations</strong> and <strong>Port Haulage & Transport</strong>. The depot business provides secure, digitally managed yard storage, repairs, washing, and reefer management. The transport business connects containers between Mombasa Port (KPA), APM Terminals, and all inland container depots (ICDs) using our GPS-tracked truck fleet.</p>
               <p>Today, Gargo Haven processes over 5,000 TEUs per month, operates 120+ trucks, and maintains depot alliance agreements with Consolebase ICD, Hakika Depot, Kibarani, and Fortune Container Depot — giving our clients the widest container movement coverage in Mombasa.</p>
               <p>We are KPA-licensed, IICL-certified, ISO 9001:2015 certified, and fully KRA-compliant. Our proprietary digital platform provides clients with real-time container and truck GPS tracking, digital EIR issuance, online booking, and live depot capacity dashboards.</p>
@@ -767,8 +767,8 @@ const SUBPAGES = {
             </div>
             <div class="sidebar-box">
               <h4>Company Snapshot</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Incorporated</div><p>2014 — Mombasa, Kenya</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Registration</div><p>RC No. 2014/XXXXX</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">Incorporated</div><p>2024 — Mombasa, Kenya</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">Registration</div><p>RC No. 2024/XXXXX</p></div>
               <div class="sidebar-item"><div class="sidebar-label">Business Lines</div><p>Empty Container Depot · Port Haulage · Container Repair · Reefer Management</p></div>
               <div class="sidebar-item"><div class="sidebar-label">Depot Locations</div><p>Changamwe Main · Consolebase ICD · Hakika · Kibarani · Fortune Depot</p></div>
               <div class="sidebar-item"><div class="sidebar-label">Fleet Size</div><p>120+ GPS-tracked trucks · 6 reach stackers · 20 forklifts</p></div>
