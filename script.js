@@ -2291,3 +2291,962 @@ window.demoTrack = demoTrack;
     initReveal();
   }
 })();
+
+
+/* ═══════════════════════════════════════════════════
+   GARGO HAVEN — CLIENT AUTH MODAL
+   Login · Create Account · Forgot Password
+═══════════════════════════════════════════════════ */
+
+(function () {
+  'use strict';
+
+  /* ── Simulated user store (localStorage for persistence) ── */
+  function getUsers() {
+    try { return JSON.parse(localStorage.getItem('gh_users') || '[]'); } catch { return []; }
+  }
+  function saveUsers(users) {
+    localStorage.setItem('gh_users', JSON.stringify(users));
+  }
+  function getCurrentUser() {
+    try { return JSON.parse(sessionStorage.getItem('gh_session') || 'null'); } catch { return null; }
+  }
+  function setCurrentUser(user) {
+    sessionStorage.setItem('gh_session', JSON.stringify(user));
+  }
+  function clearCurrentUser() {
+    sessionStorage.removeItem('gh_session');
+  }
+
+  /* ── Inject CSS ── */
+  const style = document.createElement('style');
+  style.textContent = `
+    /* AUTH OVERLAY */
+    #gh-auth-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 9500;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.35s ease;
+      backdrop-filter: blur(6px);
+    }
+    #gh-auth-overlay.open {
+      opacity: 1; pointer-events: all;
+    }
+
+    /* AUTH PANEL */
+    .gh-auth-panel {
+      background: #111;
+      border: 1px solid rgba(201,162,39,0.35);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 480px;
+      padding: 0;
+      overflow: hidden;
+      transform: translateY(24px) scale(0.97);
+      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(201,162,39,0.1);
+      position: relative;
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+    #gh-auth-overlay.open .gh-auth-panel {
+      transform: translateY(0) scale(1);
+    }
+
+    /* PANEL HEADER */
+    .gh-auth-header {
+      background: linear-gradient(135deg, #0d0d0d 0%, #1a1400 100%);
+      border-bottom: 1px solid rgba(201,162,39,0.2);
+      padding: 28px 32px 24px;
+      position: relative;
+    }
+    .gh-auth-logo {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 20px;
+    }
+    .gh-auth-logo-mark {
+      width: 36px; height: 36px;
+      background: #c9a227;
+      color: #000;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+    .gh-auth-logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px; font-weight: 700;
+      letter-spacing: 2px;
+      color: #fff;
+    }
+    .gh-auth-logo-text span { color: #c9a227; }
+    .gh-auth-close {
+      position: absolute; top: 20px; right: 20px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #888; font-size: 14px;
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .gh-auth-close:hover { background: rgba(201,162,39,0.12); color: #c9a227; border-color: rgba(201,162,39,0.3); }
+
+    /* TABS */
+    .gh-auth-tabs {
+      display: flex; gap: 0;
+    }
+    .gh-auth-tab {
+      flex: 1;
+      background: transparent;
+      border: none; border-bottom: 2px solid transparent;
+      color: #666;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; font-weight: 500;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+    .gh-auth-tab.active {
+      color: #c9a227;
+      border-bottom-color: #c9a227;
+      background: rgba(201,162,39,0.04);
+    }
+    .gh-auth-tab:hover:not(.active) { color: #aaa; }
+
+    /* PANEL BODY */
+    .gh-auth-body {
+      padding: 28px 32px 32px;
+    }
+
+    /* VIEW (login / register / forgot) */
+    .gh-auth-view { display: none; }
+    .gh-auth-view.active { display: block; }
+
+    /* FORM FIELDS */
+    .gh-field {
+      margin-bottom: 16px;
+    }
+    .gh-field label {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase;
+      color: #c9a227;
+      margin-bottom: 6px;
+    }
+    .gh-field input, .gh-field select {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid #333;
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      padding: 11px 14px;
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      box-sizing: border-box;
+    }
+    .gh-field input:focus, .gh-field select:focus {
+      border-color: #c9a227;
+      background: rgba(201,162,39,0.04);
+    }
+    .gh-field input::placeholder { color: #555; }
+    .gh-field input.error { border-color: #ef4444; }
+    .gh-field .gh-error-msg {
+      font-size: 11px; color: #ef4444;
+      margin-top: 4px; display: none;
+    }
+    .gh-field .gh-error-msg.show { display: block; }
+
+    /* PASSWORD WRAPPER */
+    .gh-pw-wrap { position: relative; }
+    .gh-pw-wrap input { padding-right: 42px; }
+    .gh-pw-toggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: #555; cursor: pointer;
+      font-size: 14px; padding: 0; line-height: 1;
+      transition: color 0.2s;
+    }
+    .gh-pw-toggle:hover { color: #c9a227; }
+
+    /* TWO-COLUMN GRID */
+    .gh-field-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+
+    /* SUBMIT BUTTON */
+    .gh-auth-submit {
+      width: 100%;
+      background: #c9a227;
+      color: #000;
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 14px;
+      border: none; border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .gh-auth-submit:hover { background: #e8c44a; transform: translateY(-1px); }
+    .gh-auth-submit:active { transform: translateY(0); }
+    .gh-auth-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .gh-auth-submit .gh-btn-spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(0,0,0,0.3);
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: ghSpin 0.7s linear infinite;
+      margin: 0 auto;
+    }
+    .gh-auth-submit.loading .gh-btn-text { display: none; }
+    .gh-auth-submit.loading .gh-btn-spinner { display: block; }
+    @keyframes ghSpin { to { transform: rotate(360deg); } }
+
+    /* DIVIDER */
+    .gh-divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 20px 0;
+    }
+    .gh-divider::before, .gh-divider::after {
+      content: ''; flex: 1; height: 1px; background: #2a2a2a;
+    }
+    .gh-divider span {
+      font-size: 10px; color: #555;
+      font-family: 'DM Mono', monospace; letter-spacing: 0.8px;
+      white-space: nowrap;
+    }
+
+    /* SWITCH LINK */
+    .gh-switch-link {
+      text-align: center;
+      font-size: 12px; color: #666;
+      margin-top: 20px;
+    }
+    .gh-switch-link button {
+      background: none; border: none;
+      color: #c9a227;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; padding: 0;
+      text-decoration: underline; text-underline-offset: 2px;
+      transition: color 0.2s;
+    }
+    .gh-switch-link button:hover { color: #e8c44a; }
+
+    /* FORGOT LINK */
+    .gh-forgot-link {
+      background: none; border: none;
+      color: #888; font-size: 11px;
+      cursor: pointer; padding: 0;
+      float: right; margin-top: 6px;
+      font-family: 'Outfit', sans-serif;
+      transition: color 0.2s;
+    }
+    .gh-forgot-link:hover { color: #c9a227; }
+
+    /* PASSWORD STRENGTH */
+    .gh-pw-strength {
+      margin-top: 8px;
+    }
+    .gh-pw-strength-bar {
+      height: 3px; background: #222; border-radius: 2px; overflow: hidden;
+      margin-bottom: 4px;
+    }
+    .gh-pw-strength-fill {
+      height: 100%; width: 0%; border-radius: 2px;
+      transition: width 0.3s ease, background 0.3s ease;
+    }
+    .gh-pw-strength-label {
+      font-size: 10px; color: #555; font-family: 'DM Mono', monospace;
+      letter-spacing: 0.8px;
+    }
+
+    /* TERMS CHECKBOX */
+    .gh-checkbox-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      margin: 16px 0;
+    }
+    .gh-checkbox-row input[type="checkbox"] {
+      width: 16px; height: 16px;
+      min-width: 16px;
+      accent-color: #c9a227;
+      margin-top: 2px;
+      cursor: pointer;
+    }
+    .gh-checkbox-row label {
+      font-size: 11px; color: #888; line-height: 1.5;
+      cursor: pointer;
+    }
+    .gh-checkbox-row label a {
+      color: #c9a227; text-decoration: none;
+    }
+    .gh-checkbox-row label a:hover { text-decoration: underline; }
+
+    /* SUCCESS STATE */
+    .gh-success-state {
+      text-align: center; padding: 20px 0 8px;
+    }
+    .gh-success-icon {
+      width: 60px; height: 60px;
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin: 0 auto 20px;
+    }
+    .gh-success-state h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; font-weight: 700;
+      color: #fff; margin-bottom: 10px;
+    }
+    .gh-success-state p {
+      font-size: 12px; color: #888; line-height: 1.7; margin-bottom: 24px;
+    }
+
+    /* LOGGED-IN STATE — NAV BUTTON */
+    .nav-login.logged-in {
+      background: rgba(201,162,39,0.12) !important;
+      border: 1px solid rgba(201,162,39,0.3) !important;
+      color: #c9a227 !important;
+    }
+
+    /* USER BADGE (nav area) */
+    #gh-user-badge {
+      display: none;
+      align-items: center; gap: 10px;
+    }
+    #gh-user-badge.show { display: flex; }
+    .gh-user-avatar {
+      width: 32px; height: 32px;
+      background: #c9a227;
+      color: #000;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px; font-weight: 700;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .gh-user-name {
+      font-size: 11px; color: #fff; font-weight: 600;
+      max-width: 100px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .gh-user-logout {
+      background: none; border: 1px solid #333;
+      color: #888; font-size: 10px;
+      font-family: 'DM Mono', monospace; letter-spacing: 0.8px;
+      padding: 5px 10px; border-radius: 4px;
+      cursor: pointer; transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .gh-user-logout:hover { border-color: #ef4444; color: #ef4444; }
+
+    /* DASHBOARD PANEL */
+    #gh-dashboard-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 9400;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.35s ease;
+      backdrop-filter: blur(6px);
+    }
+    #gh-dashboard-overlay.open { opacity: 1; pointer-events: all; }
+    .gh-dashboard-panel {
+      background: #111;
+      border: 1px solid rgba(201,162,39,0.3);
+      border-radius: 14px;
+      width: 100%; max-width: 680px;
+      max-height: 88vh; overflow-y: auto;
+      transform: translateY(20px) scale(0.97);
+      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+    }
+    #gh-dashboard-overlay.open .gh-dashboard-panel { transform: none; }
+    .gh-dash-header {
+      background: linear-gradient(135deg, #0d0d0d 0%, #1a1400 100%);
+      border-bottom: 1px solid rgba(201,162,39,0.2);
+      padding: 24px 28px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .gh-dash-greeting {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; font-weight: 700; color: #fff;
+    }
+    .gh-dash-greeting span { color: #c9a227; font-style: italic; }
+    .gh-dash-body { padding: 24px 28px 28px; }
+    .gh-dash-quick {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 12px;
+      margin-bottom: 24px;
+    }
+    .gh-dash-tile {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid #2a2a2a;
+      border-radius: 8px; padding: 18px 14px;
+      text-align: center; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .gh-dash-tile:hover { border-color: rgba(201,162,39,0.4); background: rgba(201,162,39,0.04); }
+    .gh-dash-tile-icon { font-size: 22px; margin-bottom: 8px; }
+    .gh-dash-tile-label {
+      font-size: 11px; font-weight: 600; color: #fff;
+      font-family: 'Outfit', sans-serif; margin-bottom: 2px;
+    }
+    .gh-dash-tile-sub { font-size: 10px; color: #666; }
+    .gh-dash-section-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: #c9a227; margin-bottom: 14px;
+      border-bottom: 1px solid #1e1e1e; padding-bottom: 8px;
+    }
+    .gh-dash-empty {
+      background: rgba(255,255,255,0.02);
+      border: 1px dashed #2a2a2a;
+      border-radius: 8px; padding: 32px;
+      text-align: center;
+    }
+    .gh-dash-empty p { font-size: 12px; color: #555; line-height: 1.7; }
+    .gh-dash-account-info {
+      background: rgba(201,162,39,0.04);
+      border: 1px solid rgba(201,162,39,0.15);
+      border-radius: 8px; padding: 16px 20px;
+      margin-top: 20px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    .gh-ai-item { }
+    .gh-ai-label { font-size: 10px; color: #666; font-family: 'DM Mono', monospace; letter-spacing: 0.8px; margin-bottom: 3px; }
+    .gh-ai-value { font-size: 12px; color: #fff; font-weight: 500; }
+
+    @media(max-width:560px) {
+      .gh-auth-panel { margin: 0 12px; }
+      .gh-auth-body { padding: 20px; }
+      .gh-auth-header { padding: 20px; }
+      .gh-field-row { grid-template-columns: 1fr; }
+      .gh-dash-quick { grid-template-columns: repeat(2,1fr); }
+    }
+  `;
+  document.head.appendChild(style);
+
+  /* ── Inject HTML ── */
+  const authHTML = `
+  <!-- AUTH MODAL -->
+  <div id="gh-auth-overlay" role="dialog" aria-modal="true" aria-label="Client Login">
+    <div class="gh-auth-panel">
+      <div class="gh-auth-header">
+        <div class="gh-auth-logo">
+          <div class="gh-auth-logo-mark">GH</div>
+          <div class="gh-auth-logo-text">GARGO <span>HAVEN</span></div>
+        </div>
+        <div class="gh-auth-tabs">
+          <button class="gh-auth-tab active" data-tab="login" onclick="ghAuthTab('login')">CLIENT LOGIN</button>
+          <button class="gh-auth-tab" data-tab="register" onclick="ghAuthTab('register')">CREATE ACCOUNT</button>
+        </div>
+        <button class="gh-auth-close" onclick="ghAuthClose()" aria-label="Close">✕</button>
+      </div>
+
+      <div class="gh-auth-body">
+
+        <!-- LOGIN VIEW -->
+        <div class="gh-auth-view active" id="gh-view-login">
+          <div class="gh-field">
+            <label for="gh-login-email">Email Address</label>
+            <input type="email" id="gh-login-email" placeholder="you@company.com" autocomplete="email">
+            <div class="gh-error-msg" id="gh-login-email-err"></div>
+          </div>
+          <div class="gh-field">
+            <label for="gh-login-pw">Password</label>
+            <button class="gh-forgot-link" onclick="ghAuthView('forgot')" type="button">Forgot password?</button>
+            <div class="gh-pw-wrap">
+              <input type="password" id="gh-login-pw" placeholder="Your password" autocomplete="current-password">
+              <button class="gh-pw-toggle" type="button" onclick="ghTogglePw('gh-login-pw', this)" aria-label="Show password">👁</button>
+            </div>
+            <div class="gh-error-msg" id="gh-login-pw-err"></div>
+          </div>
+          <div class="gh-error-msg" id="gh-login-general-err" style="margin-bottom:12px;font-size:12px;"></div>
+          <button class="gh-auth-submit" id="gh-login-btn" onclick="ghDoLogin()">
+            <span class="gh-btn-text">ACCESS CLIENT PORTAL →</span>
+            <div class="gh-btn-spinner"></div>
+          </button>
+          <div class="gh-switch-link">Don't have an account? <button onclick="ghAuthTab('register')">Create one free</button></div>
+        </div>
+
+        <!-- REGISTER VIEW -->
+        <div class="gh-auth-view" id="gh-view-register">
+          <div class="gh-field-row">
+            <div class="gh-field">
+              <label for="gh-reg-fname">First Name</label>
+              <input type="text" id="gh-reg-fname" placeholder="First name" autocomplete="given-name">
+              <div class="gh-error-msg" id="gh-reg-fname-err"></div>
+            </div>
+            <div class="gh-field">
+              <label for="gh-reg-lname">Last Name</label>
+              <input type="text" id="gh-reg-lname" placeholder="Last name" autocomplete="family-name">
+              <div class="gh-error-msg" id="gh-reg-lname-err"></div>
+            </div>
+          </div>
+          <div class="gh-field">
+            <label for="gh-reg-company">Company Name</label>
+            <input type="text" id="gh-reg-company" placeholder="Your company or shipping line" autocomplete="organization">
+            <div class="gh-error-msg" id="gh-reg-company-err"></div>
+          </div>
+          <div class="gh-field">
+            <label for="gh-reg-role">Your Role</label>
+            <select id="gh-reg-role">
+              <option value="">Select role…</option>
+              <option>Freight Forwarder</option>
+              <option>Shipping Line Agent</option>
+              <option>Importer / Exporter</option>
+              <option>Customs Agent</option>
+              <option>Logistics Manager</option>
+              <option>Transport Operator</option>
+              <option>Other</option>
+            </select>
+            <div class="gh-error-msg" id="gh-reg-role-err"></div>
+          </div>
+          <div class="gh-field-row">
+            <div class="gh-field">
+              <label for="gh-reg-email">Email Address</label>
+              <input type="email" id="gh-reg-email" placeholder="you@company.com" autocomplete="email">
+              <div class="gh-error-msg" id="gh-reg-email-err"></div>
+            </div>
+            <div class="gh-field">
+              <label for="gh-reg-phone">Phone / WhatsApp</label>
+              <input type="tel" id="gh-reg-phone" placeholder="+254 7XX XXX XXX" autocomplete="tel">
+              <div class="gh-error-msg" id="gh-reg-phone-err"></div>
+            </div>
+          </div>
+          <div class="gh-field">
+            <label for="gh-reg-pw">Password</label>
+            <div class="gh-pw-wrap">
+              <input type="password" id="gh-reg-pw" placeholder="Create a password" autocomplete="new-password" oninput="ghCheckStrength(this.value)">
+              <button class="gh-pw-toggle" type="button" onclick="ghTogglePw('gh-reg-pw', this)" aria-label="Show password">👁</button>
+            </div>
+            <div class="gh-pw-strength">
+              <div class="gh-pw-strength-bar"><div class="gh-pw-strength-fill" id="gh-strength-fill"></div></div>
+              <div class="gh-pw-strength-label" id="gh-strength-label">Enter a password</div>
+            </div>
+            <div class="gh-error-msg" id="gh-reg-pw-err"></div>
+          </div>
+          <div class="gh-field">
+            <label for="gh-reg-pw2">Confirm Password</label>
+            <div class="gh-pw-wrap">
+              <input type="password" id="gh-reg-pw2" placeholder="Repeat your password" autocomplete="new-password">
+              <button class="gh-pw-toggle" type="button" onclick="ghTogglePw('gh-reg-pw2', this)" aria-label="Show password">👁</button>
+            </div>
+            <div class="gh-error-msg" id="gh-reg-pw2-err"></div>
+          </div>
+          <div class="gh-checkbox-row">
+            <input type="checkbox" id="gh-reg-terms">
+            <label for="gh-reg-terms">I agree to the <a href="#" onclick="return false;">Terms of Service</a> and <a href="#" onclick="return false;">Privacy Policy</a>. Gargo Haven may contact me about my account and bookings.</label>
+          </div>
+          <div class="gh-error-msg" id="gh-reg-general-err" style="margin-bottom:12px;font-size:12px;"></div>
+          <button class="gh-auth-submit" id="gh-reg-btn" onclick="ghDoRegister()">
+            <span class="gh-btn-text">CREATE MY ACCOUNT →</span>
+            <div class="gh-btn-spinner"></div>
+          </button>
+          <div class="gh-switch-link">Already have an account? <button onclick="ghAuthTab('login')">Sign in</button></div>
+        </div>
+
+        <!-- FORGOT PASSWORD VIEW -->
+        <div class="gh-auth-view" id="gh-view-forgot">
+          <div style="margin-bottom:20px;">
+            <button onclick="ghAuthView('login')" style="background:none;border:none;color:#888;font-size:11px;cursor:pointer;padding:0;font-family:'DM Mono',monospace;letter-spacing:0.8px;">← BACK TO LOGIN</button>
+          </div>
+          <p style="font-size:13px;color:#888;line-height:1.7;margin-bottom:20px;">Enter your registered email address and we'll send a password reset link to your inbox.</p>
+          <div class="gh-field">
+            <label for="gh-forgot-email">Registered Email</label>
+            <input type="email" id="gh-forgot-email" placeholder="you@company.com">
+            <div class="gh-error-msg" id="gh-forgot-err"></div>
+          </div>
+          <button class="gh-auth-submit" id="gh-forgot-btn" onclick="ghDoForgot()">
+            <span class="gh-btn-text">SEND RESET LINK →</span>
+            <div class="gh-btn-spinner"></div>
+          </button>
+        </div>
+
+        <!-- REGISTER SUCCESS VIEW -->
+        <div class="gh-auth-view" id="gh-view-success">
+          <div class="gh-success-state">
+            <div class="gh-success-icon">✅</div>
+            <h3>Account Created</h3>
+            <p id="gh-success-msg">Welcome to Gargo Haven's client portal. Your account is active and ready to use.</p>
+            <button class="gh-auth-submit" onclick="ghOpenDashboard()">
+              <span class="gh-btn-text">GO TO MY DASHBOARD →</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- FORGOT SUCCESS VIEW -->
+        <div class="gh-auth-view" id="gh-view-forgot-sent">
+          <div class="gh-success-state">
+            <div class="gh-success-icon">📧</div>
+            <h3>Reset Link Sent</h3>
+            <p>Check your inbox for a password reset link. If you don't see it within 5 minutes, check your spam folder or contact our support team.</p>
+            <button class="gh-auth-submit" onclick="ghAuthView('login')">
+              <span class="gh-btn-text">BACK TO LOGIN →</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD MODAL -->
+  <div id="gh-dashboard-overlay" role="dialog" aria-modal="true" aria-label="Client Dashboard">
+    <div class="gh-dashboard-panel">
+      <div class="gh-dash-header">
+        <div>
+          <div class="gh-dash-greeting" id="gh-dash-greeting">Welcome, <span>Client</span></div>
+          <div style="font-size:11px;color:#666;margin-top:4px;font-family:'DM Mono',monospace;letter-spacing:0.8px;">CLIENT PORTAL · GARGO HAVEN</div>
+        </div>
+        <button class="gh-auth-close" onclick="ghDashClose()" aria-label="Close">✕</button>
+      </div>
+      <div class="gh-dash-body">
+        <div class="gh-dash-section-title" style="margin-bottom:16px;">QUICK ACTIONS</div>
+        <div class="gh-dash-quick">
+          <div class="gh-dash-tile" onclick="ghDashClose();navigateToPage('booking')">
+            <div class="gh-dash-tile-icon">📦</div>
+            <div class="gh-dash-tile-label">New Booking</div>
+            <div class="gh-dash-tile-sub">Storage or transport</div>
+          </div>
+          <div class="gh-dash-tile" onclick="ghDashClose();navigateToPage('track')">
+            <div class="gh-dash-tile-icon">📍</div>
+            <div class="gh-dash-tile-label">Track Container</div>
+            <div class="gh-dash-tile-sub">Live GPS status</div>
+          </div>
+          <div class="gh-dash-tile" onclick="ghDashClose();navigateToPage('contact')">
+            <div class="gh-dash-tile-icon">💬</div>
+            <div class="gh-dash-tile-label">Support</div>
+            <div class="gh-dash-tile-sub">Talk to our team</div>
+          </div>
+        </div>
+
+        <div class="gh-dash-section-title">MY BOOKINGS</div>
+        <div class="gh-dash-empty">
+          <p>No bookings yet. Submit a depot storage or transport request to get started — your booking history will appear here.</p>
+          <button class="gh-auth-submit" style="margin-top:16px;max-width:240px;" onclick="ghDashClose();navigateToPage('booking')">
+            <span class="gh-btn-text">CREATE FIRST BOOKING →</span>
+          </button>
+        </div>
+
+        <div class="gh-dash-account-info" id="gh-dash-account-info">
+          <div class="gh-ai-item">
+            <div class="gh-ai-label">Account Holder</div>
+            <div class="gh-ai-value" id="gh-dash-name">—</div>
+          </div>
+          <div class="gh-ai-item">
+            <div class="gh-ai-label">Company</div>
+            <div class="gh-ai-value" id="gh-dash-company">—</div>
+          </div>
+          <div class="gh-ai-item">
+            <div class="gh-ai-label">Email</div>
+            <div class="gh-ai-value" id="gh-dash-email">—</div>
+          </div>
+          <div class="gh-ai-item">
+            <div class="gh-ai-label">Role</div>
+            <div class="gh-ai-value" id="gh-dash-role">—</div>
+          </div>
+          <div class="gh-ai-item">
+            <div class="gh-ai-label">Member Since</div>
+            <div class="gh-ai-value" id="gh-dash-since">—</div>
+          </div>
+          <div class="gh-ai-item">
+            <div class="gh-ai-label">Account Status</div>
+            <div class="gh-ai-value" style="color:#22c55e;">● Active</div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="gh-auth-submit" style="max-width:160px;background:transparent;color:#ef4444;border:1px solid #ef4444;" onclick="ghDoLogout()">
+            <span class="gh-btn-text">SIGN OUT</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', authHTML);
+
+  /* ── Close on overlay click ── */
+  document.getElementById('gh-auth-overlay').addEventListener('click', function(e) {
+    if (e.target === this) ghAuthClose();
+  });
+  document.getElementById('gh-dashboard-overlay').addEventListener('click', function(e) {
+    if (e.target === this) ghDashClose();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { ghAuthClose(); ghDashClose(); }
+  });
+
+  /* ── Public API ── */
+  window.ghAuthOpen = function(tab) {
+    const overlay = document.getElementById('gh-auth-overlay');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    if (tab) ghAuthTab(tab);
+  };
+
+  window.ghAuthClose = function() {
+    document.getElementById('gh-auth-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
+  window.ghDashOpen = function() {
+    const u = getCurrentUser();
+    if (!u) { ghAuthOpen('login'); return; }
+    populateDashboard(u);
+    document.getElementById('gh-dashboard-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.ghDashClose = function() {
+    document.getElementById('gh-dashboard-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
+  window.ghOpenDashboard = function() {
+    ghAuthClose();
+    setTimeout(ghDashOpen, 200);
+  };
+
+  window.ghAuthTab = function(tab) {
+    document.querySelectorAll('.gh-auth-tab').forEach(function(t) {
+      t.classList.toggle('active', t.dataset.tab === tab);
+    });
+    ghAuthView(tab);
+  };
+
+  window.ghAuthView = function(view) {
+    document.querySelectorAll('.gh-auth-view').forEach(function(v) {
+      v.classList.remove('active');
+    });
+    var el = document.getElementById('gh-view-' + view);
+    if (el) el.classList.add('active');
+    clearErrors();
+  };
+
+  window.ghTogglePw = function(inputId, btn) {
+    var inp = document.getElementById(inputId);
+    if (!inp) return;
+    var show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    btn.textContent = show ? '🙈' : '👁';
+  };
+
+  window.ghCheckStrength = function(pw) {
+    var fill = document.getElementById('gh-strength-fill');
+    var label = document.getElementById('gh-strength-label');
+    if (!fill || !label) return;
+    var score = 0;
+    if (pw.length >= 8) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    var pct = score * 25;
+    var colors = ['#ef4444','#f59e0b','#eab308','#22c55e'];
+    var labels = ['WEAK','FAIR','GOOD','STRONG'];
+    fill.style.width = pct + '%';
+    fill.style.background = score > 0 ? colors[score - 1] : '#333';
+    label.textContent = score > 0 ? labels[score - 1] : 'Enter a password';
+    label.style.color = score > 0 ? colors[score - 1] : '#555';
+  };
+
+  function clearErrors() {
+    document.querySelectorAll('.gh-error-msg').forEach(function(el) {
+      el.textContent = ''; el.classList.remove('show');
+    });
+    document.querySelectorAll('.gh-field input').forEach(function(el) {
+      el.classList.remove('error');
+    });
+  }
+
+  function showErr(fieldId, errId, msg) {
+    var field = document.getElementById(fieldId);
+    var err = document.getElementById(errId);
+    if (field) field.classList.add('error');
+    if (err) { err.textContent = msg; err.classList.add('show'); }
+  }
+
+  function setLoading(btnId, loading) {
+    var btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.disabled = loading;
+    btn.classList.toggle('loading', loading);
+  }
+
+  
+  window.ghDoLogin = function() {
+    clearErrors();
+    var email = (document.getElementById('gh-login-email').value || '').trim().toLowerCase();
+    var pw = (document.getElementById('gh-login-pw').value || '');
+    var ok = true;
+    if (!email) { showErr('gh-login-email','gh-login-email-err','Email is required.'); ok = false; }
+    else if (!/^\S+@\S+\.\S+$/.test(email)) { showErr('gh-login-email','gh-login-email-err','Enter a valid email.'); ok = false; }
+    if (!pw) { showErr('gh-login-pw','gh-login-pw-err','Password is required.'); ok = false; }
+    if (!ok) return;
+
+    setLoading('gh-login-btn', true);
+    setTimeout(function() {
+      var users = getUsers();
+      var user = users.find(function(u) { return u.email === email && u.pw === btoa(pw); });
+      setLoading('gh-login-btn', false);
+      if (!user) {
+        var errEl = document.getElementById('gh-login-general-err');
+        if (errEl) { errEl.textContent = 'Incorrect email or password. Please try again.'; errEl.classList.add('show'); }
+        return;
+      }
+      setCurrentUser(user);
+      updateNavForUser(user);
+      ghAuthClose();
+      setTimeout(function() { ghDashOpen(); }, 200);
+    }, 900);
+  };
+
+  
+  window.ghDoRegister = function() {
+    clearErrors();
+    var fname = (document.getElementById('gh-reg-fname').value || '').trim();
+    var lname = (document.getElementById('gh-reg-lname').value || '').trim();
+    var company = (document.getElementById('gh-reg-company').value || '').trim();
+    var role = (document.getElementById('gh-reg-role').value || '').trim();
+    var email = (document.getElementById('gh-reg-email').value || '').trim().toLowerCase();
+    var phone = (document.getElementById('gh-reg-phone').value || '').trim();
+    var pw = (document.getElementById('gh-reg-pw').value || '');
+    var pw2 = (document.getElementById('gh-reg-pw2').value || '');
+    var terms = document.getElementById('gh-reg-terms').checked;
+    var ok = true;
+
+    if (!fname) { showErr('gh-reg-fname','gh-reg-fname-err','First name is required.'); ok = false; }
+    if (!lname) { showErr('gh-reg-lname','gh-reg-lname-err','Last name is required.'); ok = false; }
+    if (!company) { showErr('gh-reg-company','gh-reg-company-err','Company name is required.'); ok = false; }
+    if (!role) { showErr('gh-reg-role','gh-reg-role-err','Please select your role.'); ok = false; }
+    if (!email) { showErr('gh-reg-email','gh-reg-email-err','Email is required.'); ok = false; }
+    else if (!/^\S+@\S+\.\S+$/.test(email)) { showErr('gh-reg-email','gh-reg-email-err','Enter a valid email address.'); ok = false; }
+    if (!pw) { showErr('gh-reg-pw','gh-reg-pw-err','Create a password.'); ok = false; }
+    else if (pw.length < 8) { showErr('gh-reg-pw','gh-reg-pw-err','Password must be at least 8 characters.'); ok = false; }
+    if (pw !== pw2) { showErr('gh-reg-pw2','gh-reg-pw2-err','Passwords do not match.'); ok = false; }
+    if (!terms) {
+      var errEl = document.getElementById('gh-reg-general-err');
+      if (errEl) { errEl.textContent = 'Please accept the Terms of Service to continue.'; errEl.classList.add('show'); }
+      ok = false;
+    }
+    if (!ok) return;
+
+    setLoading('gh-reg-btn', true);
+    setTimeout(function() {
+      var users = getUsers();
+      if (users.find(function(u) { return u.email === email; })) {
+        setLoading('gh-reg-btn', false);
+        showErr('gh-reg-email','gh-reg-email-err','An account with this email already exists.');
+        return;
+      }
+      var newUser = {
+        id: 'GH-' + Date.now(),
+        fname: fname, lname: lname,
+        name: fname + ' ' + lname,
+        company: company, role: role,
+        email: email, phone: phone,
+        pw: btoa(pw),
+        since: new Date().toLocaleDateString('en-KE', { day:'numeric', month:'long', year:'numeric' })
+      };
+      users.push(newUser);
+      saveUsers(users);
+      setCurrentUser(newUser);
+      setLoading('gh-reg-btn', false);
+      updateNavForUser(newUser);
+
+      var msg = document.getElementById('gh-success-msg');
+      if (msg) msg.textContent = 'Welcome, ' + fname + '. Your Gargo Haven client account is ready. You can now book services, track containers, and manage your operations from your dashboard.';
+      ghAuthView('success');
+    }, 1100);
+  };
+
+  
+  window.ghDoForgot = function() {
+    clearErrors();
+    var email = (document.getElementById('gh-forgot-email').value || '').trim().toLowerCase();
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      showErr('gh-forgot-email','gh-forgot-err','Enter a valid email address.');
+      return;
+    }
+    setLoading('gh-forgot-btn', true);
+    setTimeout(function() {
+      setLoading('gh-forgot-btn', false);
+      // Always show success (don't reveal account existence)
+      ghAuthView('forgot-sent');
+    }, 1000);
+  };
+
+  
+  window.ghDoLogout = function() {
+    clearCurrentUser();
+    ghDashClose();
+    resetNavForGuest();
+    if (typeof showNotification === 'function') {
+      showNotification('Signed Out', 'You have been logged out of your account.', '👋');
+    }
+  };
+
+  function updateNavForUser(user) {
+    var loginBtn = document.querySelector('.nav-login');
+    if (!loginBtn) return;
+    loginBtn.textContent = user.fname;
+    loginBtn.classList.add('logged-in');
+    loginBtn.onclick = function() { ghDashOpen(); };
+  }
+
+  function resetNavForGuest() {
+    var loginBtn = document.querySelector('.nav-login');
+    if (!loginBtn) return;
+    loginBtn.textContent = 'CLIENT LOGIN';
+    loginBtn.classList.remove('logged-in');
+    loginBtn.onclick = function() { ghAuthOpen('login'); };
+  }
+
+  function populateDashboard(user) {
+    var el = function(id) { return document.getElementById(id); };
+    var greeting = el('gh-dash-greeting');
+    if (greeting) greeting.innerHTML = 'Welcome back, <span>' + user.fname + '</span>';
+    if (el('gh-dash-name')) el('gh-dash-name').textContent = user.name;
+    if (el('gh-dash-company')) el('gh-dash-company').textContent = user.company;
+    if (el('gh-dash-email')) el('gh-dash-email').textContent = user.email;
+    if (el('gh-dash-role')) el('gh-dash-role').textContent = user.role || '—';
+    if (el('gh-dash-since')) el('gh-dash-since').textContent = user.since || '—';
+  }
+
+  
+  function wireLoginButton() {
+    var loginBtn = document.querySelector('.nav-login');
+    if (!loginBtn) return;
+
+    var user = getCurrentUser();
+    if (user) {
+      updateNavForUser(user);
+    } else {
+      loginBtn.onclick = function(e) {
+        e.preventDefault();
+        ghAuthOpen('login');
+      };
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireLoginButton);
+  } else {
+    wireLoginButton();
+  }
+
+})();

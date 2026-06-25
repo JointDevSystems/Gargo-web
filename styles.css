@@ -138,12 +138,16 @@ body {
 
 
 .nav {
-  position: fixed; top: 0; left: 0; right: 0;
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  right: 0;
   z-index: 1000;
-  display: flex; align-items: center;
+  display: flex; 
+  align-items: center;
   justify-content: space-between;
   padding: 0 32px;
-  height: 72px;
+  height: 82px;
   background: rgba(0,0,0,0.95);
   border-bottom: 1px solid rgba(201,162,39,0.2);
   backdrop-filter: blur(10px);
@@ -160,12 +164,8 @@ body {
   border-radius: 4px;
   letter-spacing: 0.6px;
 }
-.logo-text {
-  font-family: var(--font-main);
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 1.7px;
-  color: var(--white);
+.logo {
+
 }
 .logo-text .accent { color: var(--gold); }
 .logo-sub { font-size: 10px; color: var(--gray-light); letter-spacing: 0.6px; margin-top: 2px; }
