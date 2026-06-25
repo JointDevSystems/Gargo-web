@@ -288,9 +288,7 @@ function initMobileMenu() {
   if (closeBtn) closeBtn.addEventListener('click', closeMobileMenu);
 }
 
-/* ---------------------------------------------------------
-SCROLL TOP BUTTON
---------------------------------------------------------- */
+
 function initScrollTop() {
   const btn = document.getElementById('scrollTop');
   if (!btn) return;
