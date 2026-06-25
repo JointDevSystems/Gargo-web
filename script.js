@@ -41,14 +41,14 @@ const STORAGE_RATE_PER_TEU_DAY = 350;
 
 
 const FAQ_DATA = [
- <!-- { cat: 'depot', q: 'What are your depot storage rates?', a: 'Our standard depot storage rate is KES 350 per TEU per day, which includes CCTV-monitored yard storage, gate-in/gate-out service, and EIR documentation. Bulk and long-term rates are available on request.' },-->
+ { cat: 'depot', q: 'What are your depot storage rates?', a: 'Our standard depot storage rate is KES 350 per TEU per day, which includes CCTV-monitored yard storage, gate-in/gate-out service, and EIR documentation. Bulk and long-term rates are available on request.' },
   { cat: 'depot', q: 'Do you store both empty and laden containers?', a: 'Gargo Haven primarily specialises in empty container storage and depot management. We do not store laden cargo containers, but we can arrange short-term holding for containers awaiting stuffing or de-stuffing through our partner facilities.' },
   { cat: 'depot', q: 'What is your gate-in / gate-out turnaround time?', a: 'Our digital gate management system processes containers in under 30 minutes on average. With 4 gate lanes and biometric access control, we keep queues to a minimum even during peak vessel discharge periods.' },
   { cat: 'tracking', q: 'How do I track my container?', a: 'Visit the Track page and search by container number, booking reference, truck registration, or EIR number. You will see real-time GPS location, current status, and a full movement timeline.' },
   { cat: 'tracking', q: 'How often is GPS location updated?', a: 'All trucks in our fleet are fitted with GPS telematics that update location every 60 seconds while in transit. Depot yard positions are updated in real time as containers are moved by our reach stackers.' },
   { cat: 'tracking', q: 'Can I get SMS or email alerts on container status?', a: 'Yes. Clients with a registered account can opt in to SMS and email notifications for key milestones — gate-in, gate-out, dispatch, and delivery. Contact our support team to enable alerts on your account.' },
   { cat: 'transport', q: 'Which routes do you cover in Mombasa?', a: 'We cover all major Mombasa container corridors, including Mombasa Port (KPA), APM Terminals, Consolebase ICD, Hakika Depot, Kibarani Depot, and Fortune Container Depot, plus direct delivery to client yards.' },
-<!--  { cat: 'transport', q: 'How much does port haulage cost?', a: 'Port haulage starts from KES 8,500 per move depending on origin, destination, and container size. Use the Cost Estimator on our homepage or the live quote calculator on the Booking page for an instant estimate.' }, -->
+  { cat: 'transport', q: 'How much does port haulage cost?', a: 'Port haulage starts from KES 8,500 per move depending on origin, destination, and container size. Use the Cost Estimator on our homepage or the live quote calculator on the Booking page for an instant estimate.' }, 
   { cat: 'transport', q: 'Do you offer reefer truck transport?', a: 'Yes, we operate genset-equipped reefer trucks capable of maintaining temperatures as low as -25°C, suitable for pharmaceutical and perishable cargo movements across all our service corridors.' },
   { cat: 'docs', q: 'What documentation do I receive after a move?', a: 'You will receive a digital Equipment Interchange Receipt (EIR), a gate pass, and a movement/delivery receipt for every transaction. All documents are paperless and accessible through your client portal.' },
   { cat: 'docs', q: 'Are you KPA licensed and IICL certified?', a: 'Yes. Gargo Haven is a KPA-licensed depot operator, IICL-certified for container inspection and repair, KRA-compliant for customs documentation, and ISO 9001 certified for quality management.' },
@@ -1568,7 +1568,7 @@ const SUBPAGES = {
           <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:center;">
             <div style="font-size:12px;color:var(--gray);letter-spacing:1px;margin-bottom:8px;">LAST UPDATED</div>
             <div style="font-family:var(--font-main);font-size:20px;color:var(--gold);" id="dashboardTime">—</div>
-            <p style="color:var(--gray-light);font-size:13px;margin-top:8px;">Dashboard updates every 15 minutes from our yard management system. For real-time availability, call our depot team on +254 700 000 000.</p>
+            <p style="color:var(--gray-light);font-size:13px;margin-top:8px;">Dashboard updates every 15 minutes from our yard management system. For real-time availability, call our depot team on +254 108 613 789.</p>
           </div>
         </div>
       </section>`,
@@ -2113,7 +2113,8 @@ window.navigateToSubpage = function(key) {
       </section>
       ${sp.render()}`;
 
-    document.body.appendChild(container);
+    const footer = document.querySelector('footer');
+    document.body.insertBefore(container, footer);
   }
 
 

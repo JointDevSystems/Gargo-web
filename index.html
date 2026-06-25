@@ -58,7 +58,7 @@
       <a href="javascript:void(0)" class="nav-link" onclick="navigateToPage('home')">HOME</a>
       
       <div class="nav-dropdown">
-        <a href="javascript:void(0)" class="nav-link">ABOUT ▾</a>
+        <a href="javascript:void(0)" onclick="navigateToPage('about')" class="nav-link">ABOUT ▾</a>
         <div class="mega-menu">
           <div class="mega-column">
             <h4>Company</h4>
@@ -84,7 +84,7 @@
       </div>
 
       <div class="nav-dropdown">
-        <a href="javascript:void(0)" class="nav-link">SERVICES ▾</a>
+        <a href="javascript:void(0)" onclick="navigateToPage('services')" class="nav-link">SERVICES ▾</a>
         <div class="mega-menu">
           <div class="mega-column">
             <h4>Depot Operations</h4>
@@ -112,7 +112,7 @@
       </div>
 
       <div class="nav-dropdown">
-        <a href="javascript:void(0)" class="nav-link">DEPOT ▾</a>
+        <a href="javascript:void(0)" onclick="navigateToPage('depot')" class="nav-link">DEPOT ▾</a>
         <div class="mega-menu">
           <div class="mega-column">
             <h4>Our Locations</h4>
@@ -137,7 +137,7 @@
       </div>
 
       <div class="nav-dropdown">
-        <a href="javascript:void(0)" class="nav-link">BOOKING ▾</a>
+        <a href="javascript:void(0)" onclick="navigateToPage('booking')" class="nav-link">BOOKING ▾</a>
         <div class="mega-menu">
           <div class="mega-column">
             <h4>Create Booking</h4>
@@ -163,7 +163,7 @@
       </div>
 
       <div class="nav-dropdown">
-        <a href="javascript:void(0)" class="nav-link">TRACK ▾</a>
+        <a href="javascript:void(0)" onclick="navigateToPage('track')" class="nav-link">TRACK ▾</a>
         <div class="mega-menu">
           <div class="mega-column">
             <h4>Track Assets</h4>
@@ -188,7 +188,7 @@
       </div>
 
       <div class="nav-dropdown">
-        <a href="javascript:void(0)" class="nav-link">FLEET ▾</a>
+        <a href="javascript:void(0)" onclick="navigateToPage('fleet')" class="nav-link">FLEET ▾</a>
         <div class="mega-menu small-menu">
           <a href="javascript:void(0)" onclick="navigateToPage('fleet')"> Fleet Overview</a>
           <a href="javascript:void(0)" onclick="navigateToPage('fleet')"> Flatbed Trucks</a>
@@ -202,7 +202,7 @@
 
       <a href="javascript:void(0)" class="nav-link" onclick="navigateToPage('contact')">CONTACT</a>
     </div>
-    <a href="javascript:void(0)" class="nav-login">CLIENT LOGIN</a>
+    <a href="javascript:void(0)" class="nav-login">LOGIN</a>
     <button class="menu-toggle-btn" id="menuToggle">☰</button>
   </div>
 </nav>
@@ -297,20 +297,22 @@
 
   <hr class="divider">
 
-  
+  <!-- STATS BAND WITH DEPOT IMAGE BACKGROUND -->
   <section class="stats-band-img" style="background-image:url('images/depot1.png')">
     <div class="sbi-overlay"></div>
-    <div class="stats-inner-logo">FACTS AND FIGURES</div>
+    <div style="margin-top: 4px;">
+      <div class="stats-inner-logo">FACTS AND FIGURES</div>
+    </div>
     <div class="stats-inner-img">
       <div class="stat-block-img"><div class="stat-num">2+</div><div class="stat-lbl">Years in Business</div></div>
       <div class="stat-block-img"><div class="stat-num">5,000+</div><div class="stat-lbl">TEU Capacity</div></div>
-      <div class="stat-block-img"><div class="stat-num">50</div><div class="stat-lbl">GPS-Tracked Trucks</div></div>
+      <div class="stat-block-img"><div class="stat-num">120+</div><div class="stat-lbl">GPS-Tracked Trucks</div></div>
       <div class="stat-block-img"><div class="stat-num">400+</div><div class="stat-lbl">Clients Served</div></div>
       <div class="stat-block-img"><div class="stat-num">24/7</div><div class="stat-lbl">Depot Operations</div></div>
     </div>
   </section>
 
- 
+  <!-- INTRO / ABOUT SNAP -->
   <section class="section-light">
     <div class="section-inner">
       <div class="home-intro-grid">
@@ -323,7 +325,7 @@
         <div class="home-intro-text-col">
           <div class="section-tag">Est. 2024 · Mombasa</div>
           <h2 class="section-title" style="text-align:left;">Mombasa's Most <span>Trusted Depot</span></h2>
-          <p style="color:var(--gray-pale);font-size:13px;line-height:1.8;margin-bottom:20px;">Founded in 2024 in Changamwe, Gargo Haven Ltd has grown from a single-yard operation into Mombasa's leading empty container depot and port haulage company — serving shipping lines, freight forwarders, and importers across the East African coast.</p>
+          <p style="color: black;font-size:13px;line-height:1.8;margin-bottom:20px;">Founded in 2024 in Changamwe, Gargo Haven Ltd has grown from a single-yard operation into Mombasa's leading empty container depot and port haulage company — serving shipping lines, freight forwarders, and importers across the East African coast.</p>
           <p style="color:var(--gray-light);font-size:12px;line-height:1.8;margin-bottom:28px;">With a 5,000+ TEU yard, a GPS-tracked fleet of over 100 trucks, IICL-certified repair bays, and a real-time client tracking portal, we deliver international-standard service at every gate.</p>
           <button class="cta-primary" onclick="navigateToPage('about')">LEARN OUR STORY →</button>
         </div>
@@ -331,13 +333,13 @@
     </div>
   </section>
 
- 
+  <!-- SERVICES PREVIEW — IMAGE-RICH GRID -->
   <section class="section-dark">
     <div class="section-inner">
       <div class="section-header">
         <div class="section-tag">What We Do</div>
         <h2 class="section-title">DEPOT & TRANSPORT <span>SERVICES</span></h2>
-        <p class="section-sub" style="color:var(--gray-pale);">Complete empty container solutions under one platform — from gate-in to final delivery.</p>
+        <p class="section-sub" style="color: black;">Complete empty container solutions under one platform — from gate-in to final delivery.</p>
       </div>
       <div class="services-img-grid">
         <div class="svc-img-card" style="background-image:url('images/depot3.png')">
@@ -398,7 +400,7 @@
     </div>
   </section>
 
- 
+ <!-- FULL-WIDTH DEPOT SHOWCASE IMAGE -->
   <section class="full-img-section" style="background-image:url('images/depot7.png')">
     <div class="full-img-overlay"></div>
     <div class="full-img-content">
@@ -596,7 +598,7 @@
         <div class="partner-item">ISO 9001</div>
         <div class="partner-item">IICL CERTIFIED</div>
       </div>
-    </div>
+  
   </section>
 
   
