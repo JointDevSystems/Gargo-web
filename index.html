@@ -9,18 +9,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="expand.css">
-<link rel="favicon" href="images/gargologo.png">
 </head>
 <body>
 
-
+<!-- LOADER -->
 <div class="loader" id="loader">
   <div class="loader-logo">GARGO <span>HAVEN</span></div>
   <div class="loader-bar"><div class="loader-progress"></div></div>
   <div class="loader-text">Initializing Depot Systems...</div>
 </div>
 
-
+<!-- NOTIFICATION -->
 <div class="notification" id="notification">
   <div class="notif-icon">✅</div>
   <div>
@@ -29,7 +28,7 @@
   </div>
 </div>
 
-
+<!-- MODAL -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <div class="modal-header">
@@ -40,17 +39,17 @@
   </div>
 </div>
 
-
+<!-- TICKER BAR -->
 <div class="ticker-bar">
   <div class="ticker-inner" id="tickerInner"></div>
 </div>
 
-
+<!-- NAVIGATION -->
 <nav class="nav">
   <div class="nav-left" onclick="navigateToPage('home')">
     <div>
-      <div class="logo"><img src="images/gargologo22.png" style="height: 120px; width: 190px;"></span></div>
-      <!--<div class="logo-sub">Container Depot & Transport · Mombasa</div>-->
+      <div class="logo-text">GARGO <span class="accent">HAVEN</span></div>
+      <div class="logo-sub">Container Depot & Transport · Mombasa</div>
     </div>
   </div>
   <div class="nav-right">
@@ -75,7 +74,7 @@
             <a href="javascript:void(0)"> Sustainability</a>
           </div>
           <div class="mega-highlight">
-            <span>EST. 2024</span>
+            <span>EST. 2014</span>
             <h3>Mombasa's Trusted Depot Partner</h3>
             <p>Over a decade of excellence in container depot operations and transport logistics across Mombasa's port corridors.</p>
             <button onclick="navigateToPage('about')">Learn Our Story →</button>
@@ -222,12 +221,15 @@
   </div>
 </div>
 
-
+<!-- ═══════════════════════════════════
+HOME PAGE
+═══════════════════════════════════ -->
 <div class="page active-page" id="home-page">
 
- 
+  <!-- CINEMATIC HERO -->
   <section class="hero-bg">
     <div class="hero-slideshow">
+      <div class="hero-slide-flash"></div>
       <div class="hero-slide" style="background-image:url('images/depot8.png')"></div>
       <div class="hero-slide" style="background-image:url('images/gargo2.png')"></div>
       <div class="hero-slide" style="background-image:url('images/gargo1.png')"></div>
@@ -297,20 +299,20 @@
 
   <hr class="divider">
 
-  
+  <!-- STATS BAND WITH DEPOT IMAGE BACKGROUND -->
   <section class="stats-band-img" style="background-image:url('images/depot1.png')">
     <div class="sbi-overlay"></div>
     <div class="stats-inner-logo">FACTS AND FIGURES</div>
     <div class="stats-inner-img">
-      <div class="stat-block-img"><div class="stat-num">2+</div><div class="stat-lbl">Years in Business</div></div>
+      <div class="stat-block-img"><div class="stat-num">10+</div><div class="stat-lbl">Years in Business</div></div>
       <div class="stat-block-img"><div class="stat-num">5,000+</div><div class="stat-lbl">TEU Capacity</div></div>
-      <div class="stat-block-img"><div class="stat-num">50</div><div class="stat-lbl">GPS-Tracked Trucks</div></div>
+      <div class="stat-block-img"><div class="stat-num">120+</div><div class="stat-lbl">GPS-Tracked Trucks</div></div>
       <div class="stat-block-img"><div class="stat-num">400+</div><div class="stat-lbl">Clients Served</div></div>
       <div class="stat-block-img"><div class="stat-num">24/7</div><div class="stat-lbl">Depot Operations</div></div>
     </div>
   </section>
 
- 
+  <!-- INTRO / ABOUT SNAP -->
   <section class="section-light">
     <div class="section-inner">
       <div class="home-intro-grid">
@@ -321,17 +323,17 @@
           </div>
         </div>
         <div class="home-intro-text-col">
-          <div class="section-tag">Est. 2024 · Mombasa</div>
+          <div class="section-tag">Est. 2014 · Mombasa</div>
           <h2 class="section-title" style="text-align:left;">Mombasa's Most <span>Trusted Depot</span></h2>
-          <p style="color:var(--gray-pale);font-size:13px;line-height:1.8;margin-bottom:20px;">Founded in 2024 in Changamwe, Gargo Haven Ltd has grown from a single-yard operation into Mombasa's leading empty container depot and port haulage company — serving shipping lines, freight forwarders, and importers across the East African coast.</p>
-          <p style="color:var(--gray-light);font-size:12px;line-height:1.8;margin-bottom:28px;">With a 5,000+ TEU yard, a GPS-tracked fleet of over 100 trucks, IICL-certified repair bays, and a real-time client tracking portal, we deliver international-standard service at every gate.</p>
+          <p style="color:var(--gray-pale);font-size:13px;line-height:1.8;margin-bottom:20px;">Founded in 2014 in Changamwe, Gargo Haven Ltd has grown from a single-yard operation into Mombasa's leading empty container depot and port haulage company — serving shipping lines, freight forwarders, and importers across the East African coast.</p>
+          <p style="color:var(--gray-light);font-size:12px;line-height:1.8;margin-bottom:28px;">With a 5,000+ TEU yard, a GPS-tracked fleet of over 120 trucks, IICL-certified repair bays, and a real-time client tracking portal, we deliver international-standard service at every gate.</p>
           <button class="cta-primary" onclick="navigateToPage('about')">LEARN OUR STORY →</button>
         </div>
       </div>
     </div>
   </section>
 
- 
+  <!-- SERVICES PREVIEW — IMAGE-RICH GRID -->
   <section class="section-dark">
     <div class="section-inner">
       <div class="section-header">
@@ -354,7 +356,7 @@
           <div class="svc-img-content">
             <div class="svc-num">02</div>
             <h3>Port Haulage</h3>
-            <p>50+ GPS-tracked trucks covering all Mombasa container corridors daily.</p>
+            <p>120+ GPS-tracked trucks covering all Mombasa container corridors daily.</p>
             <a href="javascript:void(0)" onclick="navigateToPage('services')" class="svc-link">LEARN MORE →</a>
           </div>
         </div>
@@ -398,18 +400,18 @@
     </div>
   </section>
 
- 
+  <!-- FULL-WIDTH DEPOT SHOWCASE IMAGE -->
   <section class="full-img-section" style="background-image:url('images/depot7.png')">
     <div class="full-img-overlay"></div>
     <div class="full-img-content">
       <div class="section-tag" style="margin-bottom:20px;">Facility Showcase</div>
-      <!--<h2 class="section-title" style="font-size:clamp(28px,5vw,48px);text-align:center;">5,000+ TEU CAPACITY<br><span>IN THE HEART OF MOMBASA</span></h2>-->
+      <h2 class="section-title" style="font-size:clamp(28px,5vw,48px);text-align:center;">5,000+ TEU CAPACITY<br><span>IN THE HEART OF MOMBASA</span></h2>
       <p style="color:var(--gray-pale);text-align:center;max-width:560px;margin:20px auto 32px;font-size:13px;line-height:1.7;">Strategically located in Changamwe — minutes from the Port of Mombasa, APM Terminals, and major ICD corridors. Our yard operates 24 hours a day, 7 days a week.</p>
       <button class="cta-primary" onclick="navigateToPage('depot')">EXPLORE THE DEPOT →</button>
     </div>
   </section>
 
-
+  <!-- RATES SECTION -->
   <section class="section-dark">
     <div class="section-inner">
       <div class="section-header">
@@ -460,7 +462,7 @@
         </div>
       </div>
 
-     
+      <!-- CALCULATOR -->
       <div class="calculator">
         <div class="calc-header">Storage & Haulage Cost Estimator</div>
         <div class="calc-grid">
@@ -511,13 +513,13 @@
     </div>
   </section>
 
-
+  <!-- DEPOT GALLERY STRIP -->
   <section class="gallery-strip-section">
     <div class="gallery-strip-label">
       <div class="section-tag">Depot Gallery</div>
       <h2 class="section-title" style="text-align:left;">OUR FACILITY <span>IN PHOTOS</span></h2>
     </div>
-    <div class="gallery-strip">
+    <div class="gallery-strip" id="galleryStrip">
       <div class="gallery-item"><img src="images/depot1.png" alt="Depot aerial view"></div>
       <div class="gallery-item"><img src="images/depot2.png" alt="Container stacking"></div>
       <div class="gallery-item"><img src="images/gargo3.png" alt="Fleet operations"></div>
@@ -526,10 +528,14 @@
       <div class="gallery-item"><img src="images/depot5.png" alt="Reefer yard"></div>
       <div class="gallery-item"><img src="images/gargo4.png" alt="Haulage trucks"></div>
       <div class="gallery-item"><img src="images/depot6.png" alt="Washing bay"></div>
+      <div class="gallery-item"><img src="images/depot7.png" alt="Yard overview"></div>
+      <div class="gallery-item"><img src="images/depot8.png" alt="Operations"></div>
+      <div class="gallery-item"><img src="images/gargo1.png" alt="Transport"></div>
+      <div class="gallery-item"><img src="images/gargo2.png" alt="Fleet"></div>
     </div>
   </section>
 
- 
+  <!-- FAQ -->
   <section class="section-light">
     <div class="faq-inner">
       <div class="section-header">
@@ -555,8 +561,8 @@
     </div>
   </section>
 
-  
- <!-- <section class="section-dark">
+  <!-- TESTIMONIALS -->
+  <section class="section-dark">
     <div class="section-inner">
       <div class="section-header">
         <div class="section-tag gold">What Clients Say</div>
@@ -587,7 +593,7 @@
             <div><div class="testi-name">James Njoroge</div><div class="testi-company">SUPPLY CHAIN MANAGER · COAST MANUFACTURERS</div></div>
           </div>
         </div>
-      </div>-->
+      </div>
       <div class="partners-row">
         <div class="partner-item">KPA LICENSED</div>
         <div class="partner-item">MAERSK PARTNER</div>
@@ -599,7 +605,7 @@
     </div>
   </section>
 
-  
+  <!-- CTA BAND WITH BACKGROUND IMAGE -->
   <section class="cta-band-img" style="background-image:url('images/depot8.png')">
     <div class="cta-band-overlay"></div>
     <div class="cta-band-content">
@@ -614,7 +620,9 @@
 
 </div>
 
-
+<!-- ═══════════════════════════════════
+ABOUT PAGE
+═══════════════════════════════════ -->
 <div class="page" id="about-page">
   <section class="page-hero cinematic-hero" style="background-image:url('images/gargo1.png');">
     <div class="hero-overlay-dark" style="background:linear-gradient(160deg,rgba(0,0,0,0.75) 0%,rgba(0,0,0,0.4) 100%)"></div>
@@ -630,7 +638,7 @@
       <div class="intro-grid">
         <div class="intro-body">
           <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Mombasa's Most Reliable Container Depot</h2>
-          <p style="color: black; margin-bottom:16px;">Gargo Haven Ltd was established in 2024 in Mombasa, Kenya, with a clear purpose: to provide the port's shipping lines, freight forwarders, and importers/exporters with a professional, technology-enabled empty container depot and haulage service that meets international standards.</p>
+          <p style="color: black; margin-bottom:16px;">Gargo Haven Ltd was established in 2014 in Mombasa, Kenya, with a clear purpose: to provide the port's shipping lines, freight forwarders, and importers/exporters with a professional, technology-enabled empty container depot and haulage service that meets international standards.</p>
           <p style="color: black; margin-bottom:16px;">What began as a single-yard operation in Changamwe has grown into a network of depot partnerships across Mombasa's key container corridors — from the KPA main port and APM Terminals to Consolebase, Hakika, Kibarani, and Fortune Container Depot.</p>
           <p style="color: black;">We are IICL-certified for container inspection and repair, KPA-licensed as an approved depot operator, and KRA-compliant with full customs documentation services. Our proprietary tracking platform gives clients real-time visibility of both containers and the trucks carrying them.</p>
         </div>
@@ -646,7 +654,7 @@
           </div>
           <div class="sidebar-item">
             <div class="sidebar-label">Headquarters</div>
-            <p>Gargo Haven Ltd<br>Changamwe, Mombasa, Kenya 80100<br>📞 <a href="tel:+254116307751" style="color:var(--gold);">+254 116 307 751</a><br>📞 <a href="tel:+254108613789" style="color:var(--gold);">+254 108 613 789</a><br>📧 <a href="mailto:Info@gargohaven.co.ke" style="color:var(--gold);">Info@gargo.co.ke</a></p>
+            <p>Gargo Haven Ltd<br>Changamwe, Mombasa, Kenya 80100<br>📞 <a href="tel:+254116307751" style="color:var(--gold);">+254 116 307 751</a><br>📞 <a href="tel:+254108613789" style="color:var(--gold);">+254 108 613 789</a><br>📧 <a href="mailto:Info@gatgohaven.co.ke" style="color:var(--gold);">Info@gatgohaven.co.ke</a></p>
           </div>
           <div class="sidebar-item">
             <div class="sidebar-label">Operating Hours</div>
@@ -657,7 +665,7 @@
     </div>
   </section>
 
- 
+  <!-- ABOUT IMAGE SPLIT -->
   <section class="about-img-split" style="background-image:url('images/gargo2.png')">
     <div class="ais-overlay"></div>
     <div class="ais-content">
@@ -669,9 +677,9 @@
 
   <section class="stats-band">
     <div class="stats-inner">
-      <div class="stat-block"><div class="stat-num">10+</div><div class="stat-lbl">Years in Business</div><div class="stat-desc">Founded Mombasa, 2024</div></div>
+      <div class="stat-block"><div class="stat-num">10+</div><div class="stat-lbl">Years in Business</div><div class="stat-desc">Founded Mombasa, 2014</div></div>
       <div class="stat-block"><div class="stat-num">5,000+</div><div class="stat-lbl">TEUs Monthly</div><div class="stat-desc">Storage & Transport</div></div>
-      <div class="stat-block"><div class="stat-num">50+</div><div class="stat-lbl">Truck Fleet</div><div class="stat-desc">All GPS tracked</div></div>
+      <div class="stat-block"><div class="stat-num">120+</div><div class="stat-lbl">Truck Fleet</div><div class="stat-desc">All GPS tracked</div></div>
       <div class="stat-block"><div class="stat-num">400+</div><div class="stat-lbl">Clients Served</div><div class="stat-desc">Shipping lines to SMEs</div></div>
     </div>
   </section>
@@ -691,7 +699,7 @@
     </div>
   </section>
 
-  
+  <!-- ABOUT PHOTO GRID -->
   <section class="about-photo-grid-section">
     <img src="images/depot1.png" alt="Depot overview" class="apg-img apg-tall">
     <img src="images/gargo3.png" alt="Fleet on road" class="apg-img">
@@ -705,14 +713,14 @@
         <div class="section-tag">✦ Our Journey</div>
         <h2 class="section-title">Company <span>History</span></h2>
       </div>
-     <!-- <div class="timeline">
-        <div class="tl-item"><div class="tl-year">2024</div><div class="tl-dot"></div><div class="tl-content"><h4 style="color: black;">Founded in Mombasa</h4></div></div>
+      <div class="timeline">
+        <div class="tl-item"><div class="tl-year">2014</div><div class="tl-dot"></div><div class="tl-content"><h4 style="color: black;">Founded in Mombasa</h4></div></div>
         <div class="tl-item"><div class="tl-year">2016</div><div class="tl-dot"></div><div class="tl-content"><h4 style="color: black;">KPA License & APM Partnership</h4><p>Received Kenya Ports Authority depot operator license. Established formal agreement with APM Terminals Mombasa.</p></div></div>
         <div class="tl-item"><div class="tl-year">2018</div><div class="tl-dot"></div><div class="tl-content"><h4 style="color: black;">Fleet Expansion & GPS Tracking Launch</h4><p>Expanded truck fleet to 60 units. Launched proprietary GPS tracking platform.</p></div></div>
         <div class="tl-item"><div class="tl-year">2020</div><div class="tl-dot"></div><div class="tl-content"><h4 style="color: black;">IICL Certification & Repair Bay</h4><p>Achieved IICL certification. Opened 10-bay repair workshop at Changamwe depot.</p></div></div>
         <div class="tl-item"><div class="tl-year">2022</div><div class="tl-dot"></div><div class="tl-content"><h4 style="color: black;">Network Expansion</h4><p>Established depot alliance agreements with Consolebase ICD and partner depots.</p></div></div>
-        <div class="tl-item"><div class="tl-year">2024</div><div class="tl-dot"></div><div class="tl-content"><h4 style="color: black;">Today — Mombasa's Premier Depot</h4><p>5,000+ TEU capacity. 50+ truck fleet. Real-time tracking for containers and trucks. Serving 400+ clients.</p></div></div>
-      </div>-->
+        <div class="tl-item"><div class="tl-year">2024</div><div class="tl-dot"></div><div class="tl-content"><h4 style="color: black;">Today — Mombasa's Premier Depot</h4><p>5,000+ TEU capacity. 120+ truck fleet. Real-time tracking for containers and trucks. Serving 400+ clients.</p></div></div>
+      </div>
     </div>
   </section>
 
@@ -747,7 +755,9 @@
   </section>
 </div>
 
-
+<!-- ═══════════════════════════════════
+SERVICES PAGE
+═══════════════════════════════════ -->
 <div class="page" id="services-page">
   <section class="page-hero cinematic-hero" style="background-image:url('images/gargo2.png');">
     <div class="hero-overlay-dark" style="background:linear-gradient(160deg,rgba(0,0,0,0.75) 0%,rgba(0,0,0,0.4) 100%)"></div>
@@ -758,7 +768,7 @@
     </div>
   </section>
 
- 
+  <!-- SERVICES WITH SIDE IMAGES -->
   <section class="section-light">
     <div class="section-inner">
       <div class="service-detail-row">
@@ -794,7 +804,7 @@
     </div>
   </section>
 
- 
+  <!-- SERVICES IMAGE BAND -->
   <section class="services-img-band" style="background-image:url('images/depot5.png')">
     <div class="sib-overlay"></div>
     <div class="sib-content">
@@ -847,7 +857,9 @@
   </section>
 </div>
 
-
+<!-- ═══════════════════════════════════
+DEPOT PAGE
+═══════════════════════════════════ -->
 <div class="page" id="depot-page">
   <section class="page-hero cinematic-hero" style="background-image:url('images/gargo4.png');">
     <div class="hero-overlay-dark" style="background:linear-gradient(160deg,rgba(0,0,0,0.75) 0%,rgba(0,0,0,0.4) 100%)"></div>
@@ -887,7 +899,7 @@
 
   <section class="section-light">
     <div class="section-inner">
-     
+      <!-- DEPOT PHOTO GALLERY -->
       <div class="section-header">
         <div class="section-tag">Gallery</div>
         <h2 class="section-title">DEPOT <span>PHOTOS</span></h2>
@@ -903,7 +915,7 @@
     </div>
   </section>
 
- 
+  <!-- PARTNER DEPOTS WITH IMAGE BACKGROUND -->
   <section class="depot-network-bg" style="background-image:url('images/depot8.png')">
     <div class="dnb-overlay"></div>
     <div class="section-inner" style="position:relative;z-index:2;">
@@ -935,7 +947,9 @@
   </section>
 </div>
 
-
+<!-- ═══════════════════════════════════
+BOOKING PAGE
+═══════════════════════════════════ -->
 <div class="page" id="booking-page">
   <section class="page-hero cinematic-hero" style="background-image:url('images/gargo1.png');">
     <div class="hero-overlay-dark" style="background:linear-gradient(160deg,rgba(0,0,0,0.75) 0%,rgba(0,0,0,0.4) 100%)"></div>
@@ -1029,21 +1043,21 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Phone / WhatsApp</label>
-                <input type="tel" class="form-input" id="fPhone" placeholder="+254 116 307 751">
+                <input type="tel" class="form-input" id="fPhone" placeholder="+254 700 000 000">
               </div>
             </div>
 
             <div class="quote-panel" id="quotePanel">
               <div class="quote-panel-title">LIVE ESTIMATE</div>
               <div class="quote-panel-route" id="quotePanelRoute">Mombasa Port → Gargo Haven · 40ft Standard · 1 unit</div>
-              <div class="quote-panel-disclaimer">Contact us for a confirmed rate: <a href="tel:+254116307751">+254 116 307 751</a> · <a href="mailto:Info@gargo.co.ke">Info@gargo.co.ke</a></div>
+              <div class="quote-panel-disclaimer">Contact us for a confirmed rate: <a href="tel:+254116307751">+254 116 307 751</a> · <a href="mailto:Info@gatgohaven.co.ke">Info@gatgohaven.co.ke</a></div>
             </div>
 
             <button class="form-submit" onclick="submitBooking()">SUBMIT BOOKING REQUEST →</button>
           </div>
         </div>
 
-     
+        <!-- BOOKING SIDEBAR -->
         <div class="booking-sidebar">
           <div class="bsb-image-card">
             <img src="images/depot2.png" alt="Our depot facility">
@@ -1054,7 +1068,7 @@
             <p>Prefer to book by phone or WhatsApp? Our team is available 24/7.</p>
             <div class="bic-contact"><span>📞</span><a href="tel:+254116307751">+254 116 307 751</a></div>
             <div class="bic-contact"><span>📞</span><a href="tel:+254108613789">+254 108 613 789</a></div>
-            <div class="bic-contact"><span>📧</span><a href="mailto:Info@gargo.co.ke">Info@gargo.co.ke</a></div>
+            <div class="bic-contact"><span>📧</span><a href="mailto:Info@gatgohaven.co.ke">Info@gatgohaven.co.ke</a></div>
           </div>
           <div class="booking-info-card">
             <h4>What Happens Next?</h4>
@@ -1071,7 +1085,9 @@
   </section>
 </div>
 
-
+<!-- ═══════════════════════════════════
+TRACK PAGE
+═══════════════════════════════════ -->
 <div class="page" id="track-page">
   <section class="page-hero cinematic-hero" style="background-image:url('images/gargo3.png');">
     <div class="hero-overlay-dark" style="background:linear-gradient(160deg,rgba(0,0,0,0.75) 0%,rgba(0,0,0,0.4) 100%)"></div>
@@ -1106,14 +1122,14 @@
         <div class="track-info-col">
           <div class="bsb-image-card">
             <img src="images/gargo4.png" alt="Fleet on the move">
-            <div class="bsb-img-caption">50+ GPS-tracked trucks on Mombasa's corridors</div>
+            <div class="bsb-img-caption">120+ GPS-tracked trucks on Mombasa's corridors</div>
           </div>
           <div class="booking-info-card">
             <h4>Tracking Support</h4>
             <p>Can't find your container? Our team can locate it immediately.</p>
             <div class="bic-contact"><span>📞</span><a href="tel:+254116307751">+254 116 307 751</a></div>
             <div class="bic-contact"><span>📞</span><a href="tel:+254108613789">+254 108 613 789</a></div>
-            <div class="bic-contact"><span>📧</span><a href="mailto:Info@gargo.co.ke">Info@gargo.co.ke</a></div>
+            <div class="bic-contact"><span>📧</span><a href="mailto:Info@gatgohaven.co.ke">Info@gatgohaven.co.ke</a></div>
           </div>
         </div>
       </div>
@@ -1121,14 +1137,16 @@
   </section>
 </div>
 
-
+<!-- ═══════════════════════════════════
+FLEET PAGE
+═══════════════════════════════════ -->
 <div class="page" id="fleet-page">
   <section class="page-hero cinematic-hero" style="background-image:url('images/gargo3.png');">
     <div class="hero-overlay-dark" style="background:linear-gradient(160deg,rgba(0,0,0,0.75) 0%,rgba(0,0,0,0.4) 100%)"></div>
     <div class="page-hero-content">
       <div class="section-tag">Our Fleet</div>
       <h1 class="section-title light" style="font-size:clamp(28px,5vw,52px);">FLEET <span>OVERVIEW</span></h1>
-      <p class="section-sub light">50+ GPS-tracked trucks covering all Mombasa container corridors around the clock.</p>
+      <p class="section-sub light">120+ GPS-tracked trucks covering all Mombasa container corridors around the clock.</p>
     </div>
   </section>
 
@@ -1175,7 +1193,7 @@
     </div>
   </section>
 
- 
+  <!-- FLEET IMAGE STRIP -->
   <section class="fleet-img-strip">
     <div class="fis-item" style="background-image:url('images/depot6.png')"><div class="fis-label">Maintenance Bay</div></div>
     <div class="fis-item" style="background-image:url('images/depot7.png')"><div class="fis-label">GPS Command Centre</div></div>
@@ -1200,7 +1218,9 @@
   </section>
 </div>
 
-
+<!-- ═══════════════════════════════════
+CONTACT PAGE
+═══════════════════════════════════ -->
 <div class="page" id="contact-page">
   <section class="page-hero cinematic-hero" style="background-image:url('images/gargo2.png');">
     <div class="hero-overlay-dark" style="background:linear-gradient(160deg,rgba(0,0,0,0.75) 0%,rgba(0,0,0,0.4) 100%)"></div>
@@ -1211,7 +1231,7 @@
     </div>
   </section>
 
-
+  <!-- CONTACT INFO IMAGE STRIP -->
   <section class="contact-strip-section" style="background-image:url('images/depot3.png')">
     <div class="css-overlay"></div>
     <div class="css-cards">
@@ -1228,7 +1248,7 @@
       <div class="css-card">
         <div class="css-icon">📧</div>
         <div class="css-label">Email</div>
-        <div class="css-val"><a href="mailto:Info@gargo.co.ke">Info@gargo.co.ke</a></div>
+        <div class="css-val"><a href="mailto:Info@gatgohaven.co.ke">Info@gatgohaven.co.ke</a></div>
       </div>
       <div class="css-card">
         <div class="css-icon">🕐</div>
@@ -1262,7 +1282,7 @@
             <div class="contact-icon"></div>
             <div>
               <div class="contact-detail-label">Email</div>
-              <div class="contact-detail-val"><a href="mailto:Info@gargo.co.ke">Info@gargo.co.ke</a></div>
+              <div class="contact-detail-val"><a href="mailto:Info@gatgohaven.co.ke">Info@gatgohaven.co.ke</a></div>
               <div class="contact-detail-sub">We respond to all enquiries within 2 hours</div>
             </div>
           </div>
@@ -1292,7 +1312,7 @@
             <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" id="cName" placeholder="Your name"></div>
             <div class="form-group"><label class="form-label">Company</label><input type="text" class="form-input" id="cCompany" placeholder="Your company"></div>
             <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="cEmail" placeholder="you@company.com"></div>
-            <div class="form-group"><label class="form-label">Phone / WhatsApp</label><input type="tel" class="form-input" id="cPhone" placeholder="+254116307751"></div>
+            <div class="form-group"><label class="form-label">Phone / WhatsApp</label><input type="tel" class="form-input" id="cPhone" placeholder="+254 700 000 000"></div>
             <div class="form-group">
               <label class="form-label">Subject</label>
               <select class="form-select" id="cSubject">
@@ -1311,7 +1331,7 @@
             Or reach us directly: 
             <a href="tel:+254116307751" style="color:var(--gold);">+254 116 307 751</a> · 
             <a href="tel:+254108613789" style="color:var(--gold);">+254 108 613 789</a> · 
-            <a href="mailto:Info@garrgo.co.ke" style="color:var(--gold);">Info@gargo.co.ke</a>
+            <a href="mailto:Info@gatgohaven.co.ke" style="color:var(--gold);">Info@gatgohaven.co.ke</a>
           </p>
           <button class="form-submit" onclick="sendContact()">SEND MESSAGE →</button>
         </div>
@@ -1320,20 +1340,20 @@
   </section>
 </div>
 
-
+<!-- FOOTER -->
 <footer class="footer">
   <div class="footer-inner">
     <div class="footer-top">
       <div class="footer-brand">
         <div class="footer-logo-mark">GH</div>
         <div class="footer-logo-text">GARGO <span>HAVEN</span></div>
-        <div class="footer-tagline">Mombasa's premier empty container depot and transport company. Serving the port community since 2024.</div>
+        <div class="footer-tagline">Mombasa's premier empty container depot and transport company. Serving the port community since 2014.</div>
         <div class="footer-cert">IICL · KPA LICENSED · KRA COMPLIANT · ISO 9001</div>
-       
+        <!-- FOOTER CONTACT -->
         <div class="footer-contact-quick">
           <a href="tel:+254116307751">📞 +254 116 307 751</a>
           <a href="tel:+254108613789">📞 +254 108 613 789</a>
-          <a href="mailto:Info@gargo.co.ke">📧 Info@gargo.co.ke</a>
+          <a href="mailto:Info@gatgohaven.co.ke">📧 Info@gatgohaven.co.ke</a>
         </div>
       </div>
       <div>
@@ -1372,7 +1392,7 @@
         <ul class="footer-links">
           <li><a href="tel:+254116307751">+254 116 307 751</a></li>
           <li><a href="tel:+254108613789">+254 108 613 789</a></li>
-          <li><a href="mailto:Info@gargo.co.ke">Info@gargo.co.ke</a></li>
+          <li><a href="mailto:Info@gatgohaven.co.ke">Info@gatgohaven.co.ke</a></li>
           <li><a href="javascript:void(0)" onclick="navigateToPage('booking')">New Booking</a></li>
           <li><a href="javascript:void(0)" onclick="navigateToPage('track')">Track Container</a></li>
           <li><a href="javascript:void(0)" onclick="navigateToPage('contact')">Contact Us</a></li>
