@@ -1038,7 +1038,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">Secure Empty Container Storage</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Secure Empty Container Storage</h2>
               <p>Gargo Haven's main Changamwe depot offers over 5,000 TEU of secure storage capacity for 20ft, 40ft, and 40ft High Cube dry containers, as well as reefer units, flat-racks, open-tops, and out-of-gauge cargo.</p>
               <p>Our yard uses a digital slot management system that assigns every container a specific position on arrival, enabling instant location retrieval and fast gate-out. All containers are scanned with our gate camera system on entry, with condition photos recorded in our EIR system.</p>
               <p>The yard operates 24/7, with CCTV coverage across all zones, armed perimeter security, and biometric gate access for all staff. Average gate-in turnaround is under 30 minutes for standard containers.</p>
@@ -1091,7 +1091,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">GPS-Tracked Container Transport</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">GPS-Tracked Container Transport</h2>
               <p>Gargo Haven operates Mombasa's most connected container haulage network — linking Mombasa Port (KPA), APM Terminals, and all major ICDs and depots along the Mombasa container corridor. Our 120+ truck fleet is available for same-day movements across all routes.</p>
               <p>Every truck in our fleet is fitted with a live GPS unit. Clients can track their container's truck in real-time through our tracking portal, including driver contact details and ETA. Dispatch confirmation is sent by SMS and email within 30 minutes of booking.</p>
               <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">Routes We Cover</h3>
@@ -1132,7 +1132,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">24/7 Refrigerated Container Management</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">24/7 Refrigerated Container Management</h2>
               <p>Gargo Haven's dedicated reefer yard features 200+ plug-in points with 24/7 automated temperature monitoring. Our reefer team is certified for pre-trip inspections (PTI), temperature setting, defrost cycles, and first-line reefer unit repairs.</p>
               <p>All reefer containers are monitored continuously with alarm alerts sent to our operations team and the client's designated contact if temperature deviates from the set point. A full log of temperature readings is available for every reefer unit on request.</p>
               <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;">
@@ -1172,7 +1172,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">IICL-Certified Container Repair</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">IICL-Certified Container Repair</h2>
               <p>Our 10-bay M&R workshop at the Changamwe depot handles everything from minor panel dents to full structural repairs and floor replacements. All inspections follow IICL methodology and all repair work is documented with before-and-after photography.</p>
               <p>We provide full repair estimates (M&R surveys) for shipping lines, including labour, materials, and time estimates. Completed repairs are signed off by our IICL-certified inspector and documented in the container's EIR record.</p>
               <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">Repair Capabilities</h3>
@@ -1210,7 +1210,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">Industrial Container Washing & Fumigation</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Industrial Container Washing & Fumigation</h2>
               <p>Gargo Haven's 6-lane washing bay provides high-pressure interior and exterior washing for all container types. Our fumigation chamber issues KEBS-compliant fumigation certificates for agricultural and food-grade cargo.</p>
               <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;">
                 <li>High-pressure exterior washing</li>
@@ -1243,7 +1243,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">IICL Container Condition Surveys</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">IICL Container Condition Surveys</h2>
               <p>All container inspections at Gargo Haven follow the IICL (Institute of International Container Lessors) standard — the globally accepted methodology for assessing container condition and estimating repair costs. Our IICL-certified inspector conducts surveys for gate-in, gate-out, pre-lease, and damage claim purposes.</p>
               <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">Survey Types</h3>
               <ul class="rate-features" style="list-style:none;padding:0;">
@@ -1278,7 +1278,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">Digital Equipment Interchange Receipts</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Digital Equipment Interchange Receipts</h2>
               <p>Gargo Haven's EIR system is fully digital. Every container gate-in and gate-out at our depots generates an Equipment Interchange Receipt (EIR) that is stored in our system and accessible to clients instantly via the online portal. No more paper EIRs, no lost documents.</p>
               <p>EIRs include container number, ISO type, condition status, damage codes, condition photos, gate time, truck registration, and driver details. All EIRs are timestamped and tamper-proof.</p>
               <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;">
@@ -1313,7 +1313,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">Full Customs & KRA Documentation</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Full Customs & KRA Documentation</h2>
               <p>Our compliance team manages all KRA customs documentation for bonded container movements, customs-cleared releases, and fumigation certification. Led by a former KRA Customs Officer, our team ensures every document is correct, complete, and compliant.</p>
               <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;">
                 <li>KRA customs declarations</li>
@@ -1347,7 +1347,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">Container Leasing & Hire</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Container Leasing & Hire</h2>
               <p>Gargo Haven facilitates container leasing arrangements for clients who need containers for storage, office use, site facilities, or export loading — both short-term hire and long-term lease agreements are available.</p>
               <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;">
                 <li>20ft and 40ft dry containers for hire</li>
@@ -1380,7 +1380,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">End-to-End Corporate Container Logistics</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">End-to-End Corporate Container Logistics</h2>
               <p>For businesses with regular, high-volume container movements, Gargo Haven offers dedicated corporate logistics packages — combining storage, transport, repairs, documentation, and a dedicated account manager under a single monthly agreement.</p>
               <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;">
                 <li>Dedicated account manager</li>
@@ -1417,7 +1417,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">Gargo Haven Changamwe — Main Depot</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Gargo Haven Changamwe — Main Depot</h2>
               <p>Our Changamwe facility is the operational heart of Gargo Haven — the largest and most fully equipped depot in our network. Located directly off the Mombasa–Nairobi Highway with direct access to Mombasa Port and APM Terminals, the depot offers the fastest container turnaround in the region.</p>
               <p>The facility spans over 10 acres and includes a general storage yard, dedicated reefer zone with 200+ plug-in points, a 10-bay M&R repair workshop, a 6-lane washing bay, a fumigation chamber, and a full client services centre.</p>
               <div class="depot-stats-mega" style="margin:32px 0;">
@@ -1466,7 +1466,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">Consolebase ICD — Alliance Depot</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Consolebase ICD — Alliance Depot</h2>
               <p>Gargo Haven maintains a formal depot alliance agreement with Consolebase Inland Container Depot, strategically located on the Mombasa Road corridor. The alliance enables seamless container shuttle and transfer services between Consolebase and Gargo Haven's Changamwe main depot.</p>
               <p>Clients with containers at Consolebase can utilise Gargo Haven's truck fleet for repositioning, haulage, and transport services. Our operations team liaises directly with Consolebase gate management to coordinate movements.</p>
               <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;">
@@ -1498,7 +1498,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">Hakika Container Depot — Alliance Partner</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Hakika Container Depot — Alliance Partner</h2>
               <p>Located in Changamwe, Hakika Container Depot is a key alliance partner in the Gargo Haven network. The partnership provides additional storage capacity during peak periods and enables overflow management for large-volume clients.</p>
               <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;">
                 <li>Overflow capacity during peak periods</li>
@@ -1529,7 +1529,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">Kibarani Depot — Repair & Overflow Partner</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Kibarani Depot — Repair & Overflow Partner</h2>
               <p>Kibarani Depot serves as an overflow and specialised repair partner in the Gargo Haven network, located in the Kibarani area of Mombasa. The facility handles containers requiring extended repair work and provides additional yard space for large-volume movements.</p>
               <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;">
                 <li>Extended repair and refurbishment work</li>
@@ -1558,7 +1558,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">Fortune Container Depot — Alliance Partner</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Fortune Container Depot — Alliance Partner</h2>
               <p>Fortune Container Depot is located in the Mombasa Industrial Area and provides specialised storage and overflow capacity as a Gargo Haven alliance partner. The facility is particularly well-suited for OOG and heavy industrial containers.</p>
               <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;">
                 <li>OOG container laydown and storage</li>
