@@ -737,12 +737,24 @@ const SUBPAGES = {
       </section>
       <section class="stats-band">
         <div class="stats-inner">
-          <div class="stat-block"><div class="stat-num">10+</div><div class="stat-lbl">Years Operating</div><div class="stat-desc">Since 2014</div></div>
+          <div class="stat-block"><div class="stat-num">2+</div><div class="stat-lbl">Years Operating</div><div class="stat-desc">Since 2014</div></div>
           <div class="stat-block"><div class="stat-num">5,000+</div><div class="stat-lbl">TEUs / Month</div><div class="stat-desc">Storage & Transport</div></div>
           <div class="stat-block"><div class="stat-num">120+</div><div class="stat-lbl">Truck Fleet</div><div class="stat-desc">All GPS tracked</div></div>
           <div class="stat-block"><div class="stat-num">400+</div><div class="stat-lbl">Clients</div><div class="stat-desc">Lines to SMEs</div></div>
         </div>
-      </section>`,
+      </section>
+
+        <section class="cta-band-img" style="background-image:url('images/depot8.png')">
+    <div class="cta-band-overlay"></div>
+    <div class="cta-band-content">
+      <h2>Ready to Move Your Containers?</h2>
+      <p>Get an instant quote for depot storage or port haulage in seconds.</p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
+        <button class="btn-primary" onclick="navigateToPage('booking')">Start a Booking →</button>
+        <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
+      </div>
+    </div>
+  </section>`,
   },
 
   'mission-vision': {
@@ -761,13 +773,13 @@ const SUBPAGES = {
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:56px;">
             <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:12px;padding:40px;">
               <div class="section-tag" style="margin-bottom:20px;">Our Mission</div>
-              <h3 style="font-family:var(--font-main);font-size:24px;color:var(--white);margin-bottom:16px;">Reliable. Transparent. Professional.</h3>
-              <p style="color:var(--gray-light);line-height:1.8;">To provide Mombasa's port community with Africa's most reliable and transparent empty container depot and transport service — combining world-class infrastructure, digital innovation, and a people-first culture that delivers for every client, every move, every day.</p>
+              <h3 style="font-family:var(--font-main);font-size:18px;color:var(--white);margin-bottom:16px;">Reliable. Transparent. Professional.</h3>
+              <p style="color:var(--gray-light);line-height:1.8; font-size:14px;">To provide Mombasa's port community with Africa's most reliable and transparent empty container depot and transport service — combining world-class infrastructure, digital innovation, and a people-first culture that delivers for every client, every move, every day.</p>
             </div>
             <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:12px;padding:40px;">
               <div class="section-tag" style="margin-bottom:20px;">Our Vision</div>
-              <h3 style="font-family:var(--font-main);font-size:24px;color:var(--white);margin-bottom:16px;">The First Name in Mombasa Depots</h3>
-              <p style="color:var(--gray-light);line-height:1.8;">To be the preferred empty container management partner for every major shipping line and freight forwarder operating through Mombasa Port by 2030 — and to set the operational benchmark for container depots across East Africa.</p>
+              <h3 style="font-family:var(--font-main);font-size:18px;color:var(--white);margin-bottom:16px;">The First Name in Mombasa Depots</h3>
+              <p style="color:var(--gray-light);line-height:1.8; font-size:14px;">To be the preferred empty container management partner for every major shipping line and freight forwarder operating through Mombasa Port by 2030 — and to set the operational benchmark for container depots across East Africa.</p>
             </div>
           </div>
           <div class="values-grid">
@@ -777,7 +789,19 @@ const SUBPAGES = {
             <div class="value-card"><div class="value-icon"></div><h5>Excellence</h5><p>IICL-standard repairs, ISO 9001-certified processes, and KPA-compliant operations — we meet the highest bar, always.</p></div>
           </div>
         </div>
-      </section>`,
+      </section>
+      
+      <section class="cta-band-img" style="background-image:url('images/depot8.png')">
+    <div class="cta-band-overlay"></div>
+    <div class="cta-band-content">
+      <h2>Ready to Move Your Containers?</h2>
+      <p>Get an instant quote for depot storage or port haulage in seconds.</p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
+        <button class="btn-primary" onclick="navigateToPage('booking')">Start a Booking →</button>
+        <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
+      </div>
+    </div>
+  </section>`,
   },
 
   'team': {
@@ -833,7 +857,19 @@ const SUBPAGES = {
             <button class="btn-secondary" onclick="navigateToPage('contact')">Contact HR →</button>
           </div>
         </div>
-      </section>`,
+      </section>
+      
+        <section class="cta-band-img" style="background-image:url('images/depot8.png')">
+    <div class="cta-band-overlay"></div>
+    <div class="cta-band-content">
+      <h2>Ready to Move Your Containers?</h2>
+      <p>Get an instant quote for depot storage or port haulage in seconds.</p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
+        <button class="btn-primary" onclick="navigateToPage('booking')">Start a Booking →</button>
+        <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
+      </div>
+    </div>
+  </section>`,
   },
 
   'about-gargo': {
@@ -846,7 +882,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">From a Single Yard to Mombasa's Largest Private Depot Network</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">From a Single Yard to Mombasa's Largest Private Depot Network</h2>
               <p>The story of Gargo Haven begins in 2014, when founder Ben Wamae identified a critical gap in Mombasa's container market: shipping lines and freight forwarders needed a professionally managed, technology-enabled empty container depot that could match the speed and standards demanded by modern global supply chains.</p>
               <p>Starting with a 500-TEU yard in Changamwe and a fleet of 8 trucks, Gargo Haven grew steadily by earning the trust of Mombasa's port community one container movement at a time. By 2016, the company had secured its KPA depot operator licence and established a formal partnership with APM Terminals — a landmark moment that cemented Gargo Haven's position as a serious player in Mombasa's container ecosystem.</p>
               <p>The 2018 launch of our proprietary GPS tracking platform marked a turning point. Gargo Haven became the first Mombasa depot to give clients real-time visibility of both their containers in the yard and the trucks carrying them — a capability that transformed how shipping lines manage empty container repositioning in the port.</p>
@@ -854,12 +890,12 @@ const SUBPAGES = {
             </div>
             <div class="sidebar-box">
               <h4>Key Milestones</h4>
-              <div class="sidebar-item"><div class="sidebar-label">2014</div><p>Founded · 500 TEU yard · 8 trucks</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">2016</div><p>KPA Licence · APM Terminals partnership</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">2018</div><p>GPS tracking launch · Fleet grows to 60 trucks</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">2020</div><p>IICL Certification · 10-bay repair workshop opens</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">2022</div><p>Consolebase ICD alliance · Network expansion</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">2024</div><p>5,000+ TEU · 120+ trucks · 400+ clients</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">2024</div><p>Founded · 500 TEU yard · 8 trucks</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">2024</div><p>KPA Licence · APM Terminals partnership</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">2025</div><p>GPS tracking launch · Fleet grows to 60 trucks</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">2025</div><p>IICL Certification · 10-bay repair workshop opens</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">2025</div><p>Consolebase ICD alliance · Network expansion</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">2026</div><p>5,000+ TEU · 120+ trucks · 400+ clients</p></div>
             </div>
           </div>
         </div>
@@ -868,15 +904,27 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="section-header"><div class="section-tag">✦ Journey</div><h2 class="section-title">Our <span>Timeline</span></h2></div>
           <div class="timeline">
-            <div class="tl-item"><div class="tl-year">2014</div><div class="tl-dot"></div><div class="tl-content"><h4>Gargo Haven Founded</h4><p>Ben Wamae incorporates Gargo Haven Ltd. Operations begin with a 500-TEU Changamwe yard and 8 trucks. First clients: three local freight forwarders.</p></div></div>
-            <div class="tl-item"><div class="tl-year">2016</div><div class="tl-dot"></div><div class="tl-content"><h4>KPA Licence & APM Partnership</h4><p>Received the Kenya Ports Authority depot operator licence. Established formal container handling agreement with APM Terminals Mombasa. Fleet grows to 30 trucks.</p></div></div>
-            <div class="tl-item"><div class="tl-year">2018</div><div class="tl-dot"></div><div class="tl-content"><h4>GPS Tracking Platform Launch</h4><p>Launched Mombasa's first real-time container and truck GPS tracking platform. Fleet expanded to 60 units. Maersk and MSC sign as anchor clients.</p></div></div>
-            <div class="tl-item"><div class="tl-year">2020</div><div class="tl-dot"></div><div class="tl-content"><h4>IICL Certification & Repair Bay</h4><p>Achieved IICL certification for container inspection and repair. Opened 10-bay M&R workshop. Reefer yard with 200+ plug-in points commissioned.</p></div></div>
-            <div class="tl-item"><div class="tl-year">2022</div><div class="tl-dot"></div><div class="tl-content"><h4>Network Expansion</h4><p>Alliance agreements signed with Consolebase ICD, Hakika Depot, Kibarani, and Fortune Container Depot. ISO 9001:2015 certification achieved.</p></div></div>
-            <div class="tl-item"><div class="tl-year">2024</div><div class="tl-dot"></div><div class="tl-content"><h4>Mombasa's Premier Depot</h4><p>5,000+ TEU monthly throughput. 120+ truck fleet. 400+ active clients. Digital EIR system serving all five depot locations.</p></div></div>
+            <div class="tl-item"><div class="tl-year">2024</div><div class="tl-dot"></div><div class="tl-content"><h4>Gargo Haven Founded</h4><p>Ben Wamae incorporates Gargo Haven Ltd. Operations begin with a 500-TEU Changamwe yard and 8 trucks. First clients: three local freight forwarders.</p></div></div>
+            <div class="tl-item"><div class="tl-year">2024</div><div class="tl-dot"></div><div class="tl-content"><h4>KPA Licence & APM Partnership</h4><p>Received the Kenya Ports Authority depot operator licence. Established formal container handling agreement with APM Terminals Mombasa. Fleet grows to 30 trucks.</p></div></div>
+            <div class="tl-item"><div class="tl-year">2025</div><div class="tl-dot"></div><div class="tl-content"><h4>GPS Tracking Platform Launch</h4><p>Launched Mombasa's first real-time container and truck GPS tracking platform. Fleet expanded to 60 units. Maersk and MSC sign as anchor clients.</p></div></div>
+            <div class="tl-item"><div class="tl-year">2025</div><div class="tl-dot"></div><div class="tl-content"><h4>IICL Certification & Repair Bay</h4><p>Achieved IICL certification for container inspection and repair. Opened 10-bay M&R workshop. Reefer yard with 200+ plug-in points commissioned.</p></div></div>
+            <div class="tl-item"><div class="tl-year">2025</div><div class="tl-dot"></div><div class="tl-content"><h4>Network Expansion</h4><p>Alliance agreements signed with Consolebase ICD, Hakika Depot, Kibarani, and Fortune Container Depot. ISO 9001:2015 certification achieved.</p></div></div>
+            <div class="tl-item"><div class="tl-year">2026</div><div class="tl-dot"></div><div class="tl-content"><h4>Mombasa's Premier Depot</h4><p>5,000+ TEU monthly throughput. 120+ truck fleet. 400+ active clients. Digital EIR system serving all five depot locations.</p></div></div>
           </div>
         </div>
-      </section>`,
+      </section>
+      
+        <section class="cta-band-img" style="background-image:url('images/depot8.png')">
+    <div class="cta-band-overlay"></div>
+    <div class="cta-band-content">
+      <h2>Ready to Move Your Containers?</h2>
+      <p>Get an instant quote for depot storage or port haulage in seconds.</p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
+        <button class="btn-primary" onclick="navigateToPage('booking')">Start a Booking →</button>
+        <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
+      </div>
+    </div>
+  </section>`,
   },
 
   'certifications': {
@@ -2105,7 +2153,7 @@ window.navigateToSubpage = function(key) {
         <div class="hero-overlay-dark"></div>
         <div class="page-hero-content">
           <div style="margin-bottom:12px;">
-            <button onclick="navigateToPage('${sp.parent}')" style="background:none;border:1px solid rgba(255,255,255,0.3);color:var(--gray-light);padding:6px 16px;border-radius:4px;font-size:11px;letter-spacing:1px;cursor:pointer;">← BACK TO ${sp.parent.toUpperCase()}</button>
+            <button onclick="navigateToPage('${sp.parent}')" style="background:white;border:1px solid rgba(0, 0, 0, 0.3);color: black;padding:6px 16px;border-radius:4px;font-size:11px;letter-spacing:1px; font-weight:700;cursor:pointer;">← BACK TO ${sp.parent.toUpperCase()}</button>
           </div>
           <div class="section-tag">${sp.tag || ''}</div>
           <h1 class="section-title light" style="font-size:clamp(24px,4vw,36px);">${sp.title}</h1>
