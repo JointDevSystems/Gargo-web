@@ -55,9 +55,7 @@ const FAQ_DATA = [
   { cat: 'docs', q: 'How do I file a claim for container damage?', a: 'Damage claims can be filed through our Claims Portal or by contacting our support team directly with your EIR number and supporting photos. Our team will respond with an assessment within 48 hours.' }
 ];
 
-/* ---------------------------------------------------------
-TICKER DATA
---------------------------------------------------------- */
+
 const TICKER_ITEMS = [
   '🚢 KPA LICENSED DEPOT OPERATOR',
   '📦 5,000+ TEU CAPACITY AT MIRITINI',
@@ -194,10 +192,10 @@ function initHeroSlideshow() {
   if (!slides.length) return;
 
   const totalSlides = slides.length;
-  const SLIDE_DURATION = 6000; // 6 seconds per slide (matches CSS animation)
+  const SLIDE_DURATION = 6000; 
 
   function goToSlide(index) {
-    // Remove active from all slides
+    
     slides.forEach(function(slide) {
       slide.classList.remove('active');
     });
@@ -205,25 +203,25 @@ function initHeroSlideshow() {
       ind.classList.remove('active');
     });
 
-    // Activate current slide
+    
     slides[index].classList.add('active');
     if (indicators[index]) indicators[index].classList.add('active');
 
     state.heroSlideIndex = index;
   }
 
-  // Auto-advance slides
+
   state.heroSlideInterval = window.setInterval(function() {
     const nextIndex = (state.heroSlideIndex + 1) % totalSlides;
     goToSlide(nextIndex);
   }, SLIDE_DURATION);
 
-  // Click indicators to manually switch
+  
   indicators.forEach(function(indicator, idx) {
     indicator.addEventListener('click', function() {
       window.clearInterval(state.heroSlideInterval);
       goToSlide(idx);
-      // Restart auto-advance
+     
       state.heroSlideInterval = window.setInterval(function() {
         const nextIndex = (state.heroSlideIndex + 1) % totalSlides;
         goToSlide(nextIndex);
@@ -231,13 +229,11 @@ function initHeroSlideshow() {
     });
   });
 
-  // Initialize first slide
+  
   goToSlide(0);
 }
 
-/* ---------------------------------------------------------
-NAVIGATION (SPA page switching)
---------------------------------------------------------- */
+
 function navigateToPage(pageId) {
   const pages = $$('.page');
   pages.forEach(function (p) { p.classList.remove('active-page'); });
@@ -250,14 +246,14 @@ function navigateToPage(pageId) {
   }
   state.currentPage = pageId;
 
-  // Highlight nav links
+ 
   $$('.nav-link, .mobile-nav-link').forEach(function (link) {
     link.classList.remove('active-link');
   });
 
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
 
-  // Page-specific init hooks
+  
   if (pageId === 'booking') initBookingPage();
   if (pageId === 'track') initTrackPage();
   if (pageId === 'fleet') initFleetLivePanel();
@@ -2131,16 +2127,16 @@ const SUBPAGES = {
   },
 };
 
-// ─── NAVIGATION FUNCTION ─────────────────────────────────────────
+
 window.navigateToSubpage = function(key) {
   const sp = SUBPAGES[key];
   if (!sp) return;
 
-  // Ensure the parent page exists
+ 
   const parentPage = document.getElementById(sp.parent + '-page');
   if (!parentPage) return;
 
-  // Check if subpage container already exists
+ 
   let container = document.getElementById('subpage-' + key);
 
   if (!container) {
@@ -2247,7 +2243,7 @@ function wireNavLinks() {
 
 const _origNavigate = window.navigateToPage;
 window.navigateToPage = function(page) {
-  // Remove active from subpages
+ 
   document.querySelectorAll('.subpage-panel').forEach(sp => sp.classList.remove('active-page'));
   if (_origNavigate) _origNavigate(page);
 };
@@ -2319,7 +2315,7 @@ function demoTrack(num) {
 }
 window.demoTrack = demoTrack;
 
-/* ─── REVEAL ON SCROLL ─── */
+
 (function() {
   function initReveal() {
     const imgs = document.querySelectorAll('.reveal-img');
@@ -2367,7 +2363,7 @@ window.demoTrack = demoTrack;
     sessionStorage.removeItem('gh_session');
   }
 
-  /* ── Inject CSS ── */
+
   const style = document.createElement('style');
   style.textContent = `
     /* AUTH OVERLAY */
@@ -3029,7 +3025,7 @@ window.demoTrack = demoTrack;
 
   document.body.insertAdjacentHTML('beforeend', authHTML);
 
-  /* ── Close on overlay click ── */
+ 
   document.getElementById('gh-auth-overlay').addEventListener('click', function(e) {
     if (e.target === this) ghAuthClose();
   });
@@ -3040,7 +3036,7 @@ window.demoTrack = demoTrack;
     if (e.key === 'Escape') { ghAuthClose(); ghDashClose(); }
   });
 
-  /* ── Public API ── */
+ 
   window.ghAuthOpen = function(tab) {
     const overlay = document.getElementById('gh-auth-overlay');
     overlay.classList.add('open');
