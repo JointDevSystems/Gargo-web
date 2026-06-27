@@ -148,7 +148,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 32px;
-  height: 82px;
+  height: 90px;
   background: rgba(0,0,0,0.95);
   border-bottom: 1px solid rgba(201,162,39,0.2);
   backdrop-filter: blur(10px);
