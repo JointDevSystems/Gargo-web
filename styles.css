@@ -1765,7 +1765,7 @@ footer.footer {
 
 .stats-inner-logo{
   font-family: var(--font-main);
-  font-size: clamp(32px,5vw,52px);
+  font-size: clamp(32px,5vw,32px);
   font-weight: 700;
   color: rgb(173, 148, 2);
   line-height: 1;
@@ -1962,12 +1962,13 @@ footer.footer {
   z-index: 1;
 }
 .cta-band-content {
-  position: relative; z-index: 2;
+  position: relative; 
+  z-index: 2;
 }
 .cta-band-content h2 {
   font-family: var(--font-main);
   font-size: clamp(24px,4vw,42px);
-  color: var(--white);
+  color: rgb(135, 115, 0);
   margin-bottom: 12px;
 }
 .cta-band-content p {
@@ -2555,29 +2556,10 @@ footer.footer {
     border-color:rgba(201,162,39,.4);
 }
 
-.why-icon{
-
-    width:72px;
-    height:72px;
-
-    border-radius:18px;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    font-size:34px;
-
-    margin-bottom:25px;
-
-    background:rgba(201,162,39,.12);
-
-    border:1px solid rgba(201,162,39,.25);
-}
 
 .why-card h3{
 
-    color:white;
+    color: rgb(133, 113, 0);
 
     margin-bottom:14px;
 
