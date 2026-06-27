@@ -1856,7 +1856,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">Real-Time Fleet GPS Monitoring</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Real-Time Fleet GPS Monitoring</h2>
               <p>Launched in 2018, Gargo Haven's proprietary GPS platform was the first of its kind in Mombasa — giving clients live visibility of their container's truck, updated every 60 seconds. Since then, we have expanded the platform to cover container yard positions, driver details, ETA calculations, and full trip history.</p>
               <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">What You Can Track</h3>
               <ul class="rate-features" style="list-style:none;padding:0;">
@@ -1896,7 +1896,7 @@ const SUBPAGES = {
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--white);margin-bottom:20px;">In-House Fleet Maintenance</h2>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">In-House Fleet Maintenance</h2>
               <p>Gargo Haven operates its own vehicle maintenance workshop at the Changamwe depot, ensuring our 120+ truck fleet is always in peak operational condition. In-house maintenance means faster turnaround, lower downtime, and full control over maintenance quality.</p>
               <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;">
                 <li>Scheduled preventive maintenance programme</li>

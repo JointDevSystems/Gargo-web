@@ -768,13 +768,15 @@ footer.footer {
   margin-top: 32px;
 }
 .depot-location-card {
-  background: var(--black-3);
+
   border: 1px solid var(--gray-dark);
   border-radius: 8px;
   padding: 24px;
   transition: border-color 0.2s, transform 0.2s;
 }
-.depot-location-card:hover { border-color: var(--gold-dark); transform: translateY(-2px); }
+.depot-location-card:hover { 
+  border-color: var(--gold-dark); 
+  transform: translateY(-2px); }
 .depot-location-card.featured {
   border-color: var(--gold);
   background: rgba(201,162,39,0.05);
@@ -1237,7 +1239,7 @@ footer.footer {
   font-family: var(--font-main); 
   font-size: 31px; 
   font-weight: 700; 
-  color: gold;
+  color: rgb(227, 193, 4);
   line-height: 1.1; 
   margin-bottom: 20px; 
 }
@@ -1633,11 +1635,30 @@ footer.footer {
 .footer-logo-text span { color: var(--gold); }
 .footer-tagline { font-size: 10px; color: var(--gray-light); line-height: 1.7; margin-bottom: 16px; }
 .footer-cert { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.6px; color: var(--gold); }
-.footer-col-title { font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: 1.1px; color: var(--white); text-transform: uppercase; margin-bottom: 16px; }
-.footer-links { list-style: none; }
-.footer-links li { margin-bottom: 8px; }
-.footer-links a { font-size: 10px; color: var(--gray-light); text-decoration: none; transition: color 0.2s; }
-.footer-links a:hover { color: var(--gold); }
+.footer-col-title { 
+  font-family: var(--font-body); 
+  font-size: 11px; 
+  font-weight: 600; 
+  letter-spacing: 1.1px; 
+  color: rgb(190, 163, 8); 
+  text-transform: uppercase; 
+  margin-bottom: 16px; 
+}
+.footer-links { 
+  list-style: none; 
+}
+.footer-links li { 
+  margin-bottom: 8px; 
+}
+.footer-links a { 
+  font-size: 10px; 
+  color: var(--gray-light); 
+  text-decoration: none; 
+  transition: color 0.2s; 
+}
+.footer-links a:hover { 
+  color: white; 
+}
 .footer-bottom {
   border-top: 1px solid var(--gray-dark);
   padding: 20px 0;
