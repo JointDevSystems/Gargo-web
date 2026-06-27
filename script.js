@@ -822,30 +822,35 @@ const SUBPAGES = {
                 <p>Visionary behind Gargo Haven's founding in 2014. Ben has over 15 years of experience in Mombasa port logistics, formerly managing container operations at KPA. He established Gargo Haven's foundational partnerships with APM Terminals and shaped the company's technology-first approach to depot management.</p>
               </div>
             </div>
-            <div class="team-card">
+
+            <!--<div class="team-card">
               <div class="team-avatar" style="font-size:32px;display:flex;align-items:center;justify-content:center;">👤</div>
               <div class="team-info">
                 <h4>Operations Director</h4>
                 <span class="role">Head of Depot & Fleet Operations</span>
                 <p>Oversees day-to-day operations across all five depot locations and the 120+ truck fleet. Specialist in yard management systems and container throughput optimization. Led the expansion into Consolebase ICD and the Hakika and Fortune depot alliance agreements.</p>
               </div>
-            </div>
-            <div class="team-card">
+            </div>-->
+
+            <!--<div class="team-card">
               <div class="team-avatar" style="font-size:32px;display:flex;align-items:center;justify-content:center;">👤</div>
               <div class="team-info">
                 <h4>Head of Technology</h4>
                 <span class="role">Chief Technology Officer</span>
                 <p>Built Gargo Haven's GPS tracking and depot management platform from the ground up in 2018 — making Gargo the first Mombasa depot to offer real-time container and truck tracking. Manages the client portal, gate system, and EIR digitisation infrastructure.</p>
               </div>
-            </div>
-            <div class="team-card">
+            </div>-->
+
+           <!--<div class="team-card">
               <div class="team-avatar" style="font-size:32px;display:flex;align-items:center;justify-content:center;">👤</div>
               <div class="team-info">
                 <h4>Compliance & Customs Manager</h4>
                 <span class="role">Head of Documentation & Compliance</span>
                 <p>Manages all KRA customs documentation, KPA compliance, and EIR processing. Former KRA Customs Officer with deep knowledge of port regulations and bonded transport requirements. Ensures Gargo Haven's full regulatory compliance across all depot and transport operations.</p>
               </div>
-            </div>
+            </div>-->
+
+
           </div>
           <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;">
             <h3 style="font-family:var(--font-main);font-size:22px;color:var(--white);margin-bottom:12px;">Join the Gargo Haven Team</h3>
