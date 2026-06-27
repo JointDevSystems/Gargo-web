@@ -854,7 +854,7 @@ const SUBPAGES = {
           </div>
           <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;">
             <h3 style="font-family:var(--font-main);font-size:22px;color:var(--white);margin-bottom:12px;">Join the Gargo Haven Team</h3>
-            <p style="color:var(--gray-light);margin-bottom:24px;">We are always looking for experienced drivers, yard operators, and logistics professionals in Mombasa. Send your CV to <a href="mailto:careers@gargohaven.co.ke" style="color:var(--gold);">careers@gargohaven.co.ke</a></p>
+            <p style="color:var(--gray-light);margin-bottom:24px;">We are always looking for experienced drivers, yard operators, and logistics professionals in Mombasa. Send your CV to <a href="mailto:careers@gargo.co.ke" style="color:var(--gold);">careers@gargo.co.ke</a></p>
             <button class="btn-secondary" onclick="navigateToPage('contact')">Contact HR →</button>
           </div>
         </div>
