@@ -592,6 +592,30 @@ function renderTrackResult(details, query, searchType) {
   if (statusEl) {
     statusEl.textContent = trip.status.charAt(0).toUpperCase() + trip.status.slice(1);
     statusEl.className = 'status-badge ' + (trip.status === 'active' ? 'status-transit' : trip.status === 'completed' ? 'status-delivered' : 'status-pending');
+
+    // Extra info – ensure container exists
+let extraContainer = document.getElementById('trackExtraInfo');
+if (!extraContainer) {
+  extraContainer = document.createElement('div');
+  extraContainer.id = 'trackExtraInfo';
+  const timelineEl = document.getElementById('trackTimeline');
+  if (timelineEl && timelineEl.parentNode) {
+    timelineEl.parentNode.appendChild(extraContainer);
+  }
+}
+// Populate extra info
+extraContainer.innerHTML = `
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+    <div><span style="color:var(--gray-light);font-size:10px;">Container Type</span><br><strong>${trip.ctype || '—'}</strong></div>
+    <div><span style="color:var(--gray-light);font-size:10px;">Shipping Line</span><br><strong>${trip.line || '—'}</strong></div>
+    <div><span style="color:var(--gray-light);font-size:10px;">Trip ID</span><br><strong>${trip.id}</strong></div>
+    <div><span style="color:var(--gray-light);font-size:10px;">Priority</span><br><strong>${trip.priority || 'Normal'}</strong></div>
+    ${truck ? `<div><span style="color:var(--gray-light);font-size:10px;">Truck Make</span><br><strong>${truck.make || '—'}</strong></div>` : ''}
+    ${truck ? `<div><span style="color:var(--gray-light);font-size:10px;">Truck Fuel</span><br><strong>${truck.fuel_level || '—'}%</strong></div>` : ''}
+    ${driver ? `<div><span style="color:var(--gray-light);font-size:10px;">Driver ID</span><br><strong>${driver.id || '—'}</strong></div>` : ''}
+    ${driver ? `<div><span style="color:var(--gray-light);font-size:10px;">Licence Expiry</span><br><strong>${driver.licence_exp ? dateStr(driver.licence_exp) : '—'}</strong></div>` : ''}
+  </div>
+`;
   }
 
   // Truck info
