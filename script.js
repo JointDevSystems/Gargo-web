@@ -526,64 +526,129 @@ function renderTimeline(events) {
     );
   }).join('');
 }
-function doTrack(type) {
-  if (type === 'container') {
-    const inputEl = document.getElementById('trackInput');
-    const query = (inputEl ? inputEl.value : '').trim().toUpperCase();
-    const resultEl = document.getElementById('trackResult');
-    if (!query) {
-      showNotification('Enter a Container Number', 'Try MSCU1234567, TCKU9876543, or GHTU0001234', 'ℹ️');
-      return;
-    }
-    const data = TRACK_SAMPLES.container[query] || TRACK_SAMPLES.container['MSCU1234567'];
-    setText('res-id', query);
-    setText('res-route', data.route);
-    setText('res-eta', data.eta);
-    const statusEl = document.getElementById('res-status');
-    if (statusEl) {
-      statusEl.textContent = data.status;
-      statusEl.className = 'status-badge ' + data.statusClass;
-    }
-    setText('truckReg', data.truckReg);
-    setText('driverName', data.driver);
-    const phoneEl = document.getElementById('driverPhone');
-    if (phoneEl) {
-      phoneEl.textContent = data.phone;
-      phoneEl.parentElement.href = 'tel:' + data.phone.replace(/\s/g, '');
-    }
-    setText('truckLocation', data.location);
-    setText('truckSpeed', data.speed);
-    setText('gpsUpdate', data.gps);
+function doTrack() {
+  const inputEl = document.getElementById('trackInput');
+  const query = (inputEl ? inputEl.value : '').trim();
+  const resultEl = document.getElementById('trackResult');
+  if (!query) {
+    showNotification('Enter a Container, Booking Ref, Truck Reg, or Driver Name', 'e.g. MSCU1234567, GHT-001, KCB 421G', 'ℹ️');
+    return;
+  }
 
-    const timelineEl = document.getElementById('trackTimeline');
-    if (timelineEl) timelineEl.innerHTML = renderTimeline(data.timeline);
+  // Use the bridge to search
+  let trip = null;
+  let searchType = '';
 
-    if (resultEl) resultEl.style.display = 'block';
-    showNotification('Container Located', query + ' — ' + data.status, '📍');
-    startLiveSimulation();
+  // Try container
+  trip = window.bridge.findTripByContainer(query);
+  if (trip) searchType = 'container';
 
-  } else if (type === 'truck') {
-    const inputEl = document.getElementById('truckTrackInput');
-    const query = (inputEl ? inputEl.value : '').trim().toUpperCase();
-    const resultEl = document.getElementById('truckTrackResult');
-    if (!query) {
-      showNotification('Enter a Truck Registration', 'Try KCB 421G or KDB 889T', 'ℹ️');
-      return;
-    }
-    const data = TRACK_SAMPLES.truck[query] || TRACK_SAMPLES.truck['KCB 421G'];
-    setText('truck-res-reg', data.reg);
-    setText('truck-res-driver', data.driver);
-    setText('truck-res-loc', data.loc);
-    if (resultEl) resultEl.style.display = 'block';
-    showNotification('Truck Located', data.reg + ' — ' + data.loc, '🚛');
+  if (!trip) {
+    // Try booking ref
+    trip = window.bridge.findTripByBookingRef(query);
+    if (trip) searchType = 'booking';
+  }
 
-  } else if (type === 'booking') {
-    showNotification('Booking Found', 'Status: Confirmed — depot processing in progress', '✅');
-  } else if (type === 'eir') {
-    showNotification('EIR Located', 'Document available — check your email for the digital copy', '📄');
+  if (!trip) {
+    // Try truck reg
+    trip = window.bridge.findTripByTruckReg(query);
+    if (trip) searchType = 'truck';
+  }
+
+  if (!trip) {
+    // Try driver name
+    trip = window.bridge.findTripByDriverName(query);
+    if (trip) searchType = 'driver';
+  }
+
+  if (!trip) {
+    showNotification('No matching record found', 'Please check the number and try again', '❌');
+    if (resultEl) resultEl.style.display = 'none';
+    return;
+  }
+
+  // Get full details
+  const details = window.bridge.getTripDetails(trip);
+  if (!details) {
+    showNotification('Error retrieving details', 'Please contact support', '⚠️');
+    return;
+  }
+
+  // Render the result
+  renderTrackResult(details, query, searchType);
+  if (resultEl) resultEl.style.display = 'block';
+  showNotification('Record found', `Trip ${trip.id} – ${trip.status}`, '✅');
+}
+
+function renderTrackResult(details, query, searchType) {
+  const { trip, truck, driver, gps } = details;
+
+  // Populate basic fields
+  setText('res-id', trip.container || trip.id);
+  setText('res-route', `${trip.origin} → ${trip.dest}`);
+  setText('res-eta', trip.eta || '—');
+
+  const statusEl = document.getElementById('res-status');
+  if (statusEl) {
+    statusEl.textContent = trip.status.charAt(0).toUpperCase() + trip.status.slice(1);
+    statusEl.className = 'status-badge ' + (trip.status === 'active' ? 'status-transit' : trip.status === 'completed' ? 'status-delivered' : 'status-pending');
+  }
+
+  // Truck info
+  setText('truckReg', truck ? truck.reg : '—');
+  setText('truckType', truck ? truck.type : '—');
+  setText('truckFuel', truck ? truck.fuel_level + '%' : '—');
+
+  // Driver info
+  setText('driverName', driver ? driver.name : '—');
+  const phoneEl = document.getElementById('driverPhone');
+  if (phoneEl) {
+    phoneEl.textContent = driver ? driver.phone : '—';
+    phoneEl.parentElement.href = driver ? 'tel:' + driver.phone.replace(/\s/g, '') : '#';
+  }
+  setText('driverLicence', driver ? driver.licence : '—');
+
+  // Location & speed
+  let locationText = trip.location || '—';
+  if (trip.status === 'active' && gps) {
+    locationText = `GPS: ${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)}`;
+  }
+  setText('truckLocation', locationText);
+  setText('truckSpeed', gps ? `${gps.speed} km/h` : '—');
+
+  // GPS update time
+  setText('gpsUpdate', new Date().toLocaleTimeString());
+
+  // Timeline
+  const timelineEl = document.getElementById('trackTimeline');
+  if (timelineEl && trip.events) {
+    const events = trip.events.map(ev => ({
+      t: ev.time || '—',
+      e: ev.label,
+      done: ev.done || false
+    }));
+    timelineEl.innerHTML = renderTimeline(events);
+  } else if (timelineEl) {
+    timelineEl.innerHTML = '<div class="empty-state">No timeline events</div>';
+  }
+
+  // Additional info (optional)
+  // We can also show container type, shipping line, etc.
+  const extraInfo = document.getElementById('trackExtraInfo');
+  if (extraInfo) {
+    extraInfo.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <div><span style="color:var(--gray-light);font-size:10px;">Container Type</span><br><strong>${trip.ctype || '—'}</strong></div>
+        <div><span style="color:var(--gray-light);font-size:10px;">Shipping Line</span><br><strong>${trip.line || '—'}</strong></div>
+        <div><span style="color:var(--gray-light);font-size:10px;">Trip ID</span><br><strong>${trip.id}</strong></div>
+        <div><span style="color:var(--gray-light);font-size:10px;">Priority</span><br><strong>${trip.priority || 'Normal'}</strong></div>
+        ${truck ? `<div><span style="color:var(--gray-light);font-size:10px;">Truck Make</span><br><strong>${truck.make || '—'}</strong></div>` : ''}
+        ${driver ? `<div><span style="color:var(--gray-light);font-size:10px;">Driver ID</span><br><strong>${driver.id || '—'}</strong></div>` : ''}
+      </div>
+    `;
   }
 }
-window.doTrack = doTrack;
+
 function setText(id, val) {
   const el = document.getElementById(id);
   if (el) el.textContent = val;
