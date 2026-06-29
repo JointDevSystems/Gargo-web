@@ -733,7 +733,7 @@ const SUBPAGES = {
       </section>
       <section class="stats-band">
         <div class="stats-inner">
-          <div class="stat-block"><div class="stat-num">2+</div><div class="stat-lbl">Years Operating</div><div class="stat-desc">Since 2014</div></div>
+          <div class="stat-block"><div class="stat-num">2+</div><div class="stat-lbl">Years Operating</div><div class="stat-desc">Since 2024</div></div>
           <div class="stat-block"><div class="stat-num">5,000+</div><div class="stat-lbl">TEUs / Month</div><div class="stat-desc">Storage & Transport</div></div>
           <div class="stat-block"><div class="stat-num">120+</div><div class="stat-lbl">Truck Fleet</div><div class="stat-desc">All GPS tracked</div></div>
           <div class="stat-block"><div class="stat-num">400+</div><div class="stat-lbl">Clients</div><div class="stat-desc">Lines to SMEs</div></div>
