@@ -1,4 +1,3 @@
-
 :root {
   --gold: #c9a227;
   --gold-light: #e8c44a;
@@ -1485,7 +1484,29 @@ footer.footer {
 }
 .track-btn:hover { background: var(--gold-light); }
 .tracking-result { display: none; }
-.tracking-result.visible { display: block; }
+.tracking-result.visible { display: block; margin-top: 24px; }
+.tr-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.tr-panel-title {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 1.2px;
+  color: var(--gold); font-weight: 700;
+}
+.tr-close-btn {
+  background: transparent;
+  border: 1px solid var(--gray-dark);
+  color: var(--gray-light);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.8px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tr-close-btn:hover { border-color: #ef4444; color: #ef4444; }
+.empty-state { font-size: 11px; color: var(--gray-light); padding: 12px 0; }
 .track-header-info {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -2602,6 +2623,3 @@ footer.footer {
 
 
 }
-
-
-

@@ -1,4 +1,104 @@
 
+const GH_SUPABASE_URL = 'https://okisjizcyidvvwdwehaa.supabase.co';
+const GH_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9raXNqaXpjeWlkdnZ3ZHdlaGFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTYzNjMsImV4cCI6MjA5ODM5MjM2M30.O_0EeK297a07B7FLunpWr6HDlqrfP5Z8Owyp3qE4hQE';
+
+if (!window.supabase) {
+  console.error('script.js: supabase-js must be loaded before script.js');
+}
+const ghSupabase = window.supabase.createClient(GH_SUPABASE_URL, GH_SUPABASE_ANON_KEY);
+
+
+async function ghTrackQuery(query) {
+  const q = (query || '').trim();
+  if (!q) throw new Error('Enter a container, booking ref, truck reg, or driver name');
+  const { data, error } = await ghSupabase.rpc('public_track_lookup', { p_query: q });
+  if (error) throw new Error(error.message || 'Lookup failed');
+  if (!data) throw new Error('No matching record found');
+  return data;
+}
+
+
+async function ghFleetStatus() {
+  const { data, error } = await ghSupabase.rpc('public_fleet_status');
+  if (error) throw new Error(error.message || 'Could not load fleet status');
+  return { trucks: data || [] };
+}
+
+
+async function ghSubmitBooking(payload) {
+  const id = (window.crypto && window.crypto.randomUUID)
+    ? window.crypto.randomUUID()
+    : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+  const { error } = await ghSupabase.from('public_bookings').insert(Object.assign({ id }, payload));
+  if (error) throw new Error(error.message || 'Booking failed — please try again');
+  return { booking: { id } };
+}
+
+
+async function ghSubmitContact(payload) {
+  const { error } = await ghSupabase.from('public_contact_messages').insert(payload);
+  if (error) throw new Error(error.message || 'Message failed — please try again');
+  return { ok: true };
+}
+
+
+function ghMapAuthUser(u) {
+  if (!u) return null;
+  const meta = u.user_metadata || {};
+  return {
+    id: u.id,
+    name: meta.name || u.email,
+    email: u.email,
+    phone: meta.phone || '',
+    company: meta.company || '',
+    role: meta.role || '',
+    created: u.created_at ? new Date(u.created_at).toLocaleDateString() : '—',
+  };
+}
+
+async function ghAuthRegister({ name, email, phone, company, role, password }) {
+  const { data, error } = await ghSupabase.auth.signUp({
+    email, password,
+    options: { data: { name, phone, company, role } },
+  });
+  if (error) throw new Error(error.message || 'Could not create account. Please try again.');
+  
+  return { user: ghMapAuthUser(data.user), needsEmailConfirmation: !data.session };
+}
+
+async function ghAuthLogin({ email, password }) {
+  const { data, error } = await ghSupabase.auth.signInWithPassword({ email, password });
+  if (error) throw new Error(error.message || 'Incorrect email or password. Please try again.');
+  return { user: ghMapAuthUser(data.user) };
+}
+
+async function ghAuthLogout() {
+  const { error } = await ghSupabase.auth.signOut();
+  if (error) throw new Error(error.message || 'Could not sign out. Please try again.');
+}
+
+
+async function ghAuthCurrentUser() {
+  const { data, error } = await ghSupabase.auth.getSession();
+  if (error || !data.session) return null;
+  return ghMapAuthUser(data.session.user);
+}
+
+window.bridge = {
+  trackQuery: ghTrackQuery,
+  fleetStatus: ghFleetStatus,
+  submitBooking: ghSubmitBooking,
+  submitContact: ghSubmitContact,
+  authRegister: ghAuthRegister,
+  authLogin: ghAuthLogin,
+  authLogout: ghAuthLogout,
+  authCurrentUser: ghAuthCurrentUser,
+};
+
+
 (function () {
 'use strict';
 
@@ -483,36 +583,58 @@ function submitBooking() {
     return;
   }
 
-  const ref = state.bookingRefNumber || generateBookingRef();
-  const refEl = document.getElementById('bookingRef');
-  if (refEl) refEl.textContent = ref;
+  const get = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const quoteText = (document.getElementById('liveQuote') || {}).textContent || '';
+  const quoteAmount = parseInt(quoteText.replace(/[^\d]/g, ''), 10) || null;
 
-  showNotification('Booking Submitted', 'Reference #' + ref + ' created', '✅');
+  const payload = {
+    full_name: get('fName'),
+    email: get('fEmail'),
+    phone: get('fPhone'),
+    company: get('fCompany'),
+    service_type: state.selectedCargoType || 'Depot Storage',
+    cargo_type: get('fContainerSize'),
+    container: get('fContainer'),
+    pickup_location: get('fOrigin'),
+    dropoff_location: get('fDest'),
+    pickup_date: get('fDate'),
+    quote_amount: quoteAmount,
+    notes: get('fNotes')
+  };
 
-  openModal('Booking Confirmed', [
-    '<p style="color:var(--gray-pale);line-height:1.7;margin-bottom:14px;">Thank you! Your booking request has been received.</p>',
-    '<div style="background:rgba(201,162,39,0.08);border:1px solid var(--gold-dark);border-radius:8px;padding:16px;margin-bottom:14px;">',
-    '<div style="font-size:13px;color:var(--gray-pale);">Booking Reference</div>',
-    '<div style="font-size:22px;font-weight:700;color:var(--gold);">' + ref + '</div>',
-    '</div>',
-    '<p style="color:var(--gray-pale);line-height:1.7;">Service: <strong style="color:#fff;">' + state.selectedCargoType + '</strong><br>Our team will confirm your booking within 2 hours via the contact details provided.</p>',
-    '<button class="btn-primary" style="margin-top:16px;width:100%;" onclick="closeModal()">Got It</button>'
-  ].join(''));
+  const btn = document.querySelector('.form-submit');
+  if (btn) { btn.disabled = true; btn.textContent = 'SUBMITTING…'; }
 
-  state.bookingRefNumber = generateBookingRef();
+  window.bridge.submitBooking(payload)
+    .then(function (data) {
+      const ref = data.booking.id;
+      state.bookingRefNumber = ref;
+      const refEl = document.getElementById('bookingRef');
+      if (refEl) refEl.textContent = ref;
+
+      showNotification('Booking Submitted', 'Reference #' + ref + ' created', '✅');
+
+      openModal('Booking Confirmed', [
+        '<p style="color:var(--gray-pale);line-height:1.7;margin-bottom:14px;">Thank you! Your booking request has been received.</p>',
+        '<div style="background:rgba(201,162,39,0.08);border:1px solid var(--gold-dark);border-radius:8px;padding:16px;margin-bottom:14px;">',
+        '<div style="font-size:13px;color:var(--gray-pale);">Booking Reference</div>',
+        '<div style="font-size:22px;font-weight:700;color:var(--gold);">' + ref + '</div>',
+        '</div>',
+        '<p style="color:var(--gray-pale);line-height:1.7;">Service: <strong style="color:#fff;">' + state.selectedCargoType + '</strong><br>Our team will confirm your booking within 2 hours via the contact details provided.</p>',
+        '<button class="btn-primary" style="margin-top:16px;width:100%;" onclick="closeModal()">Got It</button>'
+      ].join(''));
+    })
+    .catch(function (err) {
+      showNotification('Booking Failed', err.message || 'Please try again', '❌');
+    })
+    .finally(function () {
+      if (btn) { btn.disabled = false; btn.textContent = 'SUBMIT BOOKING →'; }
+    });
 }
 window.submitBooking = submitBooking;
 
 
 
-function switchTrackTab(btnEl, paneId) {
-  $$('.track-tab').forEach(function (b) { b.classList.remove('active'); });
-  btnEl.classList.add('active');
-  $$('.tab-pane').forEach(function (p) { p.style.display = 'none'; });
-  const pane = document.getElementById(paneId);
-  if (pane) pane.style.display = 'block';
-}
-window.switchTrackTab = switchTrackTab;
 function renderTimeline(events) {
   return events.map(function (ev, idx) {
     const isNextPending = !ev.done && (idx === 0 || events[idx - 1].done);
@@ -531,111 +653,98 @@ function doTrack() {
   const query = (inputEl ? inputEl.value : '').trim();
   const resultEl = document.getElementById('trackResult');
   if (!query) {
-    showNotification('Enter a Container, Booking Ref, Truck Reg, or Driver Name', 'e.g. MSCU1234567, GHT-001, KCB 421G', 'ℹ️');
+    showNotification('Enter a Container, Booking Ref, Truck Reg, or Driver Name', 'e.g. MSCU1234567, GH-2024-0001, KDA 221C', 'ℹ️');
     return;
   }
 
-  // Use the bridge to search
-  let trip = null;
-  let searchType = '';
-
-  // Try container
-  trip = window.bridge.findTripByContainer(query);
-  if (trip) searchType = 'container';
-
-  if (!trip) {
-    // Try booking ref
-    trip = window.bridge.findTripByBookingRef(query);
-    if (trip) searchType = 'booking';
-  }
-
-  if (!trip) {
-    // Try truck reg
-    trip = window.bridge.findTripByTruckReg(query);
-    if (trip) searchType = 'truck';
-  }
-
-  if (!trip) {
-    // Try driver name
-    trip = window.bridge.findTripByDriverName(query);
-    if (trip) searchType = 'driver';
-  }
-
-  if (!trip) {
-    showNotification('No matching record found', 'Please check the number and try again', '❌');
-    if (resultEl) resultEl.style.display = 'none';
-    return;
-  }
-
-  // Get full details
-  const details = window.bridge.getTripDetails(trip);
-  if (!details) {
-    showNotification('Error retrieving details', 'Please contact support', '⚠️');
-    return;
-  }
-
-  // Render the result
-  renderTrackResult(details, query, searchType);
-  if (resultEl) resultEl.style.display = 'block';
-  showNotification('Record found', `Trip ${trip.id} – ${trip.status}`, '✅');
+  window.bridge.trackQuery(query)
+    .then(function (details) {
+      renderTrackResult(details, query);
+      if (resultEl) resultEl.classList.add('visible');
+      showNotification('Record found', 'Trip ' + details.trip.id + ' – ' + details.trip.status, '✅');
+      startLiveSimulation(query);
+    })
+    .catch(function (err) {
+      showNotification('No matching record found', err.message || 'Please check the number and try again', '❌');
+      window.clearInterval(state.trackInterval);
+    });
 }
 
-function renderTrackResult(details, query, searchType) {
-  const { trip, truck, driver, gps } = details;
+window.doTrack = doTrack;
+
+/** Closes the results panel — the only thing that should ever hide it once shown. */
+function closeTrackResult() {
+  const resultEl = document.getElementById('trackResult');
+  if (resultEl) resultEl.classList.remove('visible');
+  window.clearInterval(state.trackInterval);
+}
+window.closeTrackResult = closeTrackResult;
+
+/**
+ * Reads the first present, non-empty value for any of `keys` off `obj`.
+ * Used because we don't control the exact column names public_track_lookup
+ * returns (snake_case DB columns vs camelCase vs UK/US spelling, etc.) —
+ * this way rendering doesn't silently go blank on a naming mismatch.
+ */
+function pick(obj, keys) {
+  if (!obj) return null;
+  for (let i = 0; i < keys.length; i++) {
+    const v = obj[keys[i]];
+    if (v !== undefined && v !== null && v !== '') return v;
+  }
+  return null;
+}
+
+function renderTrackResult(details, query) {
+
+  const { trip, truck, driver, events, gps } = details;
 
   // Populate basic fields
   setText('res-id', trip.container || trip.id);
-  setText('res-route', `${trip.origin} → ${trip.dest}`);
-  setText('res-eta', trip.eta || '—');
+  setText('res-route', (trip.origin || '—') + ' → ' + (trip.destination || '—'));
+  setText('res-eta', trip.status === 'active' ? 'In transit' : (trip.status === 'completed' ? 'Delivered' : '—'));
+  setText('res-booked', trip.created || '—');
 
   const statusEl = document.getElementById('res-status');
   if (statusEl) {
     statusEl.textContent = trip.status.charAt(0).toUpperCase() + trip.status.slice(1);
     statusEl.className = 'status-badge ' + (trip.status === 'active' ? 'status-transit' : trip.status === 'completed' ? 'status-delivered' : 'status-pending');
-
-    // Extra info – ensure container exists
-let extraContainer = document.getElementById('trackExtraInfo');
-if (!extraContainer) {
-  extraContainer = document.createElement('div');
-  extraContainer.id = 'trackExtraInfo';
-  const timelineEl = document.getElementById('trackTimeline');
-  if (timelineEl && timelineEl.parentNode) {
-    timelineEl.parentNode.appendChild(extraContainer);
-  }
-}
-// Populate extra info
-extraContainer.innerHTML = `
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-    <div><span style="color:var(--gray-light);font-size:10px;">Container Type</span><br><strong>${trip.ctype || '—'}</strong></div>
-    <div><span style="color:var(--gray-light);font-size:10px;">Shipping Line</span><br><strong>${trip.line || '—'}</strong></div>
-    <div><span style="color:var(--gray-light);font-size:10px;">Trip ID</span><br><strong>${trip.id}</strong></div>
-    <div><span style="color:var(--gray-light);font-size:10px;">Priority</span><br><strong>${trip.priority || 'Normal'}</strong></div>
-    ${truck ? `<div><span style="color:var(--gray-light);font-size:10px;">Truck Make</span><br><strong>${truck.make || '—'}</strong></div>` : ''}
-    ${truck ? `<div><span style="color:var(--gray-light);font-size:10px;">Truck Fuel</span><br><strong>${truck.fuel_level || '—'}%</strong></div>` : ''}
-    ${driver ? `<div><span style="color:var(--gray-light);font-size:10px;">Driver ID</span><br><strong>${driver.id || '—'}</strong></div>` : ''}
-    ${driver ? `<div><span style="color:var(--gray-light);font-size:10px;">Licence Expiry</span><br><strong>${driver.licence_exp ? dateStr(driver.licence_exp) : '—'}</strong></div>` : ''}
-  </div>
-`;
   }
 
-  // Truck info
-  setText('truckReg', truck ? truck.reg : '—');
-  setText('truckType', truck ? truck.type : '—');
-  setText('truckFuel', truck ? truck.fuel_level + '%' : '—');
+  // Truck info — tolerant of reg/registration/licence_plate/plate naming,
+  // and falls back to flat fields on the trip itself (e.g. truck_reg)
+  // in case the RPC doesn't nest a `truck` object at all.
+  setText('truckReg', pick(truck, ['reg', 'registration', 'licence_plate', 'licencePlate', 'plate', 'vehicle_reg'])
+    || pick(trip, ['truck_reg', 'truckReg', 'vehicle_reg']) || '—');
+  setText('truckType', pick(truck, ['type', 'truck_type', 'vehicle_type', 'make'])
+    || pick(trip, ['truck_type', 'truckType']) || '—');
+  setText('truckFuel', pick(truck, ['status', 'truck_status', 'vehicle_status'])
+    || pick(trip, ['truck_status', 'truckStatus']) || '—');
 
-  // Driver info
-  setText('driverName', driver ? driver.name : '—');
+  // Driver info — tolerant of name/phone/licence naming (UK "licence" vs
+  // US "license"), and falls back to flat fields on the trip itself.
+  const driverName = pick(driver, ['name', 'driver_name', 'full_name']) || pick(trip, ['driver_name', 'driverName']) || '—';
+  setText('driverName', driverName);
+
+  const driverPhone = pick(driver, ['phone', 'mobile', 'phone_number', 'contact']) || pick(trip, ['driver_phone', 'driverPhone']);
   const phoneEl = document.getElementById('driverPhone');
   if (phoneEl) {
-    phoneEl.textContent = driver ? driver.phone : '—';
-    phoneEl.parentElement.href = driver ? 'tel:' + driver.phone.replace(/\s/g, '') : '#';
+    phoneEl.textContent = driverPhone || '—';
+    phoneEl.parentElement.href = driverPhone ? 'tel:' + String(driverPhone).replace(/\s/g, '') : '#';
   }
-  setText('driverLicence', driver ? driver.licence : '—');
+
+  const driverLicence = pick(driver, ['licence', 'license', 'licence_no', 'license_no', 'licenceNo', 'licenseNo'])
+    || pick(trip, ['driver_licence', 'driver_license']) || '—';
+  setText('driverLicence', driverLicence);
 
   // Location & speed
-  let locationText = trip.location || '—';
+  let locationText = '—';
   if (trip.status === 'active' && gps) {
     locationText = `GPS: ${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)}`;
+  } else if (trip.status === 'completed') {
+    locationText = trip.destination || '—';
+  } else {
+    locationText = trip.origin || '—';
   }
   setText('truckLocation', locationText);
   setText('truckSpeed', gps ? `${gps.speed} km/h` : '—');
@@ -645,31 +754,13 @@ extraContainer.innerHTML = `
 
   // Timeline
   const timelineEl = document.getElementById('trackTimeline');
-  if (timelineEl && trip.events) {
-    const events = trip.events.map(ev => ({
-      t: ev.time || '—',
-      e: ev.label,
-      done: ev.done || false
-    }));
-    timelineEl.innerHTML = renderTimeline(events);
+  if (timelineEl && events && events.length) {
+    const mapped = events.map(function (ev, idx) {
+      return { t: ev.ts || '—', e: ev.label + (ev.detail ? ' — ' + ev.detail : ''), done: idx < events.length - 1 || trip.status === 'completed' };
+    });
+    timelineEl.innerHTML = renderTimeline(mapped);
   } else if (timelineEl) {
-    timelineEl.innerHTML = '<div class="empty-state">No timeline events</div>';
-  }
-
-  // Additional info (optional)
-  // We can also show container type, shipping line, etc.
-  const extraInfo = document.getElementById('trackExtraInfo');
-  if (extraInfo) {
-    extraInfo.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-        <div><span style="color:var(--gray-light);font-size:10px;">Container Type</span><br><strong>${trip.ctype || '—'}</strong></div>
-        <div><span style="color:var(--gray-light);font-size:10px;">Shipping Line</span><br><strong>${trip.line || '—'}</strong></div>
-        <div><span style="color:var(--gray-light);font-size:10px;">Trip ID</span><br><strong>${trip.id}</strong></div>
-        <div><span style="color:var(--gray-light);font-size:10px;">Priority</span><br><strong>${trip.priority || 'Normal'}</strong></div>
-        ${truck ? `<div><span style="color:var(--gray-light);font-size:10px;">Truck Make</span><br><strong>${truck.make || '—'}</strong></div>` : ''}
-        ${driver ? `<div><span style="color:var(--gray-light);font-size:10px;">Driver ID</span><br><strong>${driver.id || '—'}</strong></div>` : ''}
-      </div>
-    `;
+    timelineEl.innerHTML = '<div class="empty-state">No timeline events yet</div>';
   }
 }
 
@@ -677,49 +768,59 @@ function setText(id, val) {
   const el = document.getElementById(id);
   if (el) el.textContent = val;
 }
-function startLiveSimulation() {
+function startLiveSimulation(query) {
   window.clearInterval(state.trackInterval);
+  if (!query) return;
   state.trackInterval = window.setInterval(function () {
-    const speedEl = document.getElementById('truckSpeed');
-    const gpsEl = document.getElementById('gpsUpdate');
-    if (speedEl) {
-      const base = parseInt(speedEl.textContent, 10) || 45;
-      const variance = Math.round((Math.random() - 0.5) * 10);
-      speedEl.textContent = Math.max(0, base + variance) + ' km/h';
-    }
-    if (gpsEl) gpsEl.textContent = 'Just now';
+    window.bridge.trackQuery(query)
+      .then(function (details) {
+        if (details.trip.status !== 'active') {
+          window.clearInterval(state.trackInterval);
+          return;
+        }
+        const speedEl = document.getElementById('truckSpeed');
+        const locEl = document.getElementById('truckLocation');
+        const gpsEl = document.getElementById('gpsUpdate');
+        if (speedEl && details.gps) speedEl.textContent = details.gps.speed + ' km/h';
+        if (locEl && details.gps) locEl.textContent = `GPS: ${details.gps.lat.toFixed(4)}, ${details.gps.lng.toFixed(4)}`;
+        if (gpsEl) gpsEl.textContent = 'Just now';
+      })
+      .catch(function () { /* silent — keep last known values on a transient error */ });
   }, 8000);
 }
 function initTrackPage() {
   const resultEl = document.getElementById('trackResult');
-  if (resultEl && resultEl.style.display !== 'none') {
-    startLiveSimulation();
+  const inputEl = document.getElementById('trackInput');
+  if (resultEl && resultEl.classList.contains('visible') && inputEl && inputEl.value.trim()) {
+    startLiveSimulation(inputEl.value.trim());
   }
 }
 
 
-const FLEET_LIVE_SAMPLE = [
-  { reg: 'KCB 421G', status: 'En Route', loc: 'Makupa Causeway' },
-  { reg: 'KDB 889T', status: 'Loading', loc: 'Gargo Haven Depot — Gate 2' },
-  { reg: 'KDG 112M', status: 'En Route', loc: 'Port Reitz Road' },
-  { reg: 'KCF 765B', status: 'Idle', loc: 'Mombasa Port (KPA)' },
-  { reg: 'KDA 330L', status: 'En Route', loc: 'Changamwe' },
-  { reg: 'KBZ 904P', status: 'Unloading', loc: 'Consolebase ICD' },
-  { reg: 'KDH 558R', status: 'En Route', loc: 'Mombasa–Nairobi Highway' },
-  { reg: 'KCJ 217Q', status: 'Idle', loc: 'Gargo Haven Depot' }
-];
 function initFleetLivePanel() {
   const grid = document.getElementById('fleetLiveGrid');
   if (!grid) return;
-  grid.innerHTML = FLEET_LIVE_SAMPLE.map(function (t) {
-    return (
-      '<div class="fleet-live-item">' +
-      '<strong>' + t.reg + '</strong>' +
-      '<div>' + t.status + '</div>' +
-      '<div style="opacity:.7;font-size:12px;">' + t.loc + '</div>' +
-      '</div>'
-    );
-  }).join('');
+  grid.innerHTML = '<div class="empty-state">Loading fleet status…</div>';
+  window.bridge.fleetStatus()
+    .then(function (data) {
+      if (!data.trucks || !data.trucks.length) {
+        grid.innerHTML = '<div class="empty-state">No trucks in the fleet yet</div>';
+        return;
+      }
+      grid.innerHTML = data.trucks.map(function (t) {
+        const statusLabel = { on_trip: 'En Route', available: 'Available', maintenance: 'Maintenance', breakdown: 'Breakdown', off_duty: 'Off Duty' }[t.status] || t.status;
+        return (
+          '<div class="fleet-live-item">' +
+          '<strong>' + t.reg + '</strong>' +
+          '<div>' + statusLabel + '</div>' +
+          '<div style="opacity:.7;font-size:12px;">' + (t.type || '') + '</div>' +
+          '</div>'
+        );
+      }).join('');
+    })
+    .catch(function () {
+      grid.innerHTML = '<div class="empty-state">Could not load fleet status</div>';
+    });
 }
 
 
@@ -737,14 +838,30 @@ function sendContact() {
     return;
   }
 
-  showNotification('Message Sent', 'Our team will respond within 24 hours', '✅');
+  const get = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const payload = {
+    full_name: get('cName'),
+    company: get('cCompany'),
+    email: get('cEmail'),
+    phone: get('cPhone'),
+    subject: get('cSubject'),
+    contact_method: get('cContactMethod'),
+    message: get('cMessage')
+  };
 
-  ['cName', 'cCompany', 'cEmail', 'cMessage'].forEach(function (id) {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  const subjectEl = document.getElementById('cSubject');
-  if (subjectEl) subjectEl.selectedIndex = 0;
+  window.bridge.submitContact(payload)
+    .then(function () {
+      showNotification('Message Sent', 'Our team will respond within 2 hours', '✅');
+      ['cName', 'cCompany', 'cEmail', 'cPhone', 'cMessage'].forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      const subjectEl = document.getElementById('cSubject');
+      if (subjectEl) subjectEl.selectedIndex = 0;
+    })
+    .catch(function (err) {
+      showNotification('Message Failed', err.message || 'Please try again', '❌');
+    });
 }
 window.sendContact = sendContact;
 
@@ -2037,7 +2154,7 @@ const SUBPAGES = {
                   <input type="text" class="track-input" id="subTrackInput" placeholder="Enter container number (e.g. MSCU1234567)">
                   <button class="track-btn" onclick="
                     const v=document.getElementById('subTrackInput').value.trim();
-                    if(v){document.getElementById('fakeTrackInput').value=v;navigateToPage('track');setTimeout(()=>{document.querySelector('.track-btn') && document.getElementById('trackInput').value=v;},300);}
+                    if(v){document.getElementById('fakeTrackInput').value=v;navigateToPage('track');setTimeout(()=>{if(document.querySelector('.track-btn')){document.getElementById('trackInput').value=v;}},300);}
                   ">TRACK NOW →</button>
                 </div>
                 <div class="track-sample-hint">Try: MSCU1234567 · TCKU9876543 · GHTU0001234</div>
@@ -2389,15 +2506,16 @@ function switchTrackTab(type, btn) {
   document.querySelectorAll('.track-tab').forEach(function(t){ t.classList.remove('active'); });
   btn.classList.add('active');
   const input = document.getElementById('trackInput');
-  if (!input) return;
-  const placeholders = {
-    container: 'Enter container number e.g. MSCU1234567',
-    truck: 'Enter truck registration e.g. KCB 421G',
-    booking: 'Enter booking reference e.g. GH-2024-0001'
-  };
-  input.placeholder = placeholders[type] || placeholders.container;
-  const result = document.getElementById('trackResult');
-  if (result) result.innerHTML = '';
+  if (input) {
+    const placeholders = {
+      container: 'Enter container number e.g. MSCU1234567',
+      truck: 'Enter truck registration e.g. KCB 421G',
+      booking: 'Enter booking reference e.g. GH-2024-0001'
+    };
+    input.placeholder = placeholders[type] || placeholders.container;
+    input.value = '';
+  }
+  closeTrackResult();
 }
 window.switchTrackTab = switchTrackTab;
 
@@ -2440,21 +2558,22 @@ window.demoTrack = demoTrack;
 (function () {
   'use strict';
 
-  /* ── Simulated user store (localStorage for persistence) ── */
-  function getUsers() {
-    try { return JSON.parse(localStorage.getItem('gh_users') || '[]'); } catch { return []; }
-  }
-  function saveUsers(users) {
-    localStorage.setItem('gh_users', JSON.stringify(users));
-  }
+  /* ── Real session, backed by Supabase Auth (see ghAuth* helpers above).
+     Supabase persists its own session in localStorage; this sessionStorage
+     copy is just a fast local cache so the nav/dashboard can render
+     without waiting on a round trip. ── */
   function getCurrentUser() {
-    try { return JSON.parse(sessionStorage.getItem('gh_session') || 'null'); } catch { return null; }
+    try { return JSON.parse(sessionStorage.getItem('gh_session') || 'null'); } catch (e) { return null; }
   }
   function setCurrentUser(user) {
     sessionStorage.setItem('gh_session', JSON.stringify(user));
   }
   function clearCurrentUser() {
     sessionStorage.removeItem('gh_session');
+  }
+  // Splits the backend's single `name` field into a first name for greetings/nav
+  function firstNameOf(user) {
+    return user && user.name ? user.name.split(' ')[0] : 'there';
   }
 
 
@@ -3238,20 +3357,20 @@ window.demoTrack = demoTrack;
     if (!ok) return;
 
     setLoading('gh-login-btn', true);
-    setTimeout(function() {
-      var users = getUsers();
-      var user = users.find(function(u) { return u.email === email && u.pw === btoa(pw); });
-      setLoading('gh-login-btn', false);
-      if (!user) {
+    window.bridge.authLogin({ email: email, password: pw })
+      .then(function (result) {
+        setCurrentUser(result.user);
+        updateNavForUser(result.user);
+        ghAuthClose();
+        setTimeout(function() { ghDashOpen(); }, 200);
+      })
+      .catch(function (err) {
         var errEl = document.getElementById('gh-login-general-err');
-        if (errEl) { errEl.textContent = 'Incorrect email or password. Please try again.'; errEl.classList.add('show'); }
-        return;
-      }
-      setCurrentUser(user);
-      updateNavForUser(user);
-      ghAuthClose();
-      setTimeout(function() { ghDashOpen(); }, 200);
-    }, 900);
+        if (errEl) { errEl.textContent = err.message || 'Incorrect email or password. Please try again.'; errEl.classList.add('show'); }
+      })
+      .finally(function () {
+        setLoading('gh-login-btn', false);
+      });
   };
 
   
@@ -3285,32 +3404,34 @@ window.demoTrack = demoTrack;
     if (!ok) return;
 
     setLoading('gh-reg-btn', true);
-    setTimeout(function() {
-      var users = getUsers();
-      if (users.find(function(u) { return u.email === email; })) {
-        setLoading('gh-reg-btn', false);
-        showErr('gh-reg-email','gh-reg-email-err','An account with this email already exists.');
-        return;
-      }
-      var newUser = {
-        id: 'GH-' + Date.now(),
-        fname: fname, lname: lname,
-        name: fname + ' ' + lname,
-        company: company, role: role,
-        email: email, phone: phone,
-        pw: btoa(pw),
-        since: new Date().toLocaleDateString('en-KE', { day:'numeric', month:'long', year:'numeric' })
-      };
-      users.push(newUser);
-      saveUsers(users);
-      setCurrentUser(newUser);
-      setLoading('gh-reg-btn', false);
-      updateNavForUser(newUser);
+    window.bridge.authRegister({
+      name: fname + ' ' + lname,
+      email: email,
+      phone: phone,
+      company: company,
+      role: role,
+      password: pw
+    })
+      .then(function (result) {
+        var msg = document.getElementById('gh-success-msg');
 
-      var msg = document.getElementById('gh-success-msg');
-      if (msg) msg.textContent = 'Welcome, ' + fname + '. Your Gargo Haven client account is ready. You can now book services, track containers, and manage your operations from your dashboard.';
-      ghAuthView('success');
-    }, 1100);
+        if (result.needsEmailConfirmation) {
+          if (msg) msg.textContent = 'Almost there, ' + fname + '. We\'ve sent a confirmation link to ' + email + ' — click it, then log in to reach your dashboard.';
+          ghAuthView('success');
+          return;
+        }
+
+        setCurrentUser(result.user);
+        updateNavForUser(result.user);
+        if (msg) msg.textContent = 'Welcome, ' + fname + '. Your Gargo Haven client account is ready. You can now book services, track containers, and manage your operations from your dashboard.';
+        ghAuthView('success');
+      })
+      .catch(function (err) {
+        showErr('gh-reg-email','gh-reg-email-err', err.message || 'Could not create your account. Please try again.');
+      })
+      .finally(function () {
+        setLoading('gh-reg-btn', false);
+      });
   };
 
   
@@ -3331,18 +3452,22 @@ window.demoTrack = demoTrack;
 
   
   window.ghDoLogout = function() {
-    clearCurrentUser();
-    ghDashClose();
-    resetNavForGuest();
-    if (typeof showNotification === 'function') {
-      showNotification('Signed Out', 'You have been logged out of your account.', '👋');
-    }
+    window.bridge.authLogout()
+      .catch(function () { /* even if the network call fails, still clear the local session below */ })
+      .finally(function () {
+        clearCurrentUser();
+        ghDashClose();
+        resetNavForGuest();
+        if (typeof showNotification === 'function') {
+          showNotification('Signed Out', 'You have been logged out of your account.', '👋');
+        }
+      });
   };
 
   function updateNavForUser(user) {
     var loginBtn = document.querySelector('.nav-login');
     if (!loginBtn) return;
-    loginBtn.textContent = user.fname;
+    loginBtn.textContent = firstNameOf(user);
     loginBtn.classList.add('logged-in');
     loginBtn.onclick = function() { ghDashOpen(); };
   }
@@ -3358,12 +3483,12 @@ window.demoTrack = demoTrack;
   function populateDashboard(user) {
     var el = function(id) { return document.getElementById(id); };
     var greeting = el('gh-dash-greeting');
-    if (greeting) greeting.innerHTML = 'Welcome back, <span>' + user.fname + '</span>';
+    if (greeting) greeting.innerHTML = 'Welcome back, <span>' + firstNameOf(user) + '</span>';
     if (el('gh-dash-name')) el('gh-dash-name').textContent = user.name;
-    if (el('gh-dash-company')) el('gh-dash-company').textContent = user.company;
+    if (el('gh-dash-company')) el('gh-dash-company').textContent = user.company || '—';
     if (el('gh-dash-email')) el('gh-dash-email').textContent = user.email;
     if (el('gh-dash-role')) el('gh-dash-role').textContent = user.role || '—';
-    if (el('gh-dash-since')) el('gh-dash-since').textContent = user.since || '—';
+    if (el('gh-dash-since')) el('gh-dash-since').textContent = user.created || '—';
   }
 
   
@@ -3371,15 +3496,26 @@ window.demoTrack = demoTrack;
     var loginBtn = document.querySelector('.nav-login');
     if (!loginBtn) return;
 
-    var user = getCurrentUser();
-    if (user) {
-      updateNavForUser(user);
-    } else {
-      loginBtn.onclick = function(e) {
-        e.preventDefault();
-        ghAuthOpen('login');
-      };
-    }
+   
+    loginBtn.onclick = function(e) {
+      e.preventDefault();
+      ghAuthOpen('login');
+    };
+
+    window.bridge.authCurrentUser()
+      .then(function (user) {
+        if (user) {
+          setCurrentUser(user);
+          updateNavForUser(user);
+        } else {
+          clearCurrentUser();
+          resetNavForGuest();
+        }
+      })
+      .catch(function () {
+        clearCurrentUser();
+        resetNavForGuest();
+      });
   }
 
   if (document.readyState === 'loading') {

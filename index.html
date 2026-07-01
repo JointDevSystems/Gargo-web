@@ -1241,7 +1241,60 @@
           </div>-->
 
 
-          <div id="trackResult"></div>
+          <div id="trackResult" class="tracking-result">
+            <div class="tr-panel-head">
+              <span class="tr-panel-title">TRACKING RESULT</span>
+              <button type="button" class="tr-close-btn" onclick="closeTrackResult()" aria-label="Close results">✕ CLOSE</button>
+            </div>
+
+            <div class="track-header-info">
+              <div>
+                <div class="track-info-label">Container / Ref</div>
+                <div class="track-info-value" id="res-id">—</div>
+              </div>
+              <div>
+                <div class="track-info-label">Route</div>
+                <div class="track-info-value" id="res-route">—</div>
+              </div>
+              <div>
+                <div class="track-info-label">ETA</div>
+                <div class="track-info-value" id="res-eta">—</div>
+              </div>
+              <div>
+                <div class="track-info-label">Booked</div>
+                <div class="track-info-value" id="res-booked">—</div>
+              </div>
+              <div>
+                <div class="track-info-label">Status</div>
+                <div class="track-info-value"><span class="status-badge" id="res-status">—</span></div>
+              </div>
+            </div>
+
+            <div class="truck-panel">
+              <div class="truck-panel-title">TRUCK DETAILS</div>
+              <div class="truck-details-grid">
+                <div class="truck-detail-item"><div class="tdl">REGISTRATION</div><div class="tdv" id="truckReg">—</div></div>
+                <div class="truck-detail-item"><div class="tdl">TYPE</div><div class="tdv" id="truckType">—</div></div>
+                <div class="truck-detail-item"><div class="tdl">STATUS</div><div class="tdv" id="truckFuel">—</div></div>
+              </div>
+              <div class="truck-live-bar">
+                <span class="tlb-dot"></span>
+                <span id="truckLocation">—</span>&nbsp;·&nbsp;<span id="truckSpeed">—</span>&nbsp;·&nbsp;Updated <span id="gpsUpdate">—</span>
+              </div>
+            </div>
+
+            <div class="truck-panel">
+              <div class="truck-panel-title">DRIVER DETAILS</div>
+              <div class="truck-details-grid">
+                <div class="truck-detail-item"><div class="tdl">NAME</div><div class="tdv" id="driverName">—</div></div>
+                <div class="truck-detail-item"><div class="tdl">PHONE</div><div class="tdv"><a href="#"><span id="driverPhone">—</span></a></div></div>
+                <div class="truck-detail-item"><div class="tdl">LICENCE</div><div class="tdv" id="driverLicence">—</div></div>
+              </div>
+            </div>
+
+            <div class="truck-panel-title" style="margin-top:8px;">TIMELINE</div>
+            <div class="track-timeline" id="trackTimeline"></div>
+          </div>
         </div>
         <div class="track-info-col">
           <div class="bsb-image-card">
@@ -1549,7 +1602,7 @@
 <button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 <button class="chatbot-btn" id="chatbotBtn">💬</button>
   
-<script src="bridge.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

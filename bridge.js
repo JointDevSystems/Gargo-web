@@ -1,110 +1,86 @@
-
 "use strict";
 
-const BRIDGE_KEY = "GARGO_FLEET_v3";
+/* ─────────────────────────────────────────────────────────
+   GARGO BRIDGE — live link between the public website and the
+   Gargo TMS (Supabase).
 
+   Replaces the old localStorage-based version, which could never
+   actually work: localStorage is per-browser/per-origin, and
+   nothing wrote to it in the first place, so a real customer
+   visiting from their own device would never see live data.
 
-function loadSystemState() {
-  try {
-    const raw = localStorage.getItem(BRIDGE_KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw);
-    if (data && typeof data === "object") return data;
-    return null;
-  } catch (e) {
-    console.warn("bridge: failed to load system state", e);
-    return null;
-  }
+   Exposes window.bridge = { trackQuery(query), fleetStatus() }.
+   Both return Promises.
+
+   Public reads go through two narrowly-scoped Postgres RPC
+   functions (SECURITY DEFINER — see public_tracking_functions.sql).
+   The anon key used here never gets direct SELECT access to
+   trips/trucks/drivers: a visitor can only pull the one exact
+   record they searched for, not browse other clients' shipments.
+   ───────────────────────────────────────────────────────── */
+
+const BRIDGE_SUPABASE_URL = 'https://okisjizcyidvvwdwehaa.supabase.co';
+const BRIDGE_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9raXNqaXpjeWlkdnZ3ZHdlaGFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTYzNjMsImV4cCI6MjA5ODM5MjM2M30.O_0EeK297a07B7FLunpWr6HDlqrfP5Z8Owyp3qE4hQE';
+
+if (!window.supabase) {
+  console.error('bridge.js: supabase-js must be loaded before bridge.js');
 }
 
+const bridgeSupabase = window.supabase.createClient(BRIDGE_SUPABASE_URL, BRIDGE_SUPABASE_ANON_KEY);
 
-function findTripByContainer(container) {
-  const state = loadSystemState();
-  if (!state || !state.trips) return null;
-  const search = container.trim().toUpperCase();
-  return state.trips.find(t => t.container && t.container.toUpperCase() === search) || null;
-}
-
-
-function findTripByBookingRef(ref) {
-  const state = loadSystemState();
-  if (!state || !state.trips) return null;
-  const search = ref.trim().toUpperCase();
-  return state.trips.find(t => t.id && t.id.toUpperCase() === search) || null;
-}
-
-
-function findTripByTruckReg(reg) {
-  const state = loadSystemState();
-  if (!state || !state.trips || !state.trucks) return null;
-  const search = reg.trim().toUpperCase();
-
-  const truck = state.trucks.find(t => t.reg && t.reg.toUpperCase() === search);
-  if (!truck) return null;
-
-  const activeTrip = state.trips.find(t => t.truck_id === truck.id && t.status === "active");
-  if (activeTrip) return activeTrip;
- 
-  const tripsForTruck = state.trips.filter(t => t.truck_id === truck.id);
-  if (!tripsForTruck.length) return null;
-  return tripsForTruck.sort((a,b) => new Date(b.created) - new Date(a.created))[0];
+/**
+ * Look up a single shipment by container number, booking reference,
+ * truck registration, or driver name. Resolves to
+ * { trip, truck, driver, events, gps } — the exact shape
+ * renderTrackResult() in script.js expects. Rejects if nothing
+ * matches or the request fails.
+ */
+async function trackQuery(query) {
+  const q = (query || '').trim();
+  if (!q) throw new Error('Enter a container, booking ref, truck reg, or driver name');
+  const { data, error } = await bridgeSupabase.rpc('public_track_lookup', { p_query: q });
+  if (error) throw new Error(error.message || 'Lookup failed');
+  if (!data) throw new Error('No matching record found');
+  return data;
 }
 
 /**
- * Search for a trip by driver name (case-insensitive).
- * Returns the trip object if found, otherwise null.
- * (If multiple, returns the first active or most recent.)
+ * Public fleet status strip for the homepage/live panel.
+ * Resolves to { trucks: [{ reg, type, status }, ...] }.
  */
-function findTripByDriverName(name) {
-  const state = loadSystemState();
-  if (!state || !state.trips || !state.drivers) return null;
-  const search = name.trim().toUpperCase();
-  const driver = state.drivers.find(d => d.name && d.name.toUpperCase().includes(search));
-  if (!driver) return null;
-  const activeTrip = state.trips.find(t => t.driver_id === driver.id && t.status === "active");
-  if (activeTrip) return activeTrip;
-  const tripsForDriver = state.trips.filter(t => t.driver_id === driver.id);
-  if (!tripsForDriver.length) return null;
-  return tripsForDriver.sort((a,b) => new Date(b.created) - new Date(a.created))[0];
+async function fleetStatus() {
+  const { data, error } = await bridgeSupabase.rpc('public_fleet_status');
+  if (error) throw new Error(error.message || 'Could not load fleet status');
+  return { trucks: data || [] };
 }
 
 /**
- * Get full details for a trip, including truck, driver, container info.
- * Returns an object with all relevant data.
+ * Submit a booking request. Resolves to { booking: { id } } so callers
+ * can show the reference number, matching the old backend's response
+ * shape. We generate the id client-side rather than relying on
+ * INSERT ... RETURNING, because RETURNING is itself subject to the
+ * table's SELECT policy — and anon intentionally has no SELECT policy
+ * on public_bookings, so a server-generated id wouldn't come back.
  */
-function getTripDetails(trip) {
-  if (!trip) return null;
-  const state = loadSystemState();
-  if (!state) return { trip, truck: null, driver: null };
-
-  const truck = state.trucks ? state.trucks.find(t => t.id === trip.truck_id) : null;
-  const driver = state.drivers ? state.drivers.find(d => d.id === trip.driver_id) : null;
-
-
-  let gps = null;
-  if (trip.status === "active") {
-    
-    const hash = trip.id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-    const lat = -4.0 + (hash % 100) / 1000;
-    const lng = 39.6 + ((hash * 7) % 100) / 1000;
-    const speed = 20 + (hash % 60);
-    gps = { lat, lng, speed };
-  }
-
-  return {
-    trip,
-    truck,
-    driver,
-    gps
-  };
+async function submitBooking(payload) {
+  const id = (window.crypto && window.crypto.randomUUID)
+    ? window.crypto.randomUUID()
+    : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+  const { error } = await bridgeSupabase.from('public_bookings').insert(Object.assign({ id }, payload));
+  if (error) throw new Error(error.message || 'Booking failed — please try again');
+  return { booking: { id } };
 }
 
+/**
+ * Submit a contact form message. Resolves to { ok: true } on success.
+ */
+async function submitContact(payload) {
+  const { error } = await bridgeSupabase.from('public_contact_messages').insert(payload);
+  if (error) throw new Error(error.message || 'Message failed — please try again');
+  return { ok: true };
+}
 
-window.bridge = {
-  loadSystemState,
-  findTripByContainer,
-  findTripByBookingRef,
-  findTripByTruckReg,
-  findTripByDriverName,
-  getTripDetails
-};
+window.bridge = { trackQuery, fleetStatus, submitBooking, submitContact };

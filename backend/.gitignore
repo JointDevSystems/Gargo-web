@@ -1,0 +1,5 @@
+node_modules/
+.env
+db/gargo.db
+db/gargo.db-*
+*.log
