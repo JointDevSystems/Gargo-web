@@ -594,7 +594,7 @@ function submitBooking() {
     company: get('fCompany'),
     service_type: state.selectedCargoType || 'Depot Storage',
     cargo_type: get('fContainerSize'),
-    container: get('fContainer'),
+    container: get('fContainerNo'),
     pickup_location: get('fOrigin'),
     dropoff_location: get('fDest'),
     pickup_date: get('fDate'),
