@@ -13,6 +13,7 @@
   --white: #ffffff;
   --off-white: #f5f3ef;
   --dark-card: #1E293B;
+  --navy-card: rgb(1, 1, 40);
   --border:var(--gold);
   --font-main: 'Cormorant Garamond', serif;
   --font-body: 'Outfit', sans-serif;
@@ -1453,7 +1454,11 @@ footer.footer {
   margin-bottom: -1px;
 }
 .track-tab.active, .track-tab:hover { color: var(--gold); border-bottom-color: var(--gold); }
-.tracking-body { background: var(--black-3); border: 1px solid var(--gray-dark); border-top: none; border-radius: 0 0 8px 8px; padding: 28px; }
+.tracking-body { 
+  background: var(--black-3); 
+  border: 1px solid var(--gray-dark); 
+  border-top: none; 
+  border-radius: 0 0 8px 8px; padding: 28px; }
 .track-search { display: flex; gap: 12px; margin-bottom: 24px; }
 .track-input {
   flex: 1;
@@ -2431,12 +2436,14 @@ footer.footer {
 }
 @media(max-width:900px){ .track-layout { grid-template-columns:1fr; } }
 .track-tabs {
-  display: flex; gap: 4px;
-  margin-bottom: 20px;
+  display: flex; 
+  gap: 4px;
+  margin-bottom: 0px;
 }
 
 .track-form-area{
   border: 1px solid black;
+  padding: 28px;
 }
 
 .track-tab {
@@ -2452,7 +2459,11 @@ footer.footer {
   transition: all 0.2s;
 }
 .track-tab.active { 
-  background: var(--gold); color: var(--black); border-color: var(--gold); font-weight: 700; }
+  background: var(--gold); 
+  color: var(--black); 
+  border-color: var(--gold); 
+  font-weight: 700; 
+}
 .track-input-group { display: flex; gap: 8px; margin-bottom: 14px; }
 .track-input { flex: 1; }
 .track-btn { white-space: nowrap; }
@@ -2623,3 +2634,67 @@ footer.footer {
 
 
 }
+
+.ltd-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+ 
+  .ltd-step {
+    background: var(--navy-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+ 
+  .ltd-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 59px; height: 26px;
+    border-radius: 50%;
+    background: rgba(217,164,65,0.12);
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+ 
+  .ltd-step-title { font-size: 14px; font-weight: 600; margin: 0 0 6px; }
+  .ltd-step-desc { font-size: 13px; color: var(--text-soft); margin: 0; line-height: 1.5; }
+ 
+  @media (max-width: 860px) {
+    .ltd-stats, .ltd-steps { grid-template-columns: repeat(2, 1fr); }
+    .ltd-main { grid-template-columns: 1fr; }
+  }
+
+  .track-divider {
+    width: 100%;
+    height: 2px;
+    background: rgb(0, 0, 0);
+    opacity: 0.1;
+    margin: 34px 0;
+    
+}
+
+  .ticker-track {
+    display: flex;
+    gap: 80px;
+    animation: ticker 50s linear infinite;
+    width: max-content;
+    padding: 24px 0;
+    align-items: center;
+  }
+
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  
+  .ticker-label{
+    font-size: 32px; 
+    color: var(--gold); 
+    text-align: center; 
+    font-weight: 800;
+  }
