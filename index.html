@@ -211,16 +211,175 @@
 <!-- MOBILE MENU -->
 <div class="mobile-menu" id="mobileMenuPanel">
   <button class="mobile-close-btn" id="closeMenu">✕</button>
-  <div class="mobile-menu-inner">
-    <a href="javascript:void(0)" class="mobile-nav-link" onclick="navigateToPage('home')">HOME</a>
-    <a href="javascript:void(0)" class="mobile-nav-link" onclick="navigateToPage('about')">ABOUT</a>
-    <a href="javascript:void(0)" class="mobile-nav-link" onclick="navigateToPage('services')">SERVICES</a>
-    <a href="javascript:void(0)" class="mobile-nav-link" onclick="navigateToPage('depot')">DEPOT</a>
-    <a href="javascript:void(0)" class="mobile-nav-link" onclick="navigateToPage('booking')">BOOKING</a>
-    <a href="javascript:void(0)" class="mobile-nav-link" onclick="navigateToPage('track')">TRACK</a>
-    <a href="javascript:void(0)" class="mobile-nav-link" onclick="navigateToPage('fleet')">FLEET</a>
-    <a href="javascript:void(0)" class="mobile-nav-link" onclick="navigateToPage('contact')">CONTACT</a>
-  </div>
+<div class="mobile-menu-inner">
+
+        <a href="javascript:void(0)"
+           class="mobile-nav-link"
+           onclick="navigateToPage('home');closeMobileMenu();">
+            HOME
+        </a>
+
+        <!-- ABOUT -->
+        <div class="mobile-dropdown">
+
+            <button class="mobile-dropdown-btn">
+                ABOUT
+                <span>+</span>
+            </button>
+
+            <div class="mobile-dropdown-content">
+
+                <a href="javascript:void(0)" onclick="navigateToPage('about')">Company Overview</a>
+
+                <a href="javascript:void(0)" onclick="navigateToPage('about')">Mission & Vision</a>
+
+                <a href="javascript:void(0)" onclick="navigateToPage('about')">Team</a>
+
+                <a href="javascript:void(0)" onclick="navigateToPage('about')">About Gargo Haven</a>
+
+                <a href="javascript:void(0)" onclick="navigateToPage('about')">Certifications</a>
+
+                <a href="javascript:void(0)" onclick="navigateToPage('about')">Partners & Alliances</a>
+
+            </div>
+
+        </div>
+
+        <!-- SERVICES -->
+        <div class="mobile-dropdown">
+
+            <button class="mobile-dropdown-btn">
+                SERVICES
+                <span>+</span>
+            </button>
+
+            <div class="mobile-dropdown-content">
+
+                <a onclick="navigateToPage('services')">Container Storage</a>
+
+                <a onclick="navigateToPage('services')">Port Haulage</a>
+
+                <a onclick="navigateToPage('services')">Reefer Monitoring</a>
+
+                <a onclick="navigateToPage('services')">Container Selling</a>
+
+                <a onclick="navigateToPage('services')">Container Repairs</a>
+
+                <a onclick="navigateToPage('services')">Container Washing</a>
+
+                <a onclick="navigateToPage('services')">IICL Inspection</a>
+
+                <a onclick="navigateToPage('services')">EIR Processing</a>
+
+                <a onclick="navigateToPage('services')">Corporate Logistics</a>
+
+            </div>
+
+        </div>
+
+        <!-- DEPOT -->
+        <div class="mobile-dropdown">
+
+            <button class="mobile-dropdown-btn">
+                DEPOT
+                <span>+</span>
+            </button>
+
+            <div class="mobile-dropdown-content">
+
+                <a onclick="navigateToPage('depot')">Changamwe Main Depot</a>
+
+                <a onclick="navigateToPage('depot')">Consolebase ICD</a>
+
+                <a onclick="navigateToPage('depot')">Hakika Depot</a>
+
+                <a onclick="navigateToPage('depot')">Kibarani Depot</a>
+
+                <a onclick="navigateToPage('depot')">Fortune Depot</a>
+
+            </div>
+
+        </div>
+
+        <!-- BOOKING -->
+        <div class="mobile-dropdown">
+
+            <button class="mobile-dropdown-btn">
+                BOOKING
+                <span>+</span>
+            </button>
+
+            <div class="mobile-dropdown-content">
+
+                <a onclick="navigateToPage('booking')">Book Storage</a>
+
+                <a onclick="navigateToPage('booking')">Request Quote</a>
+
+                <a onclick="navigateToPage('booking')">Bulk Booking</a>
+
+                <a onclick="navigateToPage('booking')">Reefer Booking</a>
+
+            </div>
+
+        </div>
+
+        <!-- TRACK -->
+        <div class="mobile-dropdown">
+
+            <button class="mobile-dropdown-btn">
+                TRACK
+                <span>+</span>
+            </button>
+
+            <div class="mobile-dropdown-content">
+
+                <a onclick="navigateToPage('track')">Container Tracking</a>
+
+                <a onclick="navigateToPage('track')">Truck Tracking</a>
+
+                <a onclick="navigateToPage('track')">Booking Status</a>
+
+                <a onclick="navigateToPage('track')">GPS Dashboard</a>
+
+            </div>
+
+        </div>
+
+        <!-- FLEET -->
+        <div class="mobile-dropdown">
+
+            <button class="mobile-dropdown-btn">
+                FLEET
+                <span>+</span>
+            </button>
+
+            <div class="mobile-dropdown-content">
+
+                <a onclick="navigateToPage('fleet')">Fleet Overview</a>
+
+                <a onclick="navigateToPage('fleet')">Flatbed Trucks</a>
+
+                <a onclick="navigateToPage('fleet')">Reefer Trucks</a>
+
+                <a onclick="navigateToPage('fleet')">Reach Stackers</a>
+
+                <a onclick="navigateToPage('fleet')">Maintenance</a>
+
+            </div>
+
+        </div>
+
+        <a class="mobile-nav-link"
+           onclick="navigateToPage('contact');closeMobileMenu();">
+            CONTACT
+        </a>
+
+        <a class="mobile-login"
+           onclick="navigateToPage('login');closeMobileMenu();">
+            LOGIN
+        </a>
+
+    </div>
 </div>
 
 <!-- ═══════════════════════════════════════════

@@ -3874,3 +3874,23 @@ window.demoTrack = demoTrack;
     wireGalleryNav();
   }
 })();
+
+document.querySelectorAll(".mobile-dropdown-btn").forEach(btn => {
+
+    btn.addEventListener("click", function () {
+
+        this.classList.toggle("active");
+
+        const content = this.nextElementSibling;
+
+        if (content.style.maxHeight) {
+            content.style.maxHeight = null;
+            this.querySelector("span").textContent = "+";
+        } else {
+            content.style.maxHeight = content.scrollHeight + "px";
+            this.querySelector("span").textContent = "−";
+        }
+
+    });
+
+});
