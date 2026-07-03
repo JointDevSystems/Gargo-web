@@ -697,24 +697,44 @@ footer.footer {
   flex-shrink: 0;
   transition: color 0.2s, border-color 0.2s;
 }
-.partner-chip:hover { color: var(--gold); border-color: var(--gold-dark); }
+.partner-chip:hover { 
+  color: var(--gold); 
+  border-color: var(--gold-dark); 
+}
+.divider { 
+  border: none; 
+  border-top: 1px solid var(--gray-dark); 
+  margin: 0; 
+}
+.divider-gold { 
+  border: none; 
+  border-top: 2px solid var(--gold); 
+  width: 60px; 
+  margin: 16px 0 24px; 
+}
 
-
-.divider { border: none; border-top: 1px solid var(--gray-dark); margin: 0; }
-.divider-gold { border: none; border-top: 2px solid var(--gold); width: 60px; margin: 16px 0 24px; }
-
-
-.section-inner { max-width: 1300px; margin: 0 auto; padding: 80px 40px; }
-.section-dark { background: var(--black-2); }
-.section-light { background: var(--black-3); }
-.section-header { text-align: center; margin-bottom: 48px; }
+.section-inner { 
+  max-width: 1300px; 
+  margin: 0 auto; 
+  padding: 80px 40px; 
+}
+.section-dark { 
+  background: var(--black-2); 
+}
+.section-light { 
+  background: var(--black-3); 
+}
+.section-header { 
+  text-align: center; 
+  margin-bottom: 48px; 
+}
 .section-tag {
   display: inline-block;
   font-family: 'Times New Roman', Times, serif;
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 1.7px;
-  color: var(--gold);
+  color: gold;
   text-transform: uppercase;
   background: rgba(241, 239, 239, 0.08);
   border: 1px solid rgba(201,162,39,0.2);
@@ -722,7 +742,12 @@ footer.footer {
   border-radius: 4px;
   margin-bottom: 16px;
 }
-.section-tag.gold { color: var(--gold); }
+.section-tag.gold { 
+  color: gold; 
+}
+
+
+
 .section-title {
   font-family: var(--font-main);
   font-size: clamp(24px, 5vw, 32px);
@@ -1009,7 +1034,13 @@ footer.footer {
 
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group.full { grid-column: 1 / -1; }
-.form-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.1px; color: var(--gold); text-transform: uppercase; }
+.form-label { 
+  font-family: var(--font-mono); 
+  font-size: 10px; 
+  letter-spacing: 1.1px; 
+  color: var(--gold); 
+  text-transform: uppercase; 
+}
 .form-input, .form-select, .form-textarea {
   background: var(--black-4);
   border: 1px solid var(--gray-dark);
