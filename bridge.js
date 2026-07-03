@@ -20,24 +20,14 @@ async function trackQuery(query) {
   return data;
 }
 
-/**
- * Public fleet status strip for the homepage/live panel.
- * Resolves to { trucks: [{ reg, type, status }, ...] }.
- */
+
 async function fleetStatus() {
   const { data, error } = await bridgeSupabase.rpc('public_fleet_status');
   if (error) throw new Error(error.message || 'Could not load fleet status');
   return { trucks: data || [] };
 }
 
-/**
- * Submit a booking request. Resolves to { booking: { id } } so callers
- * can show the reference number, matching the old backend's response
- * shape. We generate the id client-side rather than relying on
- * INSERT ... RETURNING, because RETURNING is itself subject to the
- * table's SELECT policy — and anon intentionally has no SELECT policy
- * on public_bookings, so a server-generated id wouldn't come back.
- */
+
 async function submitBooking(payload) {
   const id = (window.crypto && window.crypto.randomUUID)
     ? window.crypto.randomUUID()
@@ -50,9 +40,7 @@ async function submitBooking(payload) {
   return { booking: { id } };
 }
 
-/**
- * Submit a contact form message. Resolves to { ok: true } on success.
- */
+
 async function submitContact(payload) {
   const { error } = await bridgeSupabase.from('public_contact_messages').insert(payload);
   if (error) throw new Error(error.message || 'Message failed — please try again');
