@@ -1,23 +1,5 @@
 "use strict";
 
-/* ─────────────────────────────────────────────────────────
-   GARGO BRIDGE — live link between the public website and the
-   Gargo TMS (Supabase).
-
-   Replaces the old localStorage-based version, which could never
-   actually work: localStorage is per-browser/per-origin, and
-   nothing wrote to it in the first place, so a real customer
-   visiting from their own device would never see live data.
-
-   Exposes window.bridge = { trackQuery(query), fleetStatus() }.
-   Both return Promises.
-
-   Public reads go through two narrowly-scoped Postgres RPC
-   functions (SECURITY DEFINER — see public_tracking_functions.sql).
-   The anon key used here never gets direct SELECT access to
-   trips/trucks/drivers: a visitor can only pull the one exact
-   record they searched for, not browse other clients' shipments.
-   ───────────────────────────────────────────────────────── */
 
 const BRIDGE_SUPABASE_URL = 'https://okisjizcyidvvwdwehaa.supabase.co';
 const BRIDGE_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9raXNqaXpjeWlkdnZ3ZHdlaGFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTYzNjMsImV4cCI6MjA5ODM5MjM2M30.O_0EeK297a07B7FLunpWr6HDlqrfP5Z8Owyp3qE4hQE';
@@ -28,13 +10,7 @@ if (!window.supabase) {
 
 const bridgeSupabase = window.supabase.createClient(BRIDGE_SUPABASE_URL, BRIDGE_SUPABASE_ANON_KEY);
 
-/**
- * Look up a single shipment by container number, booking reference,
- * truck registration, or driver name. Resolves to
- * { trip, truck, driver, events, gps } — the exact shape
- * renderTrackResult() in script.js expects. Rejects if nothing
- * matches or the request fails.
- */
+
 async function trackQuery(query) {
   const q = (query || '').trim();
   if (!q) throw new Error('Enter a container, booking ref, truck reg, or driver name');
