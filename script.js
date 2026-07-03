@@ -361,29 +361,11 @@ function navigateToPage(pageId) {
     runCalc();
   }
 
-  closeMobileMenu();
+  if (typeof window.closeMobileMenu === 'function') {
+    window.closeMobileMenu();
+}
 }
 window.navigateToPage = navigateToPage;
-
-
-function openMobileMenu() {
-  const panel = document.getElementById('mobileMenuPanel');
-  if (panel) panel.classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeMobileMenu() {
-  const panel = document.getElementById('mobileMenuPanel');
-  if (panel) panel.classList.remove('open');
-  document.body.style.overflow = '';
-}
-window.closeMobileMenu = closeMobileMenu;
-function initMobileMenu() {
-  const toggle = document.getElementById('menuToggle');
-  const closeBtn = document.getElementById('closeMenu');
-  if (toggle) toggle.addEventListener('click', openMobileMenu);
-  if (closeBtn) closeBtn.addEventListener('click', closeMobileMenu);
-}
-
 
 function initScrollTop() {
   const btn = document.getElementById('scrollTop');
@@ -870,7 +852,6 @@ function init() {
   initLoader();
   initTicker();
   initModal();
-  initMobileMenu();
   initScrollTop();
   initChatbot();
   initHeroSlideshow();
@@ -3872,6 +3853,350 @@ window.demoTrack = demoTrack;
     document.addEventListener('DOMContentLoaded', wireGalleryNav);
   } else {
     wireGalleryNav();
+  }
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   GARGO HAVEN — MOBILE DESKTOP-LOCK SCRIPT
+   Load this LAST, after script.js, right before </body>.
+   Does three things:
+     1. Renders the real 1300px desktop layout, scaled to fit
+        the phone — same images, same text, same layout, just smaller.
+     2. Freezes html/body permanently so the page itself never
+        scrolls, bounces, or jumps — only #site-scroll-outer does.
+     3. Replaces the plain mobile menu with a sophisticated
+        slide-in drawer that mirrors the desktop mega-menus.
+   Does nothing at all on real desktop / mouse devices.
+═══════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var DESKTOP_WIDTH = 1300;   // matches .section-inner max-width in styles.css
+  var ACTIVATE_MAX_WIDTH = 1024; // same breakpoint the site already uses for mobile nav
+
+  function isMobileDevice() {
+    var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    var narrow = window.innerWidth <= ACTIVATE_MAX_WIDTH;
+    return coarse || narrow;
+  }
+
+  if (!isMobileDevice()) return; // real desktop visitors: untouched, original site as-is
+
+  /* ── elements that must stay OUTSIDE the scaled layout because
+     they're position:fixed and rely on the true viewport (nav bar,
+     loader, toast, modal, scroll-to-top, chat bubble, and anything
+     injected later like the auth/dashboard overlays) ── */
+  var KEEP_OUTSIDE_IDS = ['loader', 'notification', 'modalOverlay', 'gh-auth-overlay', 'gh-dashboard-overlay'];
+  var KEEP_OUTSIDE_CLASSES = ['nav', 'mobile-menu', 'scroll-top', 'chatbot-btn'];
+
+  function shouldKeepOutside(el) {
+    if (!el || el.nodeType !== 1) return true; // text nodes / comments stay put trivially
+    if (el.tagName === 'SCRIPT') return true;
+    if (el.id && KEEP_OUTSIDE_IDS.indexOf(el.id) !== -1) return true;
+    for (var i = 0; i < KEEP_OUTSIDE_CLASSES.length; i++) {
+      if (el.classList && el.classList.contains(KEEP_OUTSIDE_CLASSES[i])) return true;
+    }
+    return false;
+  }
+
+  function buildShell() {
+    if (document.getElementById('site-scroll-outer')) return; // already built
+
+    var outer = document.createElement('div');
+    outer.id = 'site-scroll-outer';
+    var inner = document.createElement('div');
+    inner.id = 'site-scroll-inner';
+    outer.appendChild(inner);
+
+    // Move everything eligible, in order, into the scaled inner container.
+    var kids = Array.prototype.slice.call(document.body.children);
+    kids.forEach(function (el) {
+      if (shouldKeepOutside(el)) return;
+      inner.appendChild(el);
+    });
+
+    document.body.appendChild(outer);
+    document.documentElement.classList.add('gh-locked');
+
+    applyScale();
+    window.addEventListener('resize', applyScale);
+    window.addEventListener('orientationchange', function () {
+      setTimeout(applyScale, 250);
+    });
+
+    patchInsertBefore();
+    patchScrollTo(outer);
+    wireScrollTopButton(outer);
+    watchLegacyOverlayLocks(outer);
+  }
+
+  function applyScale() {
+    var inner = document.getElementById('site-scroll-inner');
+    if (!inner) return;
+    var scale = window.innerWidth / DESKTOP_WIDTH;
+    inner.style.transform = 'scale(' + scale + ')';
+  }
+
+  /* navigateToSubpage() in script.js does:
+       document.body.insertBefore(container, footer)
+     ...but footer no longer lives directly under <body> once we've
+     moved it into #site-scroll-inner. Redirect any such call to
+     footer's real parent so subpages keep inserting in the right spot. */
+  function patchInsertBefore() {
+    var orig = document.body.insertBefore.bind(document.body);
+    document.body.insertBefore = function (newNode, referenceNode) {
+      if (referenceNode && referenceNode.parentNode && referenceNode.parentNode !== document.body) {
+        return referenceNode.parentNode.insertBefore(newNode, referenceNode);
+      }
+      return orig(newNode, referenceNode);
+    };
+  }
+
+  /* window.scrollTo(...) is used throughout script.js (page changes,
+     etc). Redirect it to the element that actually scrolls now. */
+  function patchScrollTo(outer) {
+    window.scrollTo = function (a) {
+      if (a && typeof a === 'object') {
+        outer.scrollTo({ top: a.top || 0, left: a.left || 0, behavior: a.behavior || 'auto' });
+      } else {
+        outer.scrollTo(arguments[1] || 0, arguments[0] || 0);
+      }
+    };
+  }
+
+  /* Re-implement the "back to top" button's visibility against the
+     real scroller (the original listens on `window`, which never
+     scrolls anymore). */
+  function wireScrollTopButton(outer) {
+    var btn = document.getElementById('scrollTop');
+    if (!btn) return;
+    outer.addEventListener('scroll', function () {
+      if (outer.scrollTop > 480) btn.classList.add('visible');
+      else btn.classList.remove('visible');
+    }, { passive: true });
+  }
+
+  /* The existing code locks scrolling for modals/menus/auth panels by
+     toggling document.body.style.overflow. Body can't scroll anyway
+     now, so mirror that same toggle onto our real scroller. */
+  function watchLegacyOverlayLocks(outer) {
+    var mo = new MutationObserver(function () {
+      var locked = document.body.style.overflow === 'hidden';
+      document.documentElement.classList.toggle('gh-scroll-locked', locked || drawerOpen);
+    });
+    mo.observe(document.body, { attributes: true, attributeFilter: ['style'] });
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     SOPHISTICATED DRAWER NAV
+  ═══════════════════════════════════════════════════════ */
+
+  var drawerOpen = false;
+
+  var NAV_GROUPS = [
+    { label: 'Home', icon: '⌂', direct: 'home' },
+    {
+      label: 'About', icon: '◈',
+      items: [
+        ['Company Overview', 'company-overview'],
+        ['Mission & Vision', 'mission-vision'],
+        ['Team', 'team'],
+        ['About Gargo', 'about-gargo'],
+        ['Certifications', 'certifications'],
+        ['Partners & Alliances', 'partners']
+      ]
+    },
+    {
+      label: 'Services', icon: '⚙',
+      items: [
+        ['Container Storage', 'container-storage'],
+        ['Port Haulage', 'port-haulage'],
+        ['Reefer Monitoring', 'reefer-monitoring'],
+        ['Container Repairs', 'container-repairs'],
+        ['Container Washing', 'container-washing'],
+        ['IICL Inspection', 'iicl-inspection'],
+        ['EIR Processing', 'eir-processing'],
+        ['Customs Documentation', 'customs-documentation'],
+        ['Container Leasing', 'container-leasing'],
+        ['Corporate Logistics', 'corporate-logistics']
+      ]
+    },
+    {
+      label: 'Depot', icon: '⌘',
+      items: [
+        ['Changamwe Main Depot', 'changamwe-depot'],
+        ['Consolebase ICD', 'consolebase-icd'],
+        ['Hakika Depot', 'hakika-depot'],
+        ['Kibarani Depot', 'kibarani-depot'],
+        ['Fortune Depot', 'fortune-depot'],
+        ['Capacity Dashboard', 'capacity-dashboard'],
+        ['Gate-In Requirements', 'gate-in-requirements'],
+        ['Gate-Out Requirements', 'gate-out-requirements']
+      ]
+    },
+    {
+      label: 'Booking', icon: '▤', pageFallback: 'booking',
+      items: [
+        ['Bulk Bookings', 'bulk-bookings'],
+        ['Request Quotation', 'request-quotation'],
+        ['Dedicated Contracts', 'dedicated-contracts']
+      ]
+    },
+    {
+      label: 'Track', icon: '◎', pageFallback: 'track',
+      items: [
+        ['Container Tracking', 'container-tracking'],
+        ['Truck Tracking', 'truck-tracking'],
+        ['Driver Tracking', 'driver-tracking'],
+        ['Booking Status', 'booking-status'],
+        ['EIR Status', 'eir-status'],
+        ['GPS Dashboard', 'gps-dashboard']
+      ]
+    },
+    {
+      label: 'Fleet', icon: '▲', pageFallback: 'fleet',
+      items: [
+        ['Fleet Overview', 'fleet-overview'],
+        ['GPS Monitoring', 'gps-monitoring'],
+        ['Maintenance Center', 'maintenance-center']
+      ]
+    },
+    { label: 'Contact', icon: '✉', direct: 'contact' }
+  ];
+
+  function buildDrawer() {
+    if (document.getElementById('gh-drawer')) return;
+
+    var backdrop = document.createElement('div');
+    backdrop.id = 'gh-drawer-backdrop';
+
+    var drawer = document.createElement('div');
+    drawer.id = 'gh-drawer';
+
+    var head = document.createElement('div');
+    head.className = 'gh-drawer-head';
+    head.innerHTML =
+      '<div class="gh-drawer-logo">GARGO <span>HAVEN</span></div>' +
+      '<button class="gh-drawer-close" aria-label="Close menu">✕</button>';
+
+    var scroll = document.createElement('div');
+    scroll.className = 'gh-drawer-scroll';
+
+    var cta = document.createElement('div');
+    cta.className = 'gh-drawer-cta';
+    cta.innerHTML =
+      '<a class="call" href="tel:+254116307751">📞 CALL NOW</a>' +
+      '<a class="track" href="javascript:void(0)" data-page="track">📍 TRACK</a>';
+    scroll.appendChild(cta);
+
+    NAV_GROUPS.forEach(function (group, idx) {
+      var wrap = document.createElement('div');
+      wrap.className = 'gh-drawer-group';
+
+      var btn = document.createElement('button');
+      btn.className = 'gh-drawer-group-btn' + (group.direct ? ' direct' : '');
+      btn.innerHTML =
+        '<span class="icon">' + group.icon + '</span><span>' + group.label + '</span><span class="chev">›</span>';
+
+      if (group.direct) {
+        btn.addEventListener('click', function () {
+          go(group.direct);
+        });
+      } else {
+        var sub = document.createElement('div');
+        sub.className = 'gh-drawer-sub';
+        group.items.forEach(function (item) {
+          var a = document.createElement('a');
+          a.href = 'javascript:void(0)';
+          a.textContent = item[0];
+          a.addEventListener('click', function () {
+            goSub(item[1], group.pageFallback);
+          });
+          sub.appendChild(a);
+        });
+        btn.addEventListener('click', function () {
+          var isOpen = wrap.classList.contains('open');
+          document.querySelectorAll('.gh-drawer-group.open').forEach(function (g) {
+            if (g !== wrap) g.classList.remove('open');
+          });
+          wrap.classList.toggle('open', !isOpen);
+        });
+        wrap.appendChild(sub);
+      }
+
+      wrap.insertBefore(btn, wrap.firstChild);
+      scroll.appendChild(wrap);
+    });
+
+    var foot = document.createElement('div');
+    foot.className = 'gh-drawer-foot';
+    foot.innerHTML =
+      '<div class="gh-drawer-foot-row">📞 <a href="tel:+254116307751">+254 116 307 751</a></div>' +
+      '<div class="gh-drawer-foot-row">📧 <a href="mailto:Info@gargohavendepot.co.ke">Info@gargohavendepot.co.ke</a></div>';
+
+    drawer.appendChild(head);
+    drawer.appendChild(scroll);
+    drawer.appendChild(foot);
+    document.body.appendChild(backdrop);
+    document.body.appendChild(drawer);
+
+    head.querySelector('.gh-drawer-close').addEventListener('click', closeDrawer);
+    backdrop.addEventListener('click', closeDrawer);
+    cta.querySelector('[data-page]').addEventListener('click', function () {
+      go(this.getAttribute('data-page'));
+    });
+  }
+
+  function go(pageId) {
+    closeDrawer();
+    if (typeof window.navigateToPage === 'function') window.navigateToPage(pageId);
+  }
+  function goSub(key, fallbackPage) {
+    closeDrawer();
+    if (typeof window.navigateToSubpage === 'function') {
+      window.navigateToSubpage(key);
+    } else if (fallbackPage && typeof window.navigateToPage === 'function') {
+      window.navigateToPage(fallbackPage);
+    }
+  }
+
+  function openDrawer() {
+    drawerOpen = true;
+    document.getElementById('gh-drawer-backdrop').classList.add('open');
+    document.getElementById('gh-drawer').classList.add('open');
+    document.documentElement.classList.add('gh-scroll-locked');
+  }
+  function closeDrawer() {
+    drawerOpen = false;
+    var b = document.getElementById('gh-drawer-backdrop');
+    var d = document.getElementById('gh-drawer');
+    if (b) b.classList.remove('open');
+    if (d) d.classList.remove('open');
+    if (document.body.style.overflow !== 'hidden') {
+      document.documentElement.classList.remove('gh-scroll-locked');
+    }
+    document.querySelectorAll('.gh-drawer-group.open').forEach(function (g) { g.classList.remove('open'); });
+  }
+  window.closeMobileMenu = closeDrawer; // original code calls this after every nav click
+
+  function wireHamburger() {
+    var toggle = document.getElementById('menuToggle');
+    if (!toggle) return;
+    var fresh = toggle.cloneNode(true); // strip the original open-old-panel listener
+    toggle.parentNode.replaceChild(fresh, toggle);
+    fresh.addEventListener('click', openDrawer);
+  }
+
+  function init() {
+    buildShell();
+    buildDrawer();
+    wireHamburger();
+  }
+
+  if (document.readyState === 'complete') {
+    init();
+  } else {
+    window.addEventListener('load', init); // run after script.js's own DOMContentLoaded work (incl. the auth modal it injects)
   }
 })();
 
