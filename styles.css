@@ -2630,10 +2630,6 @@ footer.footer {
     font-size:14px;
 }
 
-.why-bottom{
-
-
-}
 
 .ltd-steps {
     display: grid;
@@ -2674,7 +2670,8 @@ footer.footer {
     height: 2px;
     background: rgb(0, 0, 0);
     opacity: 0.1;
-    margin: 34px 0;
+    margin-bottom: 4px;
+    margin-top: 34px;
     
 }
 
