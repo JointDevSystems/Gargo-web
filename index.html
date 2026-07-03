@@ -454,7 +454,7 @@
             <li>Reefer plug-in</li>
             <li>Container repair</li>
           </ul>
-          <button class="btn-secondary" onclick="navigateToPage('booking')">GET QUOTE</button>
+          <button class="btn-secondary" onclick="navigateToPage('booking')">BOOK NOW</button>
         </div>
         <div class="rate-card popular">
           <div class="rate-popular-badge">MOST POPULAR</div>
@@ -468,7 +468,7 @@
             <li>Driver phone contact</li>
             <li>Priority scheduling</li>
           </ul>
-          <button class="btn-primary" onclick="navigateToPage('booking')">GET QUOTE</button>
+          <button class="btn-primary" onclick="navigateToPage('booking')">GET TO BOOKING</button>
         </div>
         <div class="rate-card">
           <div class="rate-type">Premium</div>
@@ -481,7 +481,7 @@
             <li>Priority gate access</li>
             <li>24/7 dedicated support</li>
           </ul>
-          <button class="btn-secondary" onclick="navigateToPage('booking')">ENQUIRE NOW</button>
+          <button class="btn-secondary" onclick="navigateToPage('booking')">BOOK NOW</button>
         </div>
       </div>
 
@@ -542,16 +542,24 @@
       <div class="section-tag">Depot Gallery</div>
       <h2 class="section-title" style="text-align:left;">OUR FACILITY <span>IN PHOTOS</span></h2>
     </div>
-    <div class="gallery-strip">
-      <div class="gallery-item"><img src="images/depot1.png" alt="Depot aerial view"></div>
-      <div class="gallery-item"><img src="images/depot2.png" alt="Container stacking"></div>
-      <div class="gallery-item"><img src="images/gargo3.png" alt="Fleet operations"></div>
-      <div class="gallery-item"><img src="images/depot3.png" alt="Gate operations"></div>
-      <div class="gallery-item"><img src="images/depot4.png" alt="Repair bay"></div>
-      <div class="gallery-item"><img src="images/depot5.png" alt="Reefer yard"></div>
-      <div class="gallery-item"><img src="images/gargo4.png" alt="Haulage trucks"></div>
-      <div class="gallery-item"><img src="images/depot6.png" alt="Washing bay"></div>
-    </div>
+
+
+<div class="gallery-strip-wrap">
+  <button class="gallery-nav-btn gallery-nav-prev" id="galleryPrevBtn" aria-label="Previous images">‹</button>
+
+  <div class="gallery-strip" id="galleryStrip">
+    <div class="gallery-item"><img src="images/depot1.png" alt="Depot aerial view"></div>
+    <div class="gallery-item"><img src="images/depot2.png" alt="Container stacking"></div>
+    <div class="gallery-item"><img src="images/gargo3.png" alt="Fleet operations"></div>
+    <div class="gallery-item"><img src="images/depot3.png" alt="Gate operations"></div>
+    <div class="gallery-item"><img src="images/depot4.png" alt="Repair bay"></div>
+    <div class="gallery-item"><img src="images/depot5.png" alt="Reefer yard"></div>
+    <div class="gallery-item"><img src="images/gargo4.png" alt="Haulage trucks"></div>
+    <div class="gallery-item"><img src="images/depot6.png" alt="Washing bay"></div>
+  </div>
+
+  <button class="gallery-nav-btn gallery-nav-next" id="galleryNextBtn" aria-label="Next images">›</button>
+</div>
   </section>
 
 
@@ -1217,14 +1225,12 @@
       <h1 class="section-title light" style="font-size:clamp(28px,5vw,52px);">Hello  ,<span>TRACK YOUR CONTAINER</span></h1>
       <p class="section-sub light">Live GPS tracking for containers, trucks and drivers across all Mombasa corridors.</p>
     </div>
-  </section>
-
-  <section class="section-light">
-    <div class="section-inner">
+    
+      <section  style="margin-bottom: 20px; margin-right:25px;">
       <div class="section-header">
-        <div class="section-tag">Live Tracking</div>
-        <h2 class="section-title">Steps To Successfully <span>Tracking Your Container</span></h2>
-        <p class="section-sub">The following are steps to see live status, container location, truck location, and full movement history.</p>
+        <div class="section-tag" style="color: gold;">Live Tracking</div>
+        <h2 class="section-title" style="color: gold;">Steps To Successfully <span>Tracking Your Container</span></h2>
+        <p class="section-sub" style = color:white;>The following are steps to see live status, container location, truck location, and full movement history.</p>
       </div>
 
        <!-- How it works -->
@@ -1250,6 +1256,12 @@
             <p class="ltd-step-desc">Alerts on customs clearance, delays, and delivery.</p>
           </div>
       </section>
+      </section>
+  </section>
+
+  <section class="section-light">
+    <div class="section-inner">
+      
 
       <div class="track-divider"></div>
 
@@ -1563,13 +1575,14 @@
          
           <button class="form-submit" onclick="sendContact()">SEND MESSAGE →</button><br>
 
-           <br><p style="font-size:14px;color: black;margin-bottom:1px;">
+           <br>
+           <p style="font-size:14px;color: black;margin-bottom:1px; text-decoration: none;">
             ●  Or reach us directly: 
-            <a href="tel:+254116307751" style="color:var(--gold);">
-              <br><br><span>● +254 116 307 751</span></a>
-            <br> ● <a href="tel:+254108613789" style="color:var(--gold);">+254 108 613 789</a> 
-            <br> ● <a href="mailto:Info@gargohavendepot.co.ke" style="color:var(--gold);">Info@gargohavendepot.co.ke</a>
-            <br> ● <a href="mailto:documentation@gargohavendepot.co.ke" style="color:var(--gold);">documentation@gargohavendepot.co.ke</a>
+            <a href="tel:+254116307751" style="color:var(--gold); text-decoration: none;">
+              <br><br>●<span> +254 116 307 751</span></a>
+            <br> ● <a href="tel:+254108613789" style="color:var(--gold); text-decoration: none;">+254 108 613 789</a> 
+            <br> ● <a href="mailto:Info@gargohavendepot.co.ke" style="color:var(--gold); text-decoration: none;">Info@gargohavendepot.co.ke</a>
+            <br> ● <a href="mailto:documentation@gargohavendepot.co.ke" style="color:var(--gold); text-decoration: none;">documentation@gargohavendepot.co.ke</a>
           </p>
 
           <br><p style="font-size:14px;color: black;margin-bottom:24px;">●  Enquiries & Support · We respond within 2 hours</p>

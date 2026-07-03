@@ -1210,116 +1210,303 @@ const SUBPAGES = {
 
 
           <!-- CLIENTS -->
-      <div class="clients">
-      <div class="ticker-label">Our Trusted Partners</div>
-      <div class="ticker-track" id="ticker">
-        <div class="client-logo"><span class="cl-sep"></span> Hakika Transport Services</div>
+          <section class="clients-section">
+          <div class="clients">
+            <div class="ticker-label">Our Trusted Partners</div>
 
-          <!--Original-->
+
+          <div class="ticker-track" id="ticker">
+          
+            <!--Original-->
           <div style="text-align: center;">
-            <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://hakikatransport.com/" target="_blank"><img src="images/KPA Logo.png" alt="KPA Logo" style="width: 90px; height: 80px; margin-left: 6px;"></div><p class="client-link" style="margin: 1px;">Hakika Transport Services</p></a>
+            <a  href="https://www.kpa.co.ke/" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/KPA Logo.png" alt="KPA Logo" style="width: 90px; height: 80px; margin-left: 6px;">
+              </div>
+              <p class="client-link">Kenya Ports Authority</p>
+            </a>
+          </div>
+
+          <div style="text-align: center;">
+            <a  href="https://www.kra.go.ke/" target="_blank">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/KRA.png" alt="KRA Logo" style="width: 140px; height: 50px; margin-left: 0px;">
+              </div>
+              <p class="client-link"> Kenya Revenue Authority</p>
+            </a>
           </div>
    
-          <div style="text-align: center;">
-            <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://www.maersk.com/" target="_blank"><img src="images/MAERSK.png" alt="MAERSK Logo" style="width: 100px; height: 80px; margin-left: 15px;"></div><p class="client-link" style="margin: 1px;">Jastar Logistic Limited</p></a>
-          </div>
+            <div style="text-align: center;">
+              <a href="https://www.maersk.com/" target="_blank" class="client-block">
+                <div class="client-logo">
+                  <span class="cl-sep"></span>
+                  <img src="images/MAERSK.png" alt="MAERSK Logo" style="width: 100px; height: 60px; margin-left: 15px;">
+                </div>
+                <p class="client-link">MAERSK</p>
+              </a>
+            </div>
    
-          <div style="text-align: center;">
-            <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://www.msc.com/" target="_blank"><img src="images/msc.png" alt="MSC Logo" style="width: 78px; height: 60px; margin-left: 25px;"></div><p class="client-link" style="margin: 1px;"> Okwiri & Company Advocates</p></a>
-          </div>
+            <div style="text-align: center;">
+              <a href="https://www.msc.com/" target="_blank" class="client-block">
+                <div class="client-logo">
+                  <span class="cl-sep"></span>
+                  <img src="images/msc.png" alt="MSC Logo" style="width: 78px; height: 50px; margin-left: 25px;">
+                </div>
+                <p class="client-link" >Mediterenian Shipping Company</p>
+              </a>
+            </div>
         
-          <div style="text-align: center; justify-content: center; align-items: center;">
-            <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://hakikatransport.com//" target="_blank"><img src="images/Hakika TS logo.png" alt="JD Systems Logo" style="width: 60px; height: 60px;"></div><p class="client-link" style="margin: 1px;">JD Systems</p></a>
+          <div style="text-align: center;">
+            <a  href="https://hakikatransport.com//" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/Hakika TS logo.png" alt="Hakika TS Logo" style="width: 160px; height: 60px;">
+              </div>
+              <p class="client-link">Hakika Transport Services</p>
+            </a>
           </div>
 
           <div style="text-align: center;">
-            <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://www.kra.go.ke/" target="_blank"><img src="images/KRA.png" alt="KRA Logo" style="width: 60px; height: 50px; margin-left: 45px;"></div><p class="client-link" style="margin: 1px;"> IBM Logistics CO. UGANDA LTD</p></a>
+            <a href="https://www.consolbase.co.ke/" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/consolbase.png" alt="Consolbase Logo" style="width: 100px; height: 40px; margin-left: 0px;">
+              </div>
+              <p class="client-link"> Consolbase Limited</p>
+            </a>
           </div>
 
           <div style="text-align: center;">
-            <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://gargo.co.ke/" target="_blank"><img src="images/gargologo222.png" alt="IBM Logistics Logo" style="width: 90px; height: 70px; margin-left: 20px;"></div><p class="client-link" style="margin: 1px;"> Gargo Haven Depot Limited</p></a>
+            <a  href="https://jastarlogisticslimited.co.ke/" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/Jastar logo.png" alt="Jastar Logo" style="width: 70px; height: 60px; margin-left: 0px;">
+              </div>
+              <p class="client-link">Jastar Logistics</p>
+            </a>
           </div>
 
 
           <!--Duplicate logos for smooth scrolling--> 
           <div style="text-align: center;">
-            <div class="client-logo";><span class="cl-sep;"></span><a style="color: inherit !important;"  href="https://hakikatransport.com/" target="_blank"><img src="images/Hakika TS Logo.png" alt="Hakika TS Logo" style="width: 120px; height: 50px; margin-left: 60x;"></div><p class="client-link" style="margin: 1px;">Hakika Transport Services</p></a>
+            <a  href="https://www.kpa.co.ke/" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/KPA Logo.png" alt="KPA Logo" style="width: 90px; height: 80px; margin-left: 6px;">
+              </div>
+              <p class="client-link">Kenya Ports Authority</p>
+            </a>
+          </div>
+
+          <div style="text-align: center;">
+            <a  href="https://www.kra.go.ke/" target="_blank">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/KRA.png" alt="KRA Logo" style="width: 140px; height: 50px; margin-left: 0px;">
+              </div>
+              <p class="client-link"> Kenya Revenue Authority</p>
+            </a>
           </div>
    
-          <div style="text-align: center;">
-            <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://jastarlogisticslimited.co.ke/" target="_blank"><img src="images/Jastar logo.png" alt="Jastar Logo" style="width: 70px; height: 60px; margin-left: 15px;""></div><p class="client-link" style="margin: 1px;">Jastar Logistic Limited</p></a>
-          </div>
+            <div style="text-align: center;">
+              <a href="https://www.maersk.com/" target="_blank" class="client-block">
+                <div class="client-logo">
+                  <span class="cl-sep"></span>
+                  <img src="images/MAERSK.png" alt="MAERSK Logo" style="width: 100px; height: 60px; margin-left: 15px;">
+                </div>
+                <p class="client-link">MAERSK</p>
+              </a>
+            </div>
    
-          <div style="text-align: center;">
-            <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://okwiriadvocates.com/" target="_blank"><img src="images/OKWIRI ADVOCATES LOGO_Black.png" alt="Jastar Logo" style="width: 78px; height: 60px; margin-left: 25px;"></div><p class="client-link" style="margin: 1px;"> Okwiri & Company Advocates</p></a>
-          </div>
+            <div style="text-align: center;">
+              <a href="https://www.msc.com/" target="_blank" class="client-block">
+                <div class="client-logo">
+                  <span class="cl-sep"></span>
+                  <img src="images/msc.png" alt="MSC Logo" style="width: 78px; height: 50px; margin-left: 25px;">
+                </div>
+                <p class="client-link" >Mediterenian Shipping Company</p>
+              </a>
+            </div>
         
-          <div style="text-align: center; justify-content: center; align-items: center;">
-            <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://www.jointdevsystems.com/" target="_blank"><img src="images/JDS logo.png" alt="JD Systems Logo" style="width: 50px; height: 50px;"></div><p class="client-link" style="margin: 1px;">JD Systems</p></a>
-          </div>
-    
           <div style="text-align: center;">
-            <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://ibm-cargo.vercel.app/" target="_blank"><img src="images/IBM logo.png" alt="IBM Logistics Logo" style="width: 60px; height: 50px; margin-left: 45px;"></div><p class="client-link" style="margin: 1px;"> IBM Logistics CO. UGANDA LTD</p></a>
+            <a  href="https://hakikatransport.com//" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/Hakika TS logo.png" alt="Hakika TS Logo" style="width: 160px; height: 60px;">
+              </div>
+              <p class="client-link">Hakika Transport Services</p>
+            </a>
           </div>
-    
+
           <div style="text-align: center;">
-            <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://gargo.co.ke/" target="_blank"><img src="images/gargologo222.png" alt="IBM Logistics Logo" style="width: 90px; height: 70px; margin-left: 20px;"></div><p class="client-link" style="margin: 1px;"> Gargo Haven Depot Limited</p></a>
+            <a href="https://www.consolbase.co.ke/" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/consolbase.png" alt="Consolbase Logo" style="width: 100px; height: 40px; margin-left: 0px;">
+              </div>
+              <p class="client-link"> Consolbase Limited</p>
+            </a>
+          </div>
+
+          <div style="text-align: center;">
+            <a  href="https://jastarlogisticslimited.co.ke/" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/Jastar logo.png" alt="Jastar Logo" style="width: 70px; height: 60px; margin-left: 0px;">
+              </div>
+              <p class="client-link">Jastar Logistics</p>
+            </a>
           </div>
     
 
           <!--Additional duplicates for continuous scroll-->
-    <div style="text-align: center;">
-    <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://hakikatransport.com/" target="_blank"><img src="images/Hakika TS Logo.png" alt="Hakika TS Logo" style="width: 120px; height: 50px; margin-left: 6px;"></div><p class="client-link" style="margin: 1px;">Hakika Transport Services</p></a>
-    </div>
+          <div style="text-align: center;">
+            <a  href="https://www.kpa.co.ke/" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/KPA Logo.png" alt="KPA Logo" style="width: 90px; height: 80px; margin-left: 6px;">
+              </div>
+              <p class="client-link">Kenya Ports Authority</p>
+            </a>
+          </div>
+
+          <div style="text-align: center;">
+            <a  href="https://www.kra.go.ke/" target="_blank">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/KRA.png" alt="KRA Logo" style="width: 140px; height: 50px; margin-left: 0px;">
+              </div>
+              <p class="client-link"> Kenya Revenue Authority</p>
+            </a>
+          </div>
    
-    <div style="text-align: center;">
-    <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://jastarlogisticslimited.co.ke/" target="_blank"><img src="images/Jastar logo.png" alt="Jastar Logo" style="width: 70px; height: 60px; margin-left: 15px;"></div><p class="client-link" style="margin: 1px;">Jastar Logistic Limited</p></a>
-    </div>
+            <div style="text-align: center;">
+              <a href="https://www.maersk.com/" target="_blank" class="client-block">
+                <div class="client-logo">
+                  <span class="cl-sep"></span>
+                  <img src="images/MAERSK.png" alt="MAERSK Logo" style="width: 100px; height: 60px; margin-left: 15px;">
+                </div>
+                <p class="client-link">MAERSK</p>
+              </a>
+            </div>
    
-    <div style="text-align: center;">
-    <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://okwiriadvocates.com/" target="_blank"><img src="images/OKWIRI ADVOCATES LOGO_Black.png" alt="Jastar Logo" style="width: 78px; height: 60px; margin-left: 25px;"></div><p class="client-link" style="margin: 1px;"> Okwiri & Company Advocates</p></a>
-    </div>
+            <div style="text-align: center;">
+              <a href="https://www.msc.com/" target="_blank" class="client-block">
+                <div class="client-logo">
+                  <span class="cl-sep"></span>
+                  <img src="images/msc.png" alt="MSC Logo" style="width: 78px; height: 50px; margin-left: 25px;">
+                </div>
+                <p class="client-link" >Mediterenian Shipping Company</p>
+              </a>
+            </div>
         
-    <div style="text-align: center; justify-content: center; align-items: center;">
-    <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://www.jointdevsystems.com/" target="_blank"><img src="images/JDS logo.png" alt="JD Systems Logo" style="width: 50px; height: 50px;"></div><p class="client-link" style="margin: 1px;">JD Systems</p></a>
-    </div>
+          <div style="text-align: center;">
+            <a  href="https://hakikatransport.com//" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/Hakika TS logo.png" alt="Hakika TS Logo" style="width: 160px; height: 60px;">
+              </div>
+              <p class="client-link">Hakika Transport Services</p>
+            </a>
+          </div>
 
-    <div style="text-align: center;">
-    <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://ibm-cargo.vercel.app/" target="_blank"><img src="images/IBM logo.png" alt="IBM Logistics Logo" style="width: 60px; height: 50px; margin-left: 45px;"></div><p class="client-link" style="margin: 1px;"> IBM Logistics CO. UGANDA LTD</p></a>
-    </div>
+          <div style="text-align: center;">
+            <a href="https://www.consolbase.co.ke/" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/consolbase.png" alt="Consolbase Logo" style="width: 100px; height: 40px; margin-left: 0px;">
+              </div>
+              <p class="client-link"> Consolbase Limited</p>
+            </a>
+          </div>
 
-    <div style="text-align: center;">
-    <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://gargo.co.ke/" target="_blank"><img src="images/gargologo222.png" alt="IBM Logistics Logo" style="width: 90px; height: 70px; margin-left: 20px;"></div><p class="client-link" style="margin: 1px;"> Gargo Haven Depot Limited</p></a>
-    </div>
+          <div style="text-align: center;">
+            <a  href="https://jastarlogisticslimited.co.ke/" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/Jastar logo.png" alt="Jastar Logo" style="width: 70px; height: 60px; margin-left: 0px;">
+              </div>
+              <p class="client-link">Jastar Logistics</p>
+            </a>
+          </div>
 
 
-    <!--Additional duplicates for continuous scroll-->
-    <div style="text-align: center;">
-    <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://hakikatransport.com/" target="_blank"><img src="images/Hakika TS Logo.png" alt="Hakika TS Logo" style="width: 120px; height: 50px; margin-left: 6px;"></div><p class="client-link" style="margin: 1px;">Hakika Transport Services</p></a>
-    </div>
+          <!--Additional duplicates for continuous scroll-->
+          <div style="text-align: center;">
+            <a  href="https://www.kpa.co.ke/" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/KPA Logo.png" alt="KPA Logo" style="width: 90px; height: 80px; margin-left: 6px;">
+              </div>
+              <p class="client-link">Kenya Ports Authority</p>
+            </a>
+          </div>
+
+          <div style="text-align: center;">
+            <a  href="https://www.kra.go.ke/" target="_blank">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/KRA.png" alt="KRA Logo" style="width: 140px; height: 50px; margin-left: 0px;">
+              </div>
+              <p class="client-link"> Kenya Revenue Authority</p>
+            </a>
+          </div>
    
-    <div style="text-align: center;">
-    <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://jastarlogisticslimited.co.ke/" target="_blank"><img src="images/Jastar logo.png" alt="Jastar Logo" style="width: 70px; height: 60px; margin-left: 15px;"></div><p class="client-link" style="margin: 1px;">Jastar Logistic Limited</p></a>
-    </div>
+            <div style="text-align: center;">
+              <a href="https://www.maersk.com/" target="_blank" class="client-block">
+                <div class="client-logo">
+                  <span class="cl-sep"></span>
+                  <img src="images/MAERSK.png" alt="MAERSK Logo" style="width: 100px; height: 60px; margin-left: 15px;">
+                </div>
+                <p class="client-link">MAERSK</p>
+              </a>
+            </div>
    
-    <div style="text-align: center;">
-    <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://okwiriadvocates.com/" target="_blank"><img src="images/OKWIRI ADVOCATES LOGO_Black.png" alt="Jastar Logo" style="width: 78px; height: 60px; margin-left: 25px;"></div><p class="client-link" style="margin: 1px;"> Okwiri & Company Advocates</p></a>
-    </div>
+            <div style="text-align: center;">
+              <a href="https://www.msc.com/" target="_blank" class="client-block">
+                <div class="client-logo">
+                  <span class="cl-sep"></span>
+                  <img src="images/msc.png" alt="MSC Logo" style="width: 78px; height: 50px; margin-left: 25px;">
+                </div>
+                <p class="client-link" >Mediterenian Shipping Company</p>
+              </a>
+            </div>
         
-    <div style="text-align: center; justify-content: center; align-items: center;">
-    <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://www.jointdevsystems.com/" target="_blank"><img src="images/JDS logo.png" alt="JD Systems Logo" style="width: 50px; height: 50px;"></div><p class="client-link" style="margin: 1px;">JD Systems</p></a>
-    </div>
-    
-    <div style="text-align: center;">
-    <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://ibm-cargo.vercel.app/" target="_blank"><img src="images/IBM logo.png" alt="IBM Logistics Logo" style="width: 60px; height: 50px; margin-left: 45px;"></div><p class="client-link" style="margin: 1px;"> IBM Logistics CO. UGANDA LTD</p></a>
-    </div>
+          <div style="text-align: center;">
+            <a  href="https://hakikatransport.com//" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/Hakika TS logo.png" alt="Hakika TS Logo" style="width: 160px; height: 60px;">
+              </div>
+              <p class="client-link">Hakika Transport Services</p>
+            </a>
+          </div>
 
-    <div style="text-align: center;">
-    <div class="client-logo"><span class="cl-sep"></span><a style="color: inherit !important;"  href="https://gargo.co.ke/" target="_blank"><img src="images/gargologo222.png" alt="IBM Logistics Logo" style="width: 90px; height: 70px; margin-left: 20px;"></div><p class="client-link" style="margin: 1px;"> Gargo Haven Depot Limited</p></a>
-    </div>
+          <div style="text-align: center;">
+            <a href="https://www.consolbase.co.ke/" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/consolbase.png" alt="Consolbase Logo" style="width: 100px; height: 40px; margin-left: 0px;">
+              </div>
+              <p class="client-link"> Consolbase Limited</p>
+            </a>
+          </div>
+
+          <div style="text-align: center;">
+            <a  href="https://jastarlogisticslimited.co.ke/" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/Jastar logo.png" alt="Jastar Logo" style="width: 70px; height: 60px; margin-left: 0px;">
+              </div>
+              <p class="client-link">Jastar Logistics</p>
+            </a>
+          </div>
 
   </div>
 </div>
+</section>
 
 
 
@@ -3646,4 +3833,46 @@ window.demoTrack = demoTrack;
     wireLoginButton();
   }
 
+})();
+
+(function () {
+  function wireGalleryNav() {
+    const strip = document.getElementById('galleryStrip');
+    const prevBtn = document.getElementById('galleryPrevBtn');
+    const nextBtn = document.getElementById('galleryNextBtn');
+    if (!strip || !prevBtn || !nextBtn) return; // not on this page, bail quietly
+
+    function scrollByOneItem(direction) {
+      const item = strip.querySelector('.gallery-item');
+      const itemWidth = item ? item.getBoundingClientRect().width : 260;
+      const gapStr = window.getComputedStyle(strip).gap || '4px';
+      const gap = parseFloat(gapStr) || 4;
+      const amount = itemWidth + gap;
+      strip.scrollBy({
+        left: direction === 'next' ? amount : -amount,
+        behavior: 'smooth'
+      });
+    }
+
+    prevBtn.addEventListener('click', function () { scrollByOneItem('prev'); });
+    nextBtn.addEventListener('click', function () { scrollByOneItem('next'); });
+
+    // Optional: disable arrows at the ends
+    function updateArrowState() {
+      const maxScroll = strip.scrollWidth - strip.clientWidth - 1;
+      prevBtn.disabled = strip.scrollLeft <= 0;
+      nextBtn.disabled = strip.scrollLeft >= maxScroll;
+      prevBtn.style.opacity = prevBtn.disabled ? '0.35' : '1';
+      nextBtn.style.opacity = nextBtn.disabled ? '0.35' : '1';
+    }
+    strip.addEventListener('scroll', updateArrowState);
+    window.addEventListener('resize', updateArrowState);
+    updateArrowState();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireGalleryNav);
+  } else {
+    wireGalleryNav();
+  }
 })();

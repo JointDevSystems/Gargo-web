@@ -2678,6 +2678,19 @@ footer.footer {
     
 }
 
+.clients {
+    position: relative;
+  background: linear-gradient(90deg, #0a0a0a 0%, #1E293B 45%, #816920 75%, #aa8201 100%);
+  /* black → dark-card → gold-dark → gold */
+    overflow: hidden;
+    margin-bottom: 60px;
+    width: 100vw;
+    text-decoration: none !important;
+    left:50%;
+    right:50%;
+    margin-left:-50vw;
+    margin-right:-50vw;
+  }
   .ticker-track {
     display: flex;
     gap: 80px;
@@ -2685,6 +2698,7 @@ footer.footer {
     width: max-content;
     padding: 24px 0;
     align-items: center;
+    text-decoration: none !important;
   }
 
   @keyframes ticker {
@@ -2698,3 +2712,100 @@ footer.footer {
     text-align: center; 
     font-weight: 800;
   }
+
+  .client-logo {
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 0.3s;
+
+  }
+
+  .client-logo:hover { 
+    color: var(--gold); 
+  }
+
+  .cl-sep {
+    width: 4px;
+    height: 4px; 
+    background: gold;
+    color: gold!important; 
+    opacity: 0.3; 
+    transform: rotate(45deg); 
+
+  }
+
+  .cl-sep:hover {
+    opacity: 0.6;
+    color: rgb(151, 129, 3);
+    }
+
+  .client-link{
+    font-size: 13px;
+    color: var(--muted2);
+    transition: color 0.3s;
+    font-weight: 300;
+    margin-top: 10px;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .client-link:hover {
+    color: var(--gold); 
+    }
+
+.client-block { 
+  text-decoration: none; 
+  color: inherit; 
+  display: block; 
+}
+
+.clients a,
+.clients a:hover,
+.clients a:visited {
+  text-decoration: none !important;
+  color: inherit;
+}
+
+/* GALLERY STRIP NAV ARROWS */
+.gallery-strip-wrap {
+  position: relative;
+}
+.gallery-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px; height: 44px;
+  background: rgba(10,10,10,0.85);
+  border: 1px solid var(--gold-dark);
+  color: var(--gold);
+  font-size: 22px;
+  line-height: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  backdrop-filter: blur(4px);
+}
+.gallery-nav-btn:hover {
+  background: var(--gold);
+  color: var(--black);
+  border-color: var(--gold);
+  transform: translateY(-50%) scale(1.08);
+}
+.gallery-nav-prev { left: 12px; }
+.gallery-nav-next { right: 12px; }
+
+@media(max-width: 640px) {
+  .gallery-nav-btn { width: 36px; height: 36px; font-size: 18px; }
+}
+
