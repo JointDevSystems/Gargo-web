@@ -365,9 +365,13 @@ footer.footer {
   border-bottom: 1px solid rgba(201,162,39,0.12);
 }
 .mobile-nav-link:hover,
-.mobile-nav-link:active { color: var(--gold); }
+.mobile-nav-link:active { 
+  color: var(--gold); 
+}
 
-.mobile-dropdown { border-bottom: 1px solid rgba(201,162,39,0.12); }
+.mobile-dropdown { 
+  border-bottom: 1px solid rgba(201,162,39,0.12); 
+}
 
 .mobile-dropdown-btn {
   width: 100%;
@@ -396,7 +400,9 @@ footer.footer {
   transition: transform 0.3s ease, background 0.3s ease, color 0.3s ease;
   flex-shrink: 0;
 }
-.mobile-dropdown-btn.active { color: var(--gold); }
+.mobile-dropdown-btn.active { 
+  color: var(--gold); 
+}
 .mobile-dropdown-btn.active span {
   background: var(--gold);
   color: var(--black);
@@ -446,6 +452,15 @@ footer.footer {
 .mobile-login:hover { 
   background: var(--gold-light); 
 }
+
+.mobile-close-btn {
+  position: absolute; top: 24px; right: 28px;
+  background: none; border: none;
+  color: var(--gold);
+  font-size: 22px;
+  cursor: pointer;
+}
+
 
 
 .page { display: none; }
