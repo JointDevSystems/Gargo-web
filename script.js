@@ -1674,6 +1674,113 @@ const SUBPAGES = {
       </section>`,
   },
 
+  'container-selling': {
+  parent: 'services',
+  title: 'Container Selling',
+  hero: 'images/gargo1.png',
+  tag: ' ✦ Container Selling — 06',
+  render: () => `
+    <section class="section-light">
+      <div class="section-inner">
+        <div class="intro-grid">
+          <div class="intro-body">
+            <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Buy IICL-Graded Containers Direct From Our Yard</h2>
+            <p>Gargo Haven sells new and used shipping containers directly from our Changamwe depot — dry, high cube, and reefer units available for outright purchase. Every unit passes through our IICL-certified inspection process before it's offered for sale, so buyers know exactly what condition they're getting.</p>
+            <p>Whether you need a container for cargo shipping, site storage, conversion into office or retail space, or cold-chain use, our yard stock is refreshed regularly as units cycle through depot operations. We can also source specific sizes or grades on request for bulk buyers.</p>
+            <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">What We Offer</h3>
+            <ul class="rate-features" style="list-style:none;padding:0;">
+              <li>New (one-trip) and used containers in stock</li>
+              <li>20ft, 40ft, and 40ft High Cube dry units</li>
+              <li>Reefer containers for cold storage or transport conversion</li>
+              <li>Flat-rack and open-top units on request</li>
+              <li>IICL condition grading on every unit sold</li>
+              <li>Delivery to your site available across Mombasa</li>
+              <li>Bulk purchase pricing for fleet or project buyers</li>
+            </ul>
+            <div style="display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;">
+              <button class="btn-primary" onclick="navigateToPage('booking')">Enquire About Stock →</button>
+              <button class="btn-secondary" onclick="navigateToPage('contact')">Request a Quote →</button>
+            </div>
+          </div>
+          <div class="sidebar-box">
+            <h4>Container Sales Details</h4>
+            <div class="sidebar-item"><div class="sidebar-label">Condition Grades</div><p>New (one-trip) · IICL Grade A · IICL Grade B</p></div>
+            <div class="sidebar-item"><div class="sidebar-label">Sizes Available</div><p>20ft · 40ft · 40ft High Cube · Reefer · Flat-rack · Open-top</p></div>
+            <div class="sidebar-item"><div class="sidebar-label">Inspection</div><p>IICL-certified condition report supplied with every sale</p></div>
+            <div class="sidebar-item"><div class="sidebar-label">Delivery</div><p>Available to any site in Mombasa · Nationwide on request</p></div>
+            <div class="sidebar-item"><div class="sidebar-label">Payment</div><p>Bank transfer · Corporate invoicing for bulk orders</p></div>
+            <div class="sidebar-item"><div class="sidebar-label">Stock Updates</div><p>Refreshed regularly — call to confirm current availability</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INVENTORY with PAGINATION -->
+    <section class="container-selling-section">
+      <div class="section-inner">
+        <div class="container-header">
+         <div>
+          <div class="section-eyebrow reveal">
+            <div class="section-eyebrow-line"></div>
+            <div class="section-tag" style="color: black;">Available Containers</div>
+          </div>
+          <h2 class="section-title reveal">Container<em> Inventory</em></h2>
+        </div>
+        <div class="container-header-right reveal">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="new">New</button>
+          <button class="filter-btn" data-filter="used">Used</button>
+          <button class="filter-btn" data-filter="20ft">20ft</button>
+          <button class="filter-btn" data-filter="40ft">40ft</button>
+          <button class="filter-btn" data-filter="40HC">40HC</button>
+          <button class="filter-btn" data-filter="reefer">Reefer</button>
+          <button class="filter-btn" data-filter="flat-rack">Flat-Rack</button>
+          <button class="filter-btn" data-filter="open-top">Open-Top</button>
+        </div>
+      </div>
+ 
+      <!-- Page counter -->
+      <div class="inv-meta reveal">
+        <span id="invPageLabel" class="inv-page-label">Showing 1–25 of <span id="invTotal">0</span> containers</span>
+      </div>
+ 
+      <!-- Car grid (5 × 5) — rendered by JS -->
+      <div class="inv-grid" id="invGrid"></div>
+ 
+      <!-- Pagination controls -->
+      <div class="inv-pagination" id="invPagination"></div>
+ 
+    </div>
+  </section>
+ 
+
+
+
+    <section class="section-dark">
+      <div class="section-inner">
+        <div class="section-header"><div class="section-tag">✦ Common Uses</div>
+        <h2 class="section-title">What Clients Use Our <span>Containers For</span></h2></div>
+        <div class="depot-zones-grid">
+          <div class="zone-card"><div class="zone-label">Cargo Shipping</div><div class="zone-desc">Standard dry units ready for immediate loading and export or import shipments.</div></div>
+          <div class="zone-card"><div class="zone-label">Site Storage</div><div class="zone-desc">Secure on-site storage for construction sites, warehouses, and industrial yards.</div></div>
+          <div class="zone-card"><div class="zone-label">Cold Chain & Conversion</div><div class="zone-desc">Reefer units for cold storage, or dry units converted into offices, kiosks, and pop-up retail space.</div></div>
+          <div class="zone-card"><div class="zone-label">Fleet & Project Buyers</div><div class="zone-desc">Bulk purchasing for logistics companies, contractors, and organisations needing multiple units.</div></div>
+        </div>
+      </div>
+    </section>
+    <section class="cta-band-img" style="background-image:url('images/depot8.png')">
+      <div class="cta-band-overlay"></div>
+      <div class="cta-band-content">
+        <h2>Looking to Buy a Container?</h2>
+        <p>Check current stock and pricing at our Changamwe yard.</p>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
+          <button class="btn-primary" onclick="navigateToPage('booking')">Enquire Now →</button>
+          <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
+        </div>
+      </div>
+    </section>`,
+},
+
   'container-repairs': {
     parent: 'services',
     title: 'Container Repairs',
@@ -2543,6 +2650,7 @@ const SUBPAGES = {
               <h2 class="section-title">Track Your <span>Booking</span></h2>
               <p class="section-sub">Enter your booking reference to see current status, truck assignment, and estimated completion.</p>
             </div>
+            <div class="tracking-tabs"><button class="track-tab active">By Booking Ref</button></div>
             <div class="tracking-body">
               <div class="tab-pane">
                 <div class="track-search">
@@ -2571,6 +2679,7 @@ const SUBPAGES = {
               <h2 class="section-title">Find Your <span>EIR</span></h2>
               <p class="section-sub">Search for an Equipment Interchange Receipt by EIR number or container number.</p>
             </div>
+            <div class="tracking-tabs"><button class="track-tab active">By EIR Number/Container Number.</button></div>
             <div class="tracking-body">
               <div class="tab-pane">
                 <div class="track-search">
@@ -2706,6 +2815,7 @@ function wireNavLinks() {
     'Container Storage':    'container-storage',
     'Port Haulage':         'port-haulage',
     'Reefer Monitoring':    'reefer-monitoring',
+    'Container Selling':    'container-selling',
     'Container Repairs':    'container-repairs',
     'Container Washing':    'container-washing',
     'IICL Inspection':      'iicl-inspection',
@@ -3894,3 +4004,4 @@ document.querySelectorAll(".mobile-dropdown-btn").forEach(btn => {
     });
 
 });
+
