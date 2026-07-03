@@ -852,6 +852,9 @@ function init() {
   initLoader();
   initTicker();
   initModal();
+  if (typeof initMobileMenu === "function") {
+    initMobileMenu();
+}
   initScrollTop();
   initChatbot();
   initHeroSlideshow();
