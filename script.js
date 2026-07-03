@@ -366,7 +366,23 @@ function navigateToPage(pageId) {
 window.navigateToPage = navigateToPage;
 
 
-  
+function openMobileMenu() {
+  const panel = document.getElementById('mobileMenuPanel');
+  if (panel) panel.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeMobileMenu() {
+  const panel = document.getElementById('mobileMenuPanel');
+  if (panel) panel.classList.remove('open');
+  document.body.style.overflow = '';
+}
+window.closeMobileMenu = closeMobileMenu;
+function initMobileMenu() {
+  const toggle = document.getElementById('menuToggle');
+  const closeBtn = document.getElementById('closeMenu');
+  if (toggle) toggle.addEventListener('click', openMobileMenu);
+  if (closeBtn) closeBtn.addEventListener('click', closeMobileMenu);
+}
 
 
 function initScrollTop() {
@@ -400,6 +416,7 @@ function initChatbot() {
     ].join(''));
   });
 }
+
 
 
 function runCalc() {
@@ -3857,4 +3874,3 @@ window.demoTrack = demoTrack;
     wireGalleryNav();
   }
 })();
-
