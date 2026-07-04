@@ -715,12 +715,7 @@ function closeTrackResult() {
 }
 window.closeTrackResult = closeTrackResult;
 
-/**
- * Reads the first present, non-empty value for any of `keys` off `obj`.
- * Used because we don't control the exact column names public_track_lookup
- * returns (snake_case DB columns vs camelCase vs UK/US spelling, etc.) —
- * this way rendering doesn't silently go blank on a naming mismatch.
- */
+
 function pick(obj, keys) {
   if (!obj) return null;
   for (let i = 0; i < keys.length; i++) {
@@ -3203,18 +3198,12 @@ window.demoTrack = demoTrack;
 })();
 
 
-/* ═══════════════════════════════════════════════════
-   GARGO HAVEN — CLIENT AUTH MODAL
-   Login · Create Account · Forgot Password
-═══════════════════════════════════════════════════ */
+
 
 (function () {
   'use strict';
 
-  /* ── Real session, backed by Supabase Auth (see ghAuth* helpers above).
-     Supabase persists its own session in localStorage; this sessionStorage
-     copy is just a fast local cache so the nav/dashboard can render
-     without waiting on a round trip. ── */
+
   function getCurrentUser() {
     try { return JSON.parse(sessionStorage.getItem('gh_session') || 'null'); } catch (e) { return null; }
   }
