@@ -1447,8 +1447,17 @@
 
           <div id="trackResult" class="tracking-result">
             <div class="tr-panel-head">
-              <span class="tr-panel-title">TRACKING RESULT</span>
-              <button type="button" class="tr-close-btn" onclick="closeTrackResult()" aria-label="Close results">✕ CLOSE</button>
+              <div class="tr-panel-head-left">
+                <div class="tr-panel-icon">📦</div>
+                <div class="tr-panel-title-group">
+                  <span class="tr-panel-title">TRACKING RESULT</span>
+                  <span class="tr-panel-subtitle">Live shipment status &amp; booking details</span>
+                </div>
+              </div>
+              <div class="tr-panel-actions">
+                <button type="button" class="tr-download-btn" id="trDownloadBtn" onclick="downloadTrackingReport()">⬇ Download Report</button>
+                <button type="button" class="tr-close-btn" onclick="closeTrackResult()" aria-label="Close results">✕ CLOSE</button>
+              </div>
             </div>
 
             <div class="track-header-info">
@@ -1835,6 +1844,7 @@
 <button class="chatbot-btn" id="chatbotBtn">💬</button>
   
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

@@ -1,4 +1,3 @@
-
 const GH_SUPABASE_URL = 'https://okisjizcyidvvwdwehaa.supabase.co';
 const GH_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9raXNqaXpjeWlkdnZ3ZHdlaGFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTYzNjMsImV4cCI6MjA5ODM5MjM2M30.O_0EeK297a07B7FLunpWr6HDlqrfP5Z8Owyp3qE4hQE';
 
@@ -32,16 +31,49 @@ async function ghSubmitBooking(payload) {
         const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
       });
-  const { error } = await ghSupabase.from('public_bookings').insert(Object.assign({ id }, payload));
+
+  
+  const { data: sessionData } = await ghSupabase.auth.getSession();
+  const userId = sessionData && sessionData.session ? sessionData.session.user.id : null;
+
+  const { error } = await ghSupabase
+    .from('public_bookings')
+    .insert(Object.assign({ id, user_id: userId }, payload));
   if (error) throw new Error(error.message || 'Booking failed — please try again');
   return { booking: { id } };
 }
 
-
 async function ghSubmitContact(payload) {
-  const { error } = await ghSupabase.from('public_contact_messages').insert(payload);
+  
+  const { data: sessionData } = await ghSupabase.auth.getSession();
+  const userId = sessionData && sessionData.session ? sessionData.session.user.id : null;
+
+  const { error } = await ghSupabase
+    .from('public_contact_messages')
+    .insert(Object.assign({ user_id: userId }, payload));
   if (error) throw new Error(error.message || 'Message failed — please try again');
   return { ok: true };
+}
+
+
+// Fetches only the current user's own bookings. No explicit user_id filter is
+// added here — RLS policy "Users can read own bookings" (auth.uid() = user_id)
+// already scopes every row to the caller, so this can't leak other clients'
+// bookings even if called with a stale/forged payload.
+async function ghMyBookings({ limit = 5, offset = 0 } = {}) {
+  const { data: sessionData } = await ghSupabase.auth.getSession();
+  if (!sessionData || !sessionData.session) {
+    return { bookings: [], total: 0 };
+  }
+
+  const { data, error, count } = await ghSupabase
+    .from('public_bookings')
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) throw new Error(error.message || 'Could not load your bookings');
+  return { bookings: data || [], total: count || 0 };
 }
 
 
@@ -92,6 +124,7 @@ window.bridge = {
   fleetStatus: ghFleetStatus,
   submitBooking: ghSubmitBooking,
   submitContact: ghSubmitContact,
+  myBookings: ghMyBookings,
   authRegister: ghAuthRegister,
   authLogin: ghAuthLogin,
   authLogout: ghAuthLogout,
@@ -659,12 +692,14 @@ function doTrack() {
 
   window.bridge.trackQuery(query)
     .then(function (details) {
+      state.lastTrack = { details: details, query: query };
       renderTrackResult(details, query);
       if (resultEl) resultEl.classList.add('visible');
       showNotification('Record found', 'Trip ' + details.trip.id + ' – ' + details.trip.status, '✅');
       startLiveSimulation(query);
     })
     .catch(function (err) {
+      state.lastTrack = null;
       showNotification('No matching record found', err.message || 'Please check the number and try again', '❌');
       window.clearInterval(state.trackInterval);
     });
@@ -794,6 +829,206 @@ function initTrackPage() {
   if (resultEl && resultEl.classList.contains('visible') && inputEl && inputEl.value.trim()) {
     startLiveSimulation(inputEl.value.trim());
   }
+}
+
+/**
+ * Builds a one-click, branded PDF of the currently displayed tracking
+ * result (booking details, truck/driver info, and the full timeline) so
+ * a customer can save or forward proof of their shipment status. Falls
+ * back to a plain-text download if the PDF library failed to load
+ * (e.g. blocked by a network/ad-blocker), so the feature still works
+ * either way.
+ */
+function downloadTrackingReport() {
+  if (!state.lastTrack || !state.lastTrack.details) {
+    showNotification('Nothing to download yet', 'Track a shipment first', 'ℹ️');
+    return;
+  }
+  const { details, query } = state.lastTrack;
+  const { trip, truck, driver, events } = details;
+  const btn = document.getElementById('trDownloadBtn');
+
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    downloadTrackingReportAsText(details, query);
+    return;
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const marginX = 48;
+    let y = 56;
+
+    const gold = [201, 162, 39];
+    const dark = [20, 20, 20];
+    const gray = [110, 110, 110];
+
+    // Header
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.setTextColor(dark[0], dark[1], dark[2]);
+    doc.text('GARGO', marginX, y);
+    doc.setTextColor(gold[0], gold[1], gold[2]);
+    doc.text(' LOGISTICS', marginX + doc.getTextWidth('GARGO'), y);
+    doc.setDrawColor(gold[0], gold[1], gold[2]);
+    doc.setLineWidth(1.5);
+    doc.line(marginX, y + 10, pageWidth - marginX, y + 10);
+
+    y += 34;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(gray[0], gray[1], gray[2]);
+    doc.text('Shipment Tracking Report — generated ' + new Date().toLocaleString(), marginX, y);
+
+    // Section: Booking details
+    y += 30;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(dark[0], dark[1], dark[2]);
+    doc.text('BOOKING DETAILS', marginX, y);
+    y += 8;
+    doc.setDrawColor(225, 225, 225);
+    doc.setLineWidth(0.75);
+    doc.line(marginX, y, pageWidth - marginX, y);
+    y += 20;
+
+    const bookingRows = [
+      ['Container / Ref', trip.container || trip.id || query || '—'],
+      ['Route', (trip.origin || '—') + '  →  ' + (trip.destination || '—')],
+      ['Status', (trip.status ? trip.status.charAt(0).toUpperCase() + trip.status.slice(1) : '—')],
+      ['ETA', trip.status === 'active' ? 'In transit' : (trip.status === 'completed' ? 'Delivered' : '—')],
+      ['Booked', trip.created || '—'],
+    ];
+    y = pdfKeyValueRows(doc, bookingRows, marginX, y, pageWidth);
+
+    // Section: Truck details
+    y += 16;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('TRUCK DETAILS', marginX, y);
+    y += 8;
+    doc.line(marginX, y, pageWidth - marginX, y);
+    y += 20;
+    const truckRows = [
+      ['Registration', pick(truck, ['reg', 'registration', 'licence_plate', 'licencePlate', 'plate', 'vehicle_reg']) || pick(trip, ['truck_reg', 'truckReg']) || '—'],
+      ['Type', pick(truck, ['type', 'truck_type', 'vehicle_type', 'make']) || pick(trip, ['truck_type', 'truckType']) || '—'],
+      ['Status', pick(truck, ['status', 'truck_status', 'vehicle_status']) || pick(trip, ['truck_status', 'truckStatus']) || '—'],
+    ];
+    y = pdfKeyValueRows(doc, truckRows, marginX, y, pageWidth);
+
+    // Section: Driver details
+    y += 16;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('DRIVER DETAILS', marginX, y);
+    y += 8;
+    doc.line(marginX, y, pageWidth - marginX, y);
+    y += 20;
+    const driverRows = [
+      ['Name', pick(driver, ['name', 'driver_name', 'full_name']) || pick(trip, ['driver_name', 'driverName']) || '—'],
+      ['Phone', pick(driver, ['phone', 'mobile', 'phone_number', 'contact']) || pick(trip, ['driver_phone', 'driverPhone']) || '—'],
+      ['Licence', pick(driver, ['licence', 'license', 'licence_no', 'license_no', 'licenceNo', 'licenseNo']) || pick(trip, ['driver_licence', 'driver_license']) || '—'],
+    ];
+    y = pdfKeyValueRows(doc, driverRows, marginX, y, pageWidth);
+
+    // Section: Timeline
+    if (events && events.length) {
+      y += 16;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('TIMELINE', marginX, y);
+      y += 8;
+      doc.line(marginX, y, pageWidth - marginX, y);
+      y += 20;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      events.forEach(function (ev) {
+        if (y > 760) { doc.addPage(); y = 56; }
+        doc.setTextColor(gold[0], gold[1], gold[2]);
+        doc.text(String(ev.ts || '—'), marginX, y);
+        doc.setTextColor(dark[0], dark[1], dark[2]);
+        const label = ev.label + (ev.detail ? ' — ' + ev.detail : '');
+        doc.text(label, marginX + 90, y);
+        y += 18;
+      });
+    }
+
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(gray[0], gray[1], gray[2]);
+      doc.text('Gargo Logistics Ltd — generated automatically for reference only. For disputes, contact support.', marginX, 810);
+    }
+
+    const safeId = String(trip.container || trip.id || query || 'shipment').replace(/[^a-zA-Z0-9-]/g, '');
+    doc.save('Gargo-Tracking-' + safeId + '.pdf');
+  } catch (e) {
+    console.error('PDF generation failed, falling back to text file:', e);
+    downloadTrackingReportAsText(details, query);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '⬇ Download Report'; }
+  }
+}
+window.downloadTrackingReport = downloadTrackingReport;
+
+/** Renders an array of [label, value] pairs as aligned rows and returns the new y position. */
+function pdfKeyValueRows(doc, rows, marginX, y, pageWidth) {
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  rows.forEach(function (row) {
+    if (y > 760) { doc.addPage(); y = 56; }
+    doc.setTextColor(110, 110, 110);
+    doc.text(row[0], marginX, y);
+    doc.setTextColor(20, 20, 20);
+    doc.text(String(row[1]), marginX + 130, y);
+    y += 18;
+  });
+  return y;
+}
+
+/** Fallback download used if jsPDF isn't available for any reason. */
+function downloadTrackingReportAsText(details, query) {
+  const { trip, truck, driver, events } = details;
+  const lines = [];
+  lines.push('GARGO LOGISTICS — SHIPMENT TRACKING REPORT');
+  lines.push('Generated: ' + new Date().toLocaleString());
+  lines.push('');
+  lines.push('BOOKING DETAILS');
+  lines.push('Container / Ref: ' + (trip.container || trip.id || query || '—'));
+  lines.push('Route: ' + (trip.origin || '—') + '  ->  ' + (trip.destination || '—'));
+  lines.push('Status: ' + (trip.status || '—'));
+  lines.push('Booked: ' + (trip.created || '—'));
+  lines.push('');
+  lines.push('TRUCK DETAILS');
+  lines.push('Registration: ' + (pick(truck, ['reg', 'registration', 'licence_plate']) || '—'));
+  lines.push('Type: ' + (pick(truck, ['type', 'truck_type', 'vehicle_type']) || '—'));
+  lines.push('');
+  lines.push('DRIVER DETAILS');
+  lines.push('Name: ' + (pick(driver, ['name', 'driver_name', 'full_name']) || '—'));
+  lines.push('Phone: ' + (pick(driver, ['phone', 'mobile', 'phone_number']) || '—'));
+  lines.push('');
+  if (events && events.length) {
+    lines.push('TIMELINE');
+    events.forEach(function (ev) {
+      lines.push((ev.ts || '—') + '  —  ' + ev.label + (ev.detail ? ' (' + ev.detail + ')' : ''));
+    });
+  }
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const safeId = String(trip.container || trip.id || query || 'shipment').replace(/[^a-zA-Z0-9-]/g, '');
+  a.href = url;
+  a.download = 'Gargo-Tracking-' + safeId + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 
@@ -3389,6 +3624,51 @@ window.demoTrack = demoTrack;
       text-align: center;
     }
     .gh-dash-empty p { font-size: 12px; color: #555; line-height: 1.7; }
+
+    /* MY BOOKINGS LIST */
+    .gh-booking-row {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .gh-booking-row-main { min-width: 0; flex: 1; }
+    .gh-booking-ref {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px; color: #c9a227; letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .gh-booking-service {
+      font-size: 13px; color: #fff; font-weight: 600;
+      margin-bottom: 3px;
+    }
+    .gh-booking-route {
+      font-size: 11px; color: #888;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .gh-booking-status {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 20px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .gh-booking-status.pending { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+    .gh-booking-status.confirmed { background: rgba(34,197,94,0.12); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+    .gh-booking-status.completed { background: rgba(148,163,184,0.12); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+    .gh-booking-status.cancelled { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+    .gh-bookings-loadmore {
+      display: block; width: 100%; text-align: center;
+      background: none; border: 1px dashed #333; color: #888;
+      font-size: 11px; letter-spacing: 0.8px; font-family: 'DM Mono', monospace;
+      padding: 10px; border-radius: 8px; cursor: pointer; margin-top: 4px;
+      transition: all 0.2s;
+    }
+    .gh-bookings-loadmore:hover { border-color: #c9a227; color: #c9a227; }
     .gh-dash-account-info {
       background: rgba(201,162,39,0.04);
       border: 1px solid rgba(201,162,39,0.15);
@@ -3608,11 +3888,10 @@ window.demoTrack = demoTrack;
         </div>
 
         <div class="gh-dash-section-title">MY BOOKINGS</div>
-        <div class="gh-dash-empty">
-          <p>No bookings yet. Submit a depot storage or transport request to get started — your booking history will appear here.</p>
-          <button class="gh-auth-submit" style="margin-top:16px;max-width:240px;" onclick="ghDashClose();navigateToPage('booking')">
-            <span class="gh-btn-text">CREATE FIRST BOOKING →</span>
-          </button>
+        <div id="gh-dash-bookings-list">
+          <div class="gh-dash-empty">
+            <p>Loading your bookings…</p>
+          </div>
         </div>
 
         <div class="gh-dash-account-info" id="gh-dash-account-info">
@@ -3906,6 +4185,83 @@ window.demoTrack = demoTrack;
     if (el('gh-dash-email')) el('gh-dash-email').textContent = user.email;
     if (el('gh-dash-role')) el('gh-dash-role').textContent = user.role || '—';
     if (el('gh-dash-since')) el('gh-dash-since').textContent = user.created || '—';
+    loadMyBookings();
+  }
+
+  function ghEscapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function ghFormatBookingDate(raw) {
+    if (!raw) return '—';
+    var d = new Date(raw);
+    if (isNaN(d.getTime())) return String(raw);
+    return d.toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function ghStatusClass(status) {
+    var s = (status || 'pending').toLowerCase();
+    if (s.indexOf('confirm') !== -1) return 'confirmed';
+    if (s.indexOf('complet') !== -1 || s.indexOf('deliver') !== -1) return 'completed';
+    if (s.indexOf('cancel') !== -1 || s.indexOf('reject') !== -1) return 'cancelled';
+    return 'pending';
+  }
+
+  function renderBookingRow(b) {
+    var ref = b.id || b.booking_ref || '—';
+    var service = b.service_type || b.cargo_type || 'Booking';
+    var origin = b.pickup_location || b.origin || '';
+    var dest = b.dropoff_location || b.destination || '';
+    var route = (origin && dest) ? (origin + ' → ' + dest) : (origin || dest || '');
+    var status = b.status || 'Pending';
+    var statusClass = ghStatusClass(status);
+    var dateLabel = ghFormatBookingDate(b.created_at || b.pickup_date);
+
+    return (
+      '<div class="gh-booking-row">' +
+        '<div class="gh-booking-row-main">' +
+          '<div class="gh-booking-ref">' + ghEscapeHtml(ref) + ' · ' + ghEscapeHtml(dateLabel) + '</div>' +
+          '<div class="gh-booking-service">' + ghEscapeHtml(service) + '</div>' +
+          (route ? '<div class="gh-booking-route">' + ghEscapeHtml(route) + '</div>' : '') +
+        '</div>' +
+        '<div class="gh-booking-status ' + statusClass + '">' + ghEscapeHtml(status) + '</div>' +
+      '</div>'
+    );
+  }
+
+  function loadMyBookings() {
+    var container = document.getElementById('gh-dash-bookings-list');
+    if (!container) return;
+
+    container.innerHTML = '<div class="gh-dash-empty"><p>Loading your bookings…</p></div>';
+
+    window.bridge.myBookings({ limit: 5, offset: 0 })
+      .then(function (result) {
+        var bookings = result.bookings || [];
+
+        if (!bookings.length) {
+          container.innerHTML =
+            '<div class="gh-dash-empty">' +
+              '<p>No bookings yet. Submit a depot storage or transport request to get started — your booking history will appear here.</p>' +
+              '<button class="gh-auth-submit" style="margin-top:16px;max-width:240px;" onclick="ghDashClose();navigateToPage(\'booking\')">' +
+                '<span class="gh-btn-text">CREATE FIRST BOOKING →</span>' +
+              '</button>' +
+            '</div>';
+          return;
+        }
+
+        var html = bookings.map(renderBookingRow).join('');
+        if (result.total > bookings.length) {
+          html += '<button class="gh-bookings-loadmore" onclick="navigateToPage(\'track\');ghDashClose();">VIEW ALL BOOKINGS →</button>';
+        }
+        container.innerHTML = html;
+      })
+      .catch(function () {
+        container.innerHTML =
+          '<div class="gh-dash-empty"><p>Could not load your bookings right now. Please try again shortly.</p></div>';
+      });
   }
 
   
@@ -4004,4 +4360,3 @@ document.querySelectorAll(".mobile-dropdown-btn").forEach(btn => {
     });
 
 });
-
