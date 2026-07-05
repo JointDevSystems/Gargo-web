@@ -1,16 +1,35 @@
 const GH_SUPABASE_URL = 'https://okisjizcyidvvwdwehaa.supabase.co';
 const GH_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9raXNqaXpjeWlkdnZ3ZHdlaGFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTYzNjMsImV4cCI6MjA5ODM5MjM2M30.O_0EeK297a07B7FLunpWr6HDlqrfP5Z8Owyp3qE4hQE';
 
-if (!window.supabase) {
-  console.error('script.js: supabase-js must be loaded before script.js');
+let ghSupabase = null;
+let ghInitError = null;
+try {
+  if (!window.supabase) {
+    throw new Error('supabase-js failed to load (CDN blocked or offline)');
+  }
+  ghSupabase = window.supabase.createClient(GH_SUPABASE_URL, GH_SUPABASE_ANON_KEY);
+} catch (e) {
+  ghInitError = e;
+  console.error('script.js: could not initialize Supabase client —', e.message);
+  // Defer the visible banner until the DOM exists.
+  document.addEventListener('DOMContentLoaded', function () {
+    const banner = document.createElement('div');
+    banner.textContent = '⚠ Live tracking, booking, and login are temporarily unavailable — please refresh the page or try again shortly.';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#b91c1c;color:#fff;text-align:center;padding:10px 16px;font-family:sans-serif;font-size:13px;';
+    document.body.prepend(banner);
+  });
 }
-const ghSupabase = window.supabase.createClient(GH_SUPABASE_URL, GH_SUPABASE_ANON_KEY);
+
+function ghRequireClient() {
+  if (!ghSupabase) throw new Error('Service temporarily unavailable — please refresh the page and try again.');
+  return ghSupabase;
+}
 
 
 async function ghTrackQuery(query) {
   const q = (query || '').trim();
   if (!q) throw new Error('Enter a container, booking ref, truck reg, or driver name');
-  const { data, error } = await ghSupabase.rpc('public_track_lookup', { p_query: q });
+  const { data, error } = await ghRequireClient().rpc('public_track_lookup', { p_query: q });
   if (error) throw new Error(error.message || 'Lookup failed');
   if (!data) throw new Error('No matching record found');
   return data;
@@ -18,7 +37,7 @@ async function ghTrackQuery(query) {
 
 
 async function ghFleetStatus() {
-  const { data, error } = await ghSupabase.rpc('public_fleet_status');
+  const { data, error } = await ghRequireClient().rpc('public_fleet_status');
   if (error) throw new Error(error.message || 'Could not load fleet status');
   return { trucks: data || [] };
 }
@@ -33,10 +52,10 @@ async function ghSubmitBooking(payload) {
       });
 
   
-  const { data: sessionData } = await ghSupabase.auth.getSession();
+  const { data: sessionData } = await ghRequireClient().auth.getSession();
   const userId = sessionData && sessionData.session ? sessionData.session.user.id : null;
 
-  const { error } = await ghSupabase
+  const { error } = await ghRequireClient()
     .from('public_bookings')
     .insert(Object.assign({ id, user_id: userId }, payload));
   if (error) throw new Error(error.message || 'Booking failed — please try again');
@@ -45,10 +64,10 @@ async function ghSubmitBooking(payload) {
 
 async function ghSubmitContact(payload) {
   
-  const { data: sessionData } = await ghSupabase.auth.getSession();
+  const { data: sessionData } = await ghRequireClient().auth.getSession();
   const userId = sessionData && sessionData.session ? sessionData.session.user.id : null;
 
-  const { error } = await ghSupabase
+  const { error } = await ghRequireClient()
     .from('public_contact_messages')
     .insert(Object.assign({ user_id: userId }, payload));
   if (error) throw new Error(error.message || 'Message failed — please try again');
@@ -61,12 +80,12 @@ async function ghSubmitContact(payload) {
 // already scopes every row to the caller, so this can't leak other clients'
 // bookings even if called with a stale/forged payload.
 async function ghMyBookings({ limit = 5, offset = 0 } = {}) {
-  const { data: sessionData } = await ghSupabase.auth.getSession();
+  const { data: sessionData } = await ghRequireClient().auth.getSession();
   if (!sessionData || !sessionData.session) {
     return { bookings: [], total: 0 };
   }
 
-  const { data, error, count } = await ghSupabase
+  const { data, error, count } = await ghRequireClient()
     .from('public_bookings')
     .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
@@ -92,7 +111,7 @@ function ghMapAuthUser(u) {
 }
 
 async function ghAuthRegister({ name, email, phone, company, role, password }) {
-  const { data, error } = await ghSupabase.auth.signUp({
+  const { data, error } = await ghRequireClient().auth.signUp({
     email, password,
     options: { data: { name, phone, company, role } },
   });
@@ -102,19 +121,19 @@ async function ghAuthRegister({ name, email, phone, company, role, password }) {
 }
 
 async function ghAuthLogin({ email, password }) {
-  const { data, error } = await ghSupabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await ghRequireClient().auth.signInWithPassword({ email, password });
   if (error) throw new Error(error.message || 'Incorrect email or password. Please try again.');
   return { user: ghMapAuthUser(data.user) };
 }
 
 async function ghAuthLogout() {
-  const { error } = await ghSupabase.auth.signOut();
+  const { error } = await ghRequireClient().auth.signOut();
   if (error) throw new Error(error.message || 'Could not sign out. Please try again.');
 }
 
 
 async function ghAuthCurrentUser() {
-  const { data, error } = await ghSupabase.auth.getSession();
+  const { data, error } = await ghRequireClient().auth.getSession();
   if (error || !data.session) return null;
   return ghMapAuthUser(data.session.user);
 }
