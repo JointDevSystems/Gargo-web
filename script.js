@@ -1504,7 +1504,15 @@ const SUBPAGES = {
               </a>
             </div>
         
-
+          <div style="text-align: center;">
+            <a  href="https://hakikatransport.com/" target="_blank" class="client-block">
+              <div class="client-logo">
+                <span class="cl-sep"></span>
+                <img src="images/Hakika TS logo.png" alt="Hakika TS Logo" style="width: 160px; height: 60px;">
+              </div>
+              <p class="client-link">Hakika Transport Services</p>
+            </a>
+          </div>
 
           <div style="text-align: center;">
             <a href="https://www.consolbase.co.ke/" target="_blank" class="client-block">
