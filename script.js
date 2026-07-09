@@ -11,7 +11,7 @@ try {
 } catch (e) {
   ghInitError = e;
   console.error('script.js: could not initialize Supabase client —', e.message);
-  // Defer the visible banner until the DOM exists.
+
   document.addEventListener('DOMContentLoaded', function () {
     const banner = document.createElement('div');
     banner.textContent = '⚠ Live tracking, booking, and login are temporarily unavailable — please refresh the page or try again shortly.';
@@ -723,7 +723,7 @@ function doTrack() {
 
 window.doTrack = doTrack;
 
-/** Closes the results panel — the only thing that should ever hide it once shown. */
+
 function closeTrackResult() {
   const resultEl = document.getElementById('trackResult');
   if (resultEl) resultEl.classList.remove('visible');
@@ -828,7 +828,7 @@ function startLiveSimulation(query) {
         if (locEl && details.gps) locEl.textContent = `GPS: ${details.gps.lat.toFixed(4)}, ${details.gps.lng.toFixed(4)}`;
         if (gpsEl) gpsEl.textContent = 'Just now';
       })
-      .catch(function () { /* silent — keep last known values on a transient error */ });
+      .catch(function () {  });
   }, 8000);
 }
 function initTrackPage() {
@@ -2260,7 +2260,7 @@ const SUBPAGES = {
       </section>`,
   },
 
-  /* ══ DEPOT ════════════════════════════════════════════════════════ */
+  
 
   'changamwe-depot': {
     parent: 'depot',
@@ -3219,7 +3219,7 @@ window.demoTrack = demoTrack;
   function clearCurrentUser() {
     sessionStorage.removeItem('gh_session');
   }
-  // Splits the backend's single `name` field into a first name for greetings/nav
+
   function firstNameOf(user) {
     return user && user.name ? user.name.split(' ')[0] : 'there';
   }
@@ -3685,7 +3685,7 @@ window.demoTrack = demoTrack;
   `;
   document.head.appendChild(style);
 
-  /* ── Inject HTML ── */
+
   const authHTML = `
   <!-- AUTH MODAL -->
   <div id="gh-auth-overlay" role="dialog" aria-modal="true" aria-label="Client Login">
