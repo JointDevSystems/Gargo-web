@@ -75,10 +75,7 @@ async function ghSubmitContact(payload) {
 }
 
 
-// Fetches only the current user's own bookings. No explicit user_id filter is
-// added here — RLS policy "Users can read own bookings" (auth.uid() = user_id)
-// already scopes every row to the caller, so this can't leak other clients'
-// bookings even if called with a stale/forged payload.
+
 async function ghMyBookings({ limit = 5, offset = 0 } = {}) {
   const { data: sessionData } = await ghRequireClient().auth.getSession();
   if (!sessionData || !sessionData.session) {
@@ -760,9 +757,7 @@ function renderTrackResult(details, query) {
     statusEl.className = 'status-badge ' + (trip.status === 'active' ? 'status-transit' : trip.status === 'completed' ? 'status-delivered' : 'status-pending');
   }
 
-  // Truck info — tolerant of reg/registration/licence_plate/plate naming,
-  // and falls back to flat fields on the trip itself (e.g. truck_reg)
-  // in case the RPC doesn't nest a `truck` object at all.
+
   setText('truckReg', pick(truck, ['reg', 'registration', 'licence_plate', 'licencePlate', 'plate', 'vehicle_reg'])
     || pick(trip, ['truck_reg', 'truckReg', 'vehicle_reg']) || '—');
   setText('truckType', pick(truck, ['type', 'truck_type', 'vehicle_type', 'make'])
@@ -770,8 +765,7 @@ function renderTrackResult(details, query) {
   setText('truckFuel', pick(truck, ['status', 'truck_status', 'vehicle_status'])
     || pick(trip, ['truck_status', 'truckStatus']) || '—');
 
-  // Driver info — tolerant of name/phone/licence naming (UK "licence" vs
-  // US "license"), and falls back to flat fields on the trip itself.
+
   const driverName = pick(driver, ['name', 'driver_name', 'full_name']) || pick(trip, ['driver_name', 'driverName']) || '—';
   setText('driverName', driverName);
 
@@ -786,7 +780,7 @@ function renderTrackResult(details, query) {
     || pick(trip, ['driver_licence', 'driver_license']) || '—';
   setText('driverLicence', driverLicence);
 
-  // Location & speed
+ 
   let locationText = '—';
   if (trip.status === 'active' && gps) {
     locationText = `GPS: ${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)}`;
@@ -798,10 +792,10 @@ function renderTrackResult(details, query) {
   setText('truckLocation', locationText);
   setText('truckSpeed', gps ? `${gps.speed} km/h` : '—');
 
-  // GPS update time
+
   setText('gpsUpdate', new Date().toLocaleTimeString());
 
-  // Timeline
+ 
   const timelineEl = document.getElementById('trackTimeline');
   if (timelineEl && events && events.length) {
     const mapped = events.map(function (ev, idx) {
@@ -845,14 +839,7 @@ function initTrackPage() {
   }
 }
 
-/**
- * Builds a one-click, branded PDF of the currently displayed tracking
- * result (booking details, truck/driver info, and the full timeline) so
- * a customer can save or forward proof of their shipment status. Falls
- * back to a plain-text download if the PDF library failed to load
- * (e.g. blocked by a network/ad-blocker), so the feature still works
- * either way.
- */
+
 function downloadTrackingReport() {
   if (!state.lastTrack || !state.lastTrack.details) {
     showNotification('Nothing to download yet', 'Track a shipment first', 'ℹ️');
@@ -897,7 +884,7 @@ function downloadTrackingReport() {
     doc.setTextColor(gray[0], gray[1], gray[2]);
     doc.text('Shipment Tracking Report — generated ' + new Date().toLocaleString(), marginX, y);
 
-    // Section: Booking details
+    
     y += 30;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
@@ -933,7 +920,7 @@ function downloadTrackingReport() {
     ];
     y = pdfKeyValueRows(doc, truckRows, marginX, y, pageWidth);
 
-    // Section: Driver details
+
     y += 16;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
@@ -948,7 +935,7 @@ function downloadTrackingReport() {
     ];
     y = pdfKeyValueRows(doc, driverRows, marginX, y, pageWidth);
 
-    // Section: Timeline
+
     if (events && events.length) {
       y += 16;
       doc.setFont('helvetica', 'bold');
@@ -991,7 +978,7 @@ function downloadTrackingReport() {
 }
 window.downloadTrackingReport = downloadTrackingReport;
 
-/** Renders an array of [label, value] pairs as aligned rows and returns the new y position. */
+
 function pdfKeyValueRows(doc, rows, marginX, y, pageWidth) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
@@ -1006,7 +993,7 @@ function pdfKeyValueRows(doc, rows, marginX, y, pageWidth) {
   return y;
 }
 
-/** Fallback download used if jsPDF isn't available for any reason. */
+
 function downloadTrackingReportAsText(details, query) {
   const { trip, truck, driver, events } = details;
   const lines = [];
