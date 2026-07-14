@@ -25,6 +25,12 @@ function ghRequireClient() {
   return ghSupabase;
 }
 
+const { createClient } = window.supabase;
+
+const supabaseUrl = "https://okisjizcyidvvwdwehaa.supabase.co";
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9raXNqaXpjeWlkdnZ3ZHdlaGFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTYzNjMsImV4cCI6MjA5ODM5MjM2M30.O_0EeK297a07B7FLunpWr6HDlqrfP5Z8Owyp3qE4hQE";
+
+window.ghSupabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function ghTrackQuery(query) {
   const q = (query || '').trim();
@@ -654,6 +660,20 @@ function submitBooking() {
     notes: get('fNotes')
   };
 
+  // Bookings that will need document uploads (storage/haulage) must be
+  // created by a logged-in user — booking.user_id is set once at insert
+  // and can't be attached retroactively, so an anonymous booking here
+  // would permanently lock the client out of uploading its own documents.
+  const willNeedDocs = (window.bookingDocs && window.bookingDocs.getRequiredDocTypes)
+    ? window.bookingDocs.getRequiredDocTypes({
+        serviceType: payload.service_type,
+        origin: payload.pickup_location,
+        destination: payload.dropoff_location,
+      }).length > 0
+    : false;
+
+  function doSubmit() {
+
   const btn = document.querySelector('.form-submit');
   if (btn) { btn.disabled = true; btn.textContent = 'SUBMITTING…'; }
 
@@ -666,6 +686,14 @@ function submitBooking() {
 
       showNotification('Booking Submitted', 'Reference #' + ref + ' created', '✅');
 
+      const requiredDocs = (window.bookingDocs && window.bookingDocs.getRequiredDocTypes)
+        ? window.bookingDocs.getRequiredDocTypes({
+            serviceType: state.selectedCargoType,
+            origin: payload.pickup_location,
+            destination: payload.dropoff_location,
+          })
+        : [];
+
       openModal('Booking Confirmed', [
         '<p style="color:var(--gray-pale);line-height:1.7;margin-bottom:14px;">Thank you! Your booking request has been received.</p>',
         '<div style="background:rgba(201,162,39,0.08);border:1px solid var(--gold-dark);border-radius:8px;padding:16px;margin-bottom:14px;">',
@@ -673,6 +701,7 @@ function submitBooking() {
         '<div style="font-size:22px;font-weight:700;color:var(--gold);">' + ref + '</div>',
         '</div>',
         '<p style="color:var(--gray-pale);line-height:1.7;">Service: <strong style="color:#fff;">' + state.selectedCargoType + '</strong><br>Our team will confirm your booking within 2 hours via the contact details provided.</p>',
+        renderDocUploadSection(ref, requiredDocs),
         '<button class="btn-primary" style="margin-top:16px;width:100%;" onclick="closeModal()">Got It</button>'
       ].join(''));
     })
@@ -682,8 +711,98 @@ function submitBooking() {
     .finally(function () {
       if (btn) { btn.disabled = false; btn.textContent = 'SUBMIT BOOKING →'; }
     });
+  } // end doSubmit
+
+  if (!willNeedDocs) {
+    doSubmit();
+    return;
+  }
+
+  // This service type will require a document upload — confirm the
+  // booker is signed in first, since booking.user_id can't be attached
+  // after the fact.
+  window.bridge.authCurrentUser()
+    .then(function (user) {
+      if (user) {
+        doSubmit();
+      } else {
+        showNotification(
+          'Sign In Required',
+          'This booking type requires document upload, so please sign in or create an account first — this links the booking to your account so you can upload the required paperwork afterward.',
+          '🔒'
+        );
+      }
+    })
+    .catch(function () {
+      showNotification('Sign In Required', 'Please sign in before submitting this booking.', '🔒');
+    });
 }
 window.submitBooking = submitBooking;
+
+
+const DOC_TYPE_LABELS = {
+  guarantee_form: 'Container Guarantee Form',
+  release_order: 'Release Order (CRO)',
+  delivery_order: 'Delivery Order',
+};
+
+// Builds the "please upload X" section shown inside the Booking
+// Confirmed modal. requiredDocs is an array from
+// window.bookingDocs.getRequiredDocTypes() — empty array renders nothing.
+function renderDocUploadSection(bookingRef, requiredDocs) {
+  if (!requiredDocs || !requiredDocs.length) return '';
+  const rows = requiredDocs.map(function (docType) {
+    const label = DOC_TYPE_LABELS[docType] || docType;
+    const inputId = 'docFile_' + docType;
+    const statusId = 'docStatus_' + docType;
+    return (
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
+      '<div style="flex:1;">' +
+      '<div style="font-size:13px;color:#fff;margin-bottom:4px;">' + label + ' <span style="color:var(--gold);">*required</span></div>' +
+      '<input type="file" id="' + inputId + '" accept=".pdf,.jpg,.jpeg,.png" style="font-size:12px;color:var(--gray-pale);" />' +
+      '</div>' +
+      '<button class="btn-primary" style="padding:8px 14px;font-size:12px;" onclick="handleDocUploadClick(\'' + bookingRef + '\',\'' + docType + '\')">Upload</button>' +
+      '</div>' +
+      '<div id="' + statusId + '" style="font-size:12px;margin-bottom:12px;"></div>'
+    );
+  }).join('');
+
+  return (
+    '<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:16px;padding-top:16px;">' +
+    '<div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:10px;">Required Documents</div>' +
+    '<p style="font-size:12px;color:var(--gray-pale);margin-bottom:12px;">Please upload the following before our team can verify this booking. Accepted: PDF, JPG, PNG.</p>' +
+    rows +
+    '</div>'
+  );
+}
+window.renderDocUploadSection = renderDocUploadSection;
+
+function handleDocUploadClick(bookingRef, docType) {
+  const fileInput = document.getElementById('docFile_' + docType);
+  const statusEl = document.getElementById('docStatus_' + docType);
+  const file = fileInput && fileInput.files[0];
+
+  if (!file) {
+    if (statusEl) { statusEl.textContent = 'Please choose a file first.'; statusEl.style.color = '#e6a23c'; }
+    return;
+  }
+  if (!window.bookingDocs) {
+    if (statusEl) { statusEl.textContent = 'Upload service unavailable — please refresh and try again.'; statusEl.style.color = '#e6a23c'; }
+    return;
+  }
+
+  if (statusEl) { statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--gray-pale)'; }
+
+  window.bookingDocs.uploadBookingDocument({ bookingId: bookingRef, docType: docType, file: file })
+    .then(function () {
+      if (statusEl) { statusEl.textContent = '✓ Uploaded — pending verification'; statusEl.style.color = '#4caf50'; }
+      if (fileInput) fileInput.disabled = true;
+    })
+    .catch(function (err) {
+      if (statusEl) { statusEl.textContent = err.message || 'Upload failed — please try again'; statusEl.style.color = '#e05252'; }
+    });
+}
+window.handleDocUploadClick = handleDocUploadClick;
 
 
 
@@ -4217,7 +4336,44 @@ window.demoTrack = demoTrack;
     return 'pending';
   }
 
-  function renderBookingRow(b) {
+  var DOC_TYPE_LABELS_SHORT = {
+    guarantee_form: 'Guarantee Form',
+    release_order: 'Release Order',
+    delivery_order: 'Delivery Order',
+  };
+
+  function ghDocStatusClass(status) {
+    var s = (status || 'pending_review').toLowerCase();
+    if (s.indexOf('verif') !== -1) return 'confirmed';
+    if (s.indexOf('reject') !== -1) return 'cancelled';
+    return 'pending';
+  }
+
+  // Renders one small chip per uploaded document, e.g. "Guarantee Form:
+  // Verified". Docs is the array for this specific booking (may be empty
+  // if nothing required/uploaded yet, in which case nothing is rendered).
+  function renderDocChips(docs) {
+    if (!docs || !docs.length) return '';
+    var chips = docs.map(function (d) {
+      var label = DOC_TYPE_LABELS_SHORT[d.doc_type] || d.doc_type;
+      var statusLabel = (d.status || 'pending_review').replace('_', ' ');
+      var cls = ghDocStatusClass(d.status);
+      return (
+        '<span class="gh-booking-status ' + cls + '" style="font-size:10.5px;padding:3px 8px;margin:2px 6px 0 0;display:inline-block;">' +
+        ghEscapeHtml(label) + ': ' + ghEscapeHtml(statusLabel) +
+        '</span>'
+      );
+    }).join('');
+    return '<div style="margin-top:6px;">' + chips + '</div>';
+  }
+
+  function renderStorageLine(b) {
+    if (!b.storage_status) return '';
+    var label = String(b.storage_status).replace(/_/g, ' ');
+    return '<div class="gh-booking-route" style="margin-top:4px;">Storage: ' + ghEscapeHtml(label) + '</div>';
+  }
+
+  function renderBookingRow(b, docsByBooking) {
     var ref = b.id || b.booking_ref || '—';
     var service = b.service_type || b.cargo_type || 'Booking';
     var origin = b.pickup_location || b.origin || '';
@@ -4226,6 +4382,7 @@ window.demoTrack = demoTrack;
     var status = b.status || 'Pending';
     var statusClass = ghStatusClass(status);
     var dateLabel = ghFormatBookingDate(b.created_at || b.pickup_date);
+    var docs = (docsByBooking && docsByBooking[ref]) || [];
 
     return (
       '<div class="gh-booking-row">' +
@@ -4233,6 +4390,8 @@ window.demoTrack = demoTrack;
           '<div class="gh-booking-ref">' + ghEscapeHtml(ref) + ' · ' + ghEscapeHtml(dateLabel) + '</div>' +
           '<div class="gh-booking-service">' + ghEscapeHtml(service) + '</div>' +
           (route ? '<div class="gh-booking-route">' + ghEscapeHtml(route) + '</div>' : '') +
+          renderStorageLine(b) +
+          renderDocChips(docs) +
         '</div>' +
         '<div class="gh-booking-status ' + statusClass + '">' + ghEscapeHtml(status) + '</div>' +
       '</div>'
@@ -4260,11 +4419,26 @@ window.demoTrack = demoTrack;
           return;
         }
 
-        var html = bookings.map(renderBookingRow).join('');
+        var html = bookings.map(function (b) { return renderBookingRow(b, {}); }).join('');
         if (result.total > bookings.length) {
           html += '<button class="gh-bookings-loadmore" onclick="navigateToPage(\'track\');ghDashClose();">VIEW ALL BOOKINGS →</button>';
         }
         container.innerHTML = html;
+
+        // Document statuses load separately and patch in once ready, so a
+        // slow/failed doc lookup never blocks the booking list itself.
+        if (window.bookingDocs && window.bookingDocs.documentsForBookings) {
+          var ids = bookings.map(function (b) { return b.id; });
+          window.bookingDocs.documentsForBookings(ids)
+            .then(function (docsByBooking) {
+              var refreshed = bookings.map(function (b) { return renderBookingRow(b, docsByBooking); }).join('');
+              if (result.total > bookings.length) {
+                refreshed += '<button class="gh-bookings-loadmore" onclick="navigateToPage(\'track\');ghDashClose();">VIEW ALL BOOKINGS →</button>';
+              }
+              container.innerHTML = refreshed;
+            })
+            .catch(function () { /* booking list already rendered — silently skip doc statuses */ });
+        }
       })
       .catch(function () {
         container.innerHTML =

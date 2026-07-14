@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Portal · Gargo Haven</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --gold: #c9a227;
+    --gold-light: #e8c44a;
+    --black: #0a0a0a;
+    --card: #15151a;
+    --border: #262630;
+    --gray-pale: #b7b7c0;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --font-body: 'Segoe UI', 'Outfit', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--black);
+    color: #eee;
+    font-family: var(--font-body);
+    min-height: 100vh;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 28px; border-bottom: 1px solid var(--border);
+    background: #0d0d10; position: sticky; top: 0; z-index: 10;
+  }
+  header h1 { font-size: 17px; margin: 0; color: var(--gold); font-weight: 600; }
+  header .sub { font-size: 11px; color: #777; letter-spacing: 0.6px; margin-top: 2px; }
+  #whoami { font-size: 12px; color: var(--gray-pale); display: flex; align-items: center; gap: 12px; }
+  #whoami button {
+    background: transparent; border: 1px solid var(--red); color: var(--red);
+    padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;
+  }
+  main { max-width: 1080px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  /* ---- gate / login ---- */
+  #gate { max-width: 380px; margin: 80px auto; text-align: center; }
+  #gate h2 { color: #fff; font-weight: 600; margin-bottom: 6px; }
+  #gate p { color: #888; font-size: 13px; margin-bottom: 24px; }
+  #gate input {
+    width: 100%; padding: 11px 14px; margin-bottom: 10px; border-radius: 6px;
+    border: 1px solid var(--border); background: #111; color: #fff; font-size: 14px;
+  }
+  #gate button {
+    width: 100%; padding: 12px; border-radius: 6px; border: none;
+    background: var(--gold); color: #1a1a1a; font-weight: 700; cursor: pointer; font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+  #gate button:disabled { opacity: 0.6; cursor: default; }
+  #gateErr { color: var(--red); font-size: 12.5px; margin-top: 10px; min-height: 16px; }
+  #notStaff { max-width: 420px; margin: 100px auto; text-align: center; color: var(--gray-pale); }
+  #notStaff .icon { font-size: 34px; margin-bottom: 12px; }
+
+  /* ---- tabs ---- */
+  .tabs { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .tab-btn {
+    background: transparent; border: none; color: #888; padding: 10px 16px;
+    font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 600;
+  }
+  .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ---- review status filter chips ---- */
+  .review-filter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .filter-chip {
+    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: transparent; color: #888; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .filter-chip:hover { border-color: #444; color: #ddd; }
+  .filter-chip.active { background: rgba(201,162,39,0.12); border-color: rgba(201,162,39,0.35); color: var(--gold); }
+  .filter-chip.refresh-chip { margin-left: auto; }
+  .doc-reviewer-note {
+    font-size: 12px; color: var(--gray-pale); margin-top: 8px; padding: 8px 10px;
+    background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid var(--border);
+  }
+
+  .section-title { font-size: 12px; letter-spacing: 1px; color: #888; margin: 22px 0 12px; text-transform: uppercase; }
+  .empty { color: #777; font-size: 13px; padding: 30px 0; text-align: center; }
+
+  /* ---- review queue cards ---- */
+  .doc-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; margin-bottom: 12px;
+  }
+  .doc-card-top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .doc-ref { font-weight: 700; color: #fff; font-size: 14px; }
+  .doc-meta { font-size: 12px; color: #888; margin-top: 3px; }
+  .doc-type-badge {
+    display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 20px;
+    background: rgba(201,162,39,0.12); color: var(--gold); border: 1px solid rgba(201,162,39,0.3);
+    white-space: nowrap; height: fit-content;
+  }
+  .doc-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .btn {
+    padding: 7px 13px; border-radius: 6px; font-size: 12px; cursor: pointer; border: 1px solid var(--border);
+    background: #1c1c22; color: #ddd; font-weight: 600;
+  }
+  .btn:hover { border-color: #444; }
+  .btn-view { color: var(--gold-light); }
+  .btn-verify { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.4); color: var(--green); }
+  .btn-reject { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.4); color: var(--red); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .doc-note-row { display: none; margin-top: 10px; gap: 8px; }
+  .doc-note-row.show { display: flex; flex-wrap: wrap; }
+  .doc-note-row input {
+    flex: 1; min-width: 200px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);
+    background: #111; color: #fff; font-size: 12.5px;
+  }
+  .doc-status-line { font-size: 12px; margin-top: 8px; min-height: 14px; }
+
+  /* ---- storage tab ---- */
+  table.zones { width: 100%; border-collapse: collapse; margin-bottom: 26px; }
+  table.zones th, table.zones td { text-align: left; padding: 9px 10px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  table.zones th { color: #888; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .bar-wrap { width: 120px; height: 6px; background: #222; border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--gold); }
+
+  .alloc-form {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px;
+    display: grid; grid-template-columns: 1fr 1fr 100px auto; gap: 10px; align-items: end;
+  }
+  .alloc-form label { display: block; font-size: 11px; color: #888; margin-bottom: 5px; }
+  .alloc-form input, .alloc-form select {
+    width: 100%; padding: 9px 10px; border-radius: 6px; border: 1px solid var(--border);
+    background: #111; color: #fff; font-size: 13px;
+  }
+  #allocMsg { grid-column: 1 / -1; font-size: 12.5px; min-height: 16px; }
+
+  @media(max-width: 640px) {
+    .alloc-form { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Gargo Haven — Staff Portal</h1>
+    <div class="sub">DOCUMENT REVIEW &amp; DEPOT STORAGE</div>
+  </div>
+  <div id="whoami" style="display:none;">
+    <span id="whoamiName">—</span>
+    <button onclick="staffLogout()">SIGN OUT</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- LOGIN GATE -->
+  <div id="gate">
+    <h2>Staff Sign In</h2>
+    <p>Use your Gargo Haven staff account. New staff accounts are added by an administrator.</p>
+    <input type="email" id="gateEmail" placeholder="you@gargohaven.co.ke" autocomplete="username">
+    <input type="password" id="gatePw" placeholder="Password" autocomplete="current-password">
+    <button id="gateBtn" onclick="staffLogin()">SIGN IN</button>
+    <div id="gateErr"></div>
+  </div>
+
+  <!-- NOT AUTHORIZED -->
+  <div id="notStaff" style="display:none;">
+    <div class="icon">🔒</div>
+    <h2 style="color:#fff;">This account isn't authorized for staff access</h2>
+    <p>If you believe this is a mistake, ask an administrator to add your account to <code>staff_members</code>.</p>
+    <button class="btn" style="margin-top:14px;" onclick="staffLogout()">SIGN OUT</button>
+  </div>
+
+  <!-- APP -->
+  <div id="app" style="display:none;">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="review" onclick="switchTab('review')">Document Review</button>
+      <button class="tab-btn" data-tab="storage" onclick="switchTab('storage')">Depot Storage</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-review">
+      <div class="section-title">Document Review</div>
+      <div class="review-filter-row">
+        <button class="filter-chip active" data-status="pending_review" onclick="switchReviewFilter('pending_review',this)">Pending Review</button>
+        <button class="filter-chip" data-status="verified" onclick="switchReviewFilter('verified',this)">Verified</button>
+        <button class="filter-chip" data-status="rejected" onclick="switchReviewFilter('rejected',this)">Rejected</button>
+        <button class="filter-chip" data-status="all" onclick="switchReviewFilter('all',this)">All</button>
+        <button class="filter-chip refresh-chip" onclick="loadReviewQueue()">↻ Refresh</button>
+      </div>
+      <div id="reviewList"><div class="empty">Loading…</div></div>
+    </div>
+
+    <div class="tab-panel" id="tab-storage">
+      <div class="section-title">Zone Capacity</div>
+      <div id="zoneTableWrap"><div class="empty">Loading…</div></div>
+
+      <div class="section-title">Allocate Storage to a Booking</div>
+      <div class="alloc-form">
+        <div>
+          <label for="allocBookingRef">Booking Reference</label>
+          <input type="text" id="allocBookingRef" placeholder="e.g. 8f2c1a90-...">
+        </div>
+        <div>
+          <label for="allocZone">Zone</label>
+          <select id="allocZone"><option value="">Select zone…</option></select>
+        </div>
+        <div>
+          <label for="allocTeu">TEU</label>
+          <input type="number" id="allocTeu" min="1" value="1">
+        </div>
+        <div>
+          <button class="btn btn-verify" style="width:100%;padding:9px;" onclick="submitAllocation()">Allocate</button>
+        </div>
+        <div id="allocMsg"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="booking-documents.js"></script>
+<script src="staff-portal.js"></script>
+</body>
+</html>
