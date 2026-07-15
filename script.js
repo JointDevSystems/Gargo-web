@@ -12,7 +12,7 @@ try {
 } catch (e) {
   ghInitError = e;
   console.error('script.js: could not initialize Supabase client —', e.message);
-  // Defer the visible banner until the DOM exists.
+  
   document.addEventListener('DOMContentLoaded', function () {
     const banner = document.createElement('div');
     banner.textContent = '⚠ Live tracking, booking, and login are temporarily unavailable — please refresh the page or try again shortly.';
@@ -4318,9 +4318,7 @@ window.demoTrack = demoTrack;
     if (el('gh-dash-since')) el('gh-dash-since').textContent = user.created || '—';
     loadMyBookings();
 
-    // Staff accounts get a banner linking out to the staff portal for
-    // document review + depot storage. Resolves to false (never throws)
-    // for regular clients, so this is safe to call on every login.
+
     var staffBanner = el('ghDashStaffBanner');
     if (staffBanner && window.bookingDocs && window.bookingDocs.isStaffMember) {
       window.bookingDocs.isStaffMember().then(function (isStaff) {
@@ -4363,9 +4361,7 @@ window.demoTrack = demoTrack;
     return 'pending';
   }
 
-  // Renders one small chip per uploaded document, e.g. "Guarantee Form:
-  // Verified". Docs is the array for this specific booking (may be empty
-  // if nothing required/uploaded yet, in which case nothing is rendered).
+  
   function renderDocChips(docs) {
     if (!docs || !docs.length) return '';
     var chips = docs.map(function (d) {

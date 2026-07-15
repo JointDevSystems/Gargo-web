@@ -1,10 +1,7 @@
 (function () {
   'use strict';
 
-  // Same project/anon key used by the public site's script.js. The anon
-  // key is safe to expose client-side — every privileged action here is
-  // gated by the `is_staff()` RLS policies added in
-  // sql/staff-review-access.sql, not by this key.
+  
   const GH_SUPABASE_URL = 'https://okisjizcyidvvwdwehaa.supabase.co';
   const GH_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9raXNqaXpjeWlkdnZ3ZHdlaGFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTYzNjMsImV4cCI6MjA5ODM5MjM2M30.O_0EeK297a07B7FLunpWr6HDlqrfP5Z8Owyp3qE4hQE';
 
@@ -20,8 +17,7 @@
     delivery_order: 'Delivery Order',
   };
 
-  // Which review filter chip is active — drives both the query and the
-  // empty-state copy. Defaults to the pending queue on load.
+
   let currentReviewStatus = 'pending_review';
   const REVIEW_EMPTY_MESSAGES = {
     pending_review: 'No documents waiting for review right now.',
@@ -105,7 +101,7 @@
     });
   }
 
-  // On load, resume an existing session if there is one.
+ 
   window.ghSupabase && window.ghSupabase.auth.getSession().then(function (res) {
     const session = res.data && res.data.session;
     if (session && session.user) {
@@ -120,9 +116,7 @@
     document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.toggle('active', p.id === 'tab-' + tab); });
   };
 
-  // ---------------------------------------------------------------------
-  // Document review queue
-  // ---------------------------------------------------------------------
+
 
   function loadReviewQueue() {
     const wrap = el('reviewList');
@@ -142,9 +136,7 @@
   }
   window.loadReviewQueue = loadReviewQueue;
 
-  // Filter chip click handler — swaps the active chip, updates the
-  // current status, and reloads. Wired from the onclick attributes in
-  // staff-portal.html.
+
   window.switchReviewFilter = function (status, btnEl) {
     currentReviewStatus = status;
     document.querySelectorAll('.filter-chip[data-status]').forEach(function (b) {
@@ -153,11 +145,7 @@
     loadReviewQueue();
   };
 
-  // Safely embed a value as a single-quoted JS string literal inside an
-  // onclick="..." attribute (which is itself double-quoted). Using
-  // JSON.stringify() here would wrap the value in double quotes and
-  // break out of the attribute early — this keeps it single-quoted and
-  // escapes anything that could terminate the literal or the attribute.
+
   function jsStr(value) {
     return "'" + esc(String(value)).replace(/'/g, "\\'") + "'";
   }
@@ -178,9 +166,7 @@
     const isPending = status === 'pending_review';
     const statusLabel = status.replace(/_/g, ' ');
 
-    // Verify/Reject only make sense while a document is still pending —
-    // once reviewed, the card is read-only (View/Download plus the
-    // reviewer's note) regardless of which filter chip surfaced it.
+
     const actions = isPending
       ? (
           '<div class="doc-actions">' +
@@ -296,9 +282,7 @@
     }
   }
 
-  // ---------------------------------------------------------------------
-  // Depot storage
-  // ---------------------------------------------------------------------
+
 
   function loadZones() {
     const wrap = el('zoneTableWrap');

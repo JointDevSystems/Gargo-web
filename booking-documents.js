@@ -18,10 +18,10 @@
     }
 
     if (serviceType === 'Port Haulage' || serviceType === 'Full Transport Package') {
-      if (destIsPort && !originIsPort) required.push('release_order');   // going TO port = export
-      else if (originIsPort && !destIsPort) required.push('delivery_order'); // coming FROM port = import
-      else if (!originIsPort && !destIsPort) required.push('guarantee_form'); // depot-to-depot: container still moves in/out of depot custody at one end
-      // both-port case (rare/unlikely) intentionally left unrequired — flag for review if it occurs.
+      if (destIsPort && !originIsPort) required.push('release_order');   
+      else if (originIsPort && !destIsPort) required.push('delivery_order'); 
+      else if (!originIsPort && !destIsPort) required.push('guarantee_form'); 
+
 
       if (serviceType === 'Full Transport Package' && required.indexOf('guarantee_form') === -1) required.push('guarantee_form');
     }
