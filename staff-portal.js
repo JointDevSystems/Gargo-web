@@ -20,6 +20,16 @@
     delivery_order: 'Delivery Order',
   };
 
+  // Which review filter chip is active — drives both the query and the
+  // empty-state copy. Defaults to the pending queue on load.
+  let currentReviewStatus = 'pending_review';
+  const REVIEW_EMPTY_MESSAGES = {
+    pending_review: 'No documents waiting for review right now.',
+    verified: 'No verified documents yet.',
+    rejected: 'No rejected documents yet.',
+    all: 'No documents uploaded yet.',
+  };
+
   function el(id) { return document.getElementById(id); }
   function esc(str) {
     const d = document.createElement('div');
@@ -114,33 +124,14 @@
   // Document review queue
   // ---------------------------------------------------------------------
 
-  var REVIEW_STATUS_LABELS = {
-    pending_review: 'No documents waiting for review right now.',
-    verified: 'No verified documents yet.',
-    rejected: 'No rejected documents.',
-    all: 'No documents have been uploaded yet.',
-  };
-
-  var _reviewFilter = 'pending_review';
-
-  window.switchReviewFilter = function (status, btn) {
-    _reviewFilter = status;
-    document.querySelectorAll('.filter-chip[data-status]').forEach(function (b) { b.classList.toggle('active', b === btn); });
-    loadReviewQueue();
-  };
-
   function loadReviewQueue() {
     const wrap = el('reviewList');
     wrap.innerHTML = '<div class="empty">Loading…</div>';
 
-    const fetcher = _reviewFilter === 'pending_review'
-      ? window.bookingDocs.pendingReviewQueue()
-      : window.bookingDocs.documentsByStatus(_reviewFilter);
-
-    fetcher
+    window.bookingDocs.reviewQueue(currentReviewStatus)
       .then(function (docs) {
         if (!docs.length) {
-          wrap.innerHTML = '<div class="empty">' + (REVIEW_STATUS_LABELS[_reviewFilter] || 'No documents found.') + '</div>';
+          wrap.innerHTML = '<div class="empty">' + (REVIEW_EMPTY_MESSAGES[currentReviewStatus] || 'Nothing to show.') + '</div>';
           return;
         }
         wrap.innerHTML = docs.map(renderDocCard).join('');
@@ -149,6 +140,33 @@
         wrap.innerHTML = '<div class="empty">Could not load documents — ' + esc(err.message || 'please retry') + '</div>';
       });
   }
+  window.loadReviewQueue = loadReviewQueue;
+
+  // Filter chip click handler — swaps the active chip, updates the
+  // current status, and reloads. Wired from the onclick attributes in
+  // staff-portal.html.
+  window.switchReviewFilter = function (status, btnEl) {
+    currentReviewStatus = status;
+    document.querySelectorAll('.filter-chip[data-status]').forEach(function (b) {
+      b.classList.toggle('active', b === btnEl);
+    });
+    loadReviewQueue();
+  };
+
+  // Safely embed a value as a single-quoted JS string literal inside an
+  // onclick="..." attribute (which is itself double-quoted). Using
+  // JSON.stringify() here would wrap the value in double quotes and
+  // break out of the attribute early — this keeps it single-quoted and
+  // escapes anything that could terminate the literal or the attribute.
+  function jsStr(value) {
+    return "'" + esc(String(value)).replace(/'/g, "\\'") + "'";
+  }
+
+  function statusPillStyle(status) {
+    if (status === 'verified') return 'background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.35);color:var(--green);';
+    if (status === 'rejected') return 'background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.35);color:var(--red);';
+    return 'background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.35);color:var(--amber);';
+  }
 
   function renderDocCard(doc) {
     const booking = doc.public_bookings || {};
@@ -156,32 +174,36 @@
     const ref = booking.id || doc.booking_id;
     const who = [booking.full_name, booking.company].filter(Boolean).join(' · ') || 'Unknown client';
     const cid = doc.id;
-    const isPending = doc.status === 'pending_review';
+    const status = doc.status || 'pending_review';
+    const isPending = status === 'pending_review';
+    const statusLabel = status.replace(/_/g, ' ');
 
-    const statusBadge = isPending ? '' :
-      '<div class="doc-type-badge" style="' +
-        (doc.status === 'verified' ? 'background:rgba(34,197,94,0.12);color:var(--green);border-color:rgba(34,197,94,0.3);'
-          : doc.status === 'rejected' ? 'background:rgba(239,68,68,0.12);color:var(--red);border-color:rgba(239,68,68,0.3);' : '') +
-        '">' + esc((doc.status || '').replace('_', ' ')) + '</div>';
-
+    // Verify/Reject only make sense while a document is still pending —
+    // once reviewed, the card is read-only (View/Download plus the
+    // reviewer's note) regardless of which filter chip surfaced it.
     const actions = isPending
       ? (
-          '<button class="btn btn-verify" onclick="handleVerify(' + JSON.stringify(cid) + ')">Verify</button>' +
-          '<button class="btn btn-reject" onclick="toggleRejectNote(' + JSON.stringify(cid) + ')">Reject…</button>'
-        )
-      : '';
-
-    const rejectRow = isPending
-      ? (
+          '<div class="doc-actions">' +
+            '<button class="btn btn-view" onclick="viewDoc(\'' + esc(doc.file_path).replace(/'/g, "\\'") + '\')">View / Download</button>' +
+            '<button class="btn btn-verify" onclick="handleVerify(' + jsStr(cid) + ')">Verify</button>' +
+            '<button class="btn btn-reject" onclick="toggleRejectNote(' + jsStr(cid) + ')">Reject…</button>' +
+          '</div>' +
           '<div class="doc-note-row" id="rejectRow-' + cid + '">' +
             '<input type="text" id="rejectNote-' + cid + '" placeholder="Reason for rejection (required, shown to the client)">' +
-            '<button class="btn btn-reject" onclick="handleReject(' + JSON.stringify(cid) + ')">Confirm Reject</button>' +
+            '<button class="btn btn-reject" onclick="handleReject(' + jsStr(cid) + ')">Confirm Reject</button>' +
           '</div>'
         )
-      : '';
+      : (
+          '<div class="doc-actions">' +
+            '<button class="btn btn-view" onclick="viewDoc(\'' + esc(doc.file_path).replace(/'/g, "\\'") + '\')">View / Download</button>' +
+          '</div>'
+        );
 
-    const reviewerNote = (!isPending && doc.review_notes)
-      ? '<div class="doc-reviewer-note">' + (doc.status === 'rejected' ? 'Rejection reason: ' : 'Note: ') + esc(doc.review_notes) + '</div>'
+    const reviewNote = !isPending
+      ? '<div class="doc-reviewer-note">' +
+          esc(statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)) + ' ' + fmtDate(doc.reviewed_at) +
+          (doc.review_notes ? ' — ' + esc(doc.review_notes) : '') +
+        '</div>'
       : '';
 
     return (
@@ -192,17 +214,13 @@
             '<div class="doc-meta">' + esc(who) + (booking.service_type ? ' · ' + esc(booking.service_type) : '') + '</div>' +
             '<div class="doc-meta">' + (doc.container_no ? 'Container: ' + esc(doc.container_no) + ' · ' : '') + 'Uploaded ' + fmtDate(doc.uploaded_at) + '</div>' +
           '</div>' +
-          '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">' +
+          '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">' +
             '<div class="doc-type-badge">' + esc(label) + '</div>' +
-            statusBadge +
+            (!isPending ? '<div class="doc-type-badge" style="' + statusPillStyle(status) + '">' + esc(statusLabel) + '</div>' : '') +
           '</div>' +
         '</div>' +
-        '<div class="doc-actions">' +
-          '<button class="btn btn-view" onclick="viewDoc(\'' + esc(doc.file_path).replace(/'/g, "\\'") + '\')">View / Download</button>' +
-          actions +
-        '</div>' +
-        rejectRow +
-        reviewerNote +
+        actions +
+        reviewNote +
         '<div class="doc-status-line" id="docStatusLine-' + cid + '"></div>' +
       '</div>'
     );
@@ -274,7 +292,7 @@
   function checkQueueEmpty() {
     const wrap = el('reviewList');
     if (wrap && !wrap.querySelector('.doc-card')) {
-      wrap.innerHTML = '<div class="empty">' + (REVIEW_STATUS_LABELS[_reviewFilter] || 'No documents found.') + '</div>';
+      wrap.innerHTML = '<div class="empty">' + (REVIEW_EMPTY_MESSAGES[currentReviewStatus] || 'Nothing to show.') + '</div>';
     }
   }
 

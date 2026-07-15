@@ -8,10 +8,11 @@ try {
     throw new Error('supabase-js failed to load (CDN blocked or offline)');
   }
   ghSupabase = window.supabase.createClient(GH_SUPABASE_URL, GH_SUPABASE_ANON_KEY);
+  window.ghSupabase = ghSupabase;
 } catch (e) {
   ghInitError = e;
   console.error('script.js: could not initialize Supabase client —', e.message);
-
+  // Defer the visible banner until the DOM exists.
   document.addEventListener('DOMContentLoaded', function () {
     const banner = document.createElement('div');
     banner.textContent = '⚠ Live tracking, booking, and login are temporarily unavailable — please refresh the page or try again shortly.';
@@ -25,12 +26,6 @@ function ghRequireClient() {
   return ghSupabase;
 }
 
-const { createClient } = window.supabase;
-
-const supabaseUrl = "https://okisjizcyidvvwdwehaa.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9raXNqaXpjeWlkdnZ3ZHdlaGFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTYzNjMsImV4cCI6MjA5ODM5MjM2M30.O_0EeK297a07B7FLunpWr6HDlqrfP5Z8Owyp3qE4hQE";
-
-window.ghSupabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function ghTrackQuery(query) {
   const q = (query || '').trim();
@@ -81,7 +76,10 @@ async function ghSubmitContact(payload) {
 }
 
 
-
+// Fetches only the current user's own bookings. No explicit user_id filter is
+// added here — RLS policy "Users can read own bookings" (auth.uid() = user_id)
+// already scopes every row to the caller, so this can't leak other clients'
+// bookings even if called with a stale/forged payload.
 async function ghMyBookings({ limit = 5, offset = 0 } = {}) {
   const { data: sessionData } = await ghRequireClient().auth.getSession();
   if (!sessionData || !sessionData.session) {
@@ -842,7 +840,7 @@ function doTrack() {
 
 window.doTrack = doTrack;
 
-
+/** Closes the results panel — the only thing that should ever hide it once shown. */
 function closeTrackResult() {
   const resultEl = document.getElementById('trackResult');
   if (resultEl) resultEl.classList.remove('visible');
@@ -876,7 +874,9 @@ function renderTrackResult(details, query) {
     statusEl.className = 'status-badge ' + (trip.status === 'active' ? 'status-transit' : trip.status === 'completed' ? 'status-delivered' : 'status-pending');
   }
 
-
+  // Truck info — tolerant of reg/registration/licence_plate/plate naming,
+  // and falls back to flat fields on the trip itself (e.g. truck_reg)
+  // in case the RPC doesn't nest a `truck` object at all.
   setText('truckReg', pick(truck, ['reg', 'registration', 'licence_plate', 'licencePlate', 'plate', 'vehicle_reg'])
     || pick(trip, ['truck_reg', 'truckReg', 'vehicle_reg']) || '—');
   setText('truckType', pick(truck, ['type', 'truck_type', 'vehicle_type', 'make'])
@@ -884,7 +884,8 @@ function renderTrackResult(details, query) {
   setText('truckFuel', pick(truck, ['status', 'truck_status', 'vehicle_status'])
     || pick(trip, ['truck_status', 'truckStatus']) || '—');
 
-
+  // Driver info — tolerant of name/phone/licence naming (UK "licence" vs
+  // US "license"), and falls back to flat fields on the trip itself.
   const driverName = pick(driver, ['name', 'driver_name', 'full_name']) || pick(trip, ['driver_name', 'driverName']) || '—';
   setText('driverName', driverName);
 
@@ -899,7 +900,7 @@ function renderTrackResult(details, query) {
     || pick(trip, ['driver_licence', 'driver_license']) || '—';
   setText('driverLicence', driverLicence);
 
- 
+  // Location & speed
   let locationText = '—';
   if (trip.status === 'active' && gps) {
     locationText = `GPS: ${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)}`;
@@ -911,10 +912,10 @@ function renderTrackResult(details, query) {
   setText('truckLocation', locationText);
   setText('truckSpeed', gps ? `${gps.speed} km/h` : '—');
 
-
+  // GPS update time
   setText('gpsUpdate', new Date().toLocaleTimeString());
 
- 
+  // Timeline
   const timelineEl = document.getElementById('trackTimeline');
   if (timelineEl && events && events.length) {
     const mapped = events.map(function (ev, idx) {
@@ -947,7 +948,7 @@ function startLiveSimulation(query) {
         if (locEl && details.gps) locEl.textContent = `GPS: ${details.gps.lat.toFixed(4)}, ${details.gps.lng.toFixed(4)}`;
         if (gpsEl) gpsEl.textContent = 'Just now';
       })
-      .catch(function () {  });
+      .catch(function () { /* silent — keep last known values on a transient error */ });
   }, 8000);
 }
 function initTrackPage() {
@@ -958,7 +959,14 @@ function initTrackPage() {
   }
 }
 
-
+/**
+ * Builds a one-click, branded PDF of the currently displayed tracking
+ * result (booking details, truck/driver info, and the full timeline) so
+ * a customer can save or forward proof of their shipment status. Falls
+ * back to a plain-text download if the PDF library failed to load
+ * (e.g. blocked by a network/ad-blocker), so the feature still works
+ * either way.
+ */
 function downloadTrackingReport() {
   if (!state.lastTrack || !state.lastTrack.details) {
     showNotification('Nothing to download yet', 'Track a shipment first', 'ℹ️');
@@ -1003,7 +1011,7 @@ function downloadTrackingReport() {
     doc.setTextColor(gray[0], gray[1], gray[2]);
     doc.text('Shipment Tracking Report — generated ' + new Date().toLocaleString(), marginX, y);
 
-    
+    // Section: Booking details
     y += 30;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
@@ -1039,7 +1047,7 @@ function downloadTrackingReport() {
     ];
     y = pdfKeyValueRows(doc, truckRows, marginX, y, pageWidth);
 
-
+    // Section: Driver details
     y += 16;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
@@ -1054,7 +1062,7 @@ function downloadTrackingReport() {
     ];
     y = pdfKeyValueRows(doc, driverRows, marginX, y, pageWidth);
 
-
+    // Section: Timeline
     if (events && events.length) {
       y += 16;
       doc.setFont('helvetica', 'bold');
@@ -1097,7 +1105,7 @@ function downloadTrackingReport() {
 }
 window.downloadTrackingReport = downloadTrackingReport;
 
-
+/** Renders an array of [label, value] pairs as aligned rows and returns the new y position. */
 function pdfKeyValueRows(doc, rows, marginX, y, pageWidth) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
@@ -1112,7 +1120,7 @@ function pdfKeyValueRows(doc, rows, marginX, y, pageWidth) {
   return y;
 }
 
-
+/** Fallback download used if jsPDF isn't available for any reason. */
 function downloadTrackingReportAsText(details, query) {
   const { trip, truck, driver, events } = details;
   const lines = [];
@@ -2379,7 +2387,7 @@ const SUBPAGES = {
       </section>`,
   },
 
-  
+  /* ══ DEPOT ════════════════════════════════════════════════════════ */
 
   'changamwe-depot': {
     parent: 'depot',
@@ -3338,7 +3346,7 @@ window.demoTrack = demoTrack;
   function clearCurrentUser() {
     sessionStorage.removeItem('gh_session');
   }
-
+  // Splits the backend's single `name` field into a first name for greetings/nav
   function firstNameOf(user) {
     return user && user.name ? user.name.split(' ')[0] : 'there';
   }
@@ -3804,7 +3812,7 @@ window.demoTrack = demoTrack;
   `;
   document.head.appendChild(style);
 
-
+  /* ── Inject HTML ── */
   const authHTML = `
   <!-- AUTH MODAL -->
   <div id="gh-auth-overlay" role="dialog" aria-modal="true" aria-label="Client Login">
@@ -3982,6 +3990,15 @@ window.demoTrack = demoTrack;
         <button class="gh-auth-close" onclick="ghDashClose()" aria-label="Close">✕</button>
       </div>
       <div class="gh-dash-body">
+        <div id="ghDashStaffBanner" style="display:none;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.35);border-radius:8px;padding:14px 16px;margin-bottom:22px;">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--gold);letter-spacing:0.3px;">STAFF ACCESS</div>
+            <div style="font-size:12px;color:#999;margin-top:3px;">Review uploaded documents and manage depot storage in the staff portal.</div>
+          </div>
+          <button class="gh-auth-submit" style="max-width:190px;" onclick="window.open('staff-portal.html','_blank','noopener')">
+            <span class="gh-btn-text">OPEN STAFF PORTAL →</span>
+          </button>
+        </div>
         <div class="gh-dash-section-title" style="margin-bottom:16px;">QUICK ACTIONS</div>
         <div class="gh-dash-quick">
           <div class="gh-dash-tile" onclick="ghDashClose();navigateToPage('booking')">
@@ -4300,6 +4317,16 @@ window.demoTrack = demoTrack;
     if (el('gh-dash-role')) el('gh-dash-role').textContent = user.role || '—';
     if (el('gh-dash-since')) el('gh-dash-since').textContent = user.created || '—';
     loadMyBookings();
+
+    // Staff accounts get a banner linking out to the staff portal for
+    // document review + depot storage. Resolves to false (never throws)
+    // for regular clients, so this is safe to call on every login.
+    var staffBanner = el('ghDashStaffBanner');
+    if (staffBanner && window.bookingDocs && window.bookingDocs.isStaffMember) {
+      window.bookingDocs.isStaffMember().then(function (isStaff) {
+        staffBanner.style.display = isStaff ? 'flex' : 'none';
+      });
+    }
   }
 
   function ghEscapeHtml(str) {

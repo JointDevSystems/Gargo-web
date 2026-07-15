@@ -102,29 +102,31 @@
     return data || [];
   }
 
-  async function pendingReviewQueue() {
-    const { data, error } = await client()
+  // Powers the staff portal's review list for any of its filter chips
+  // (Pending Review / Verified / Rejected / All). status === 'all' skips
+  // the status filter entirely. Pending items are ordered oldest-first
+  // (FIFO, so staff clear the backlog in upload order); everything else
+  // is ordered most-recently-uploaded first, which surfaces the latest
+  // review activity.
+  async function reviewQueue(status) {
+    let query = client()
       .from('booking_documents')
-      .select('*, public_bookings(id, full_name, company, service_type, container, storage_status)')
-      .eq('status', 'pending_review')
-      .order('uploaded_at', { ascending: true }); // oldest first = FIFO for staff
+      .select('*, public_bookings(id, full_name, company, service_type, container, storage_status)');
+
+    if (status && status !== 'all') {
+      query = query.eq('status', status);
+    }
+
+    query = query.order('uploaded_at', { ascending: status === 'pending_review' });
+
+    const { data, error } = await query;
     if (error) throw new Error(error.message || 'Could not load review queue');
     return data || [];
   }
 
-
-  // Same shape as pendingReviewQueue but for any status (or all of them),
-  // used by the admin Document Verification screen which needs to browse
-  // Pending / Verified / Rejected / All — not just the FIFO review queue.
-  async function documentsByStatus(status) {
-    let q = client()
-      .from('booking_documents')
-      .select('*, public_bookings(id, full_name, company, service_type, container, storage_status)')
-      .order('uploaded_at', { ascending: false });
-    if (status && status !== 'all') q = q.eq('status', status);
-    const { data, error } = await q;
-    if (error) throw new Error(error.message || 'Could not load documents');
-    return data || [];
+  // Back-compat alias for the original pending-only queue.
+  async function pendingReviewQueue() {
+    return reviewQueue('pending_review');
   }
 
 
@@ -257,7 +259,7 @@
     storageAvailability,
    
     pendingReviewQueue,
-    documentsByStatus,
+    reviewQueue,
     documentsForBooking,
     documentsForBookings,
     isStaffMember,
