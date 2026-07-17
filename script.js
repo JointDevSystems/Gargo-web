@@ -845,6 +845,7 @@ function closeTrackResult() {
   const resultEl = document.getElementById('trackResult');
   if (resultEl) resultEl.classList.remove('visible');
   window.clearInterval(state.trackInterval);
+  destroyTrackMap();
 }
 window.closeTrackResult = closeTrackResult;
 
@@ -912,6 +913,15 @@ function renderTrackResult(details, query) {
   setText('truckLocation', locationText);
   setText('truckSpeed', gps ? `${gps.speed} km/h` : '—');
 
+  // Live GPS map — only meaningful while the truck is actually moving
+  // and we have real coordinates for it.
+  if (trip.status === 'active' && gps && typeof gps.lat === 'number' && typeof gps.lng === 'number') {
+    showTrackMap(true);
+    updateTrackMap(gps.lat, gps.lng);
+  } else {
+    showTrackMap(false);
+  }
+
   // GPS update time
   setText('gpsUpdate', new Date().toLocaleTimeString());
 
@@ -931,6 +941,58 @@ function setText(id, val) {
   const el = document.getElementById(id);
   if (el) el.textContent = val;
 }
+
+/* ---------------------------------------------------------------
+   Live GPS map (Leaflet + CARTO dark tiles, no API key required).
+   Lazily created on first result that has real coordinates, then
+   just re-centered/moved on every subsequent update so we're not
+   tearing down and rebuilding the map on every 8s poll.
+--------------------------------------------------------------- */
+let trackMap = null;
+let trackMarker = null;
+
+function showTrackMap(show) {
+  const wrap = document.getElementById('trackMapWrap');
+  if (wrap) wrap.style.display = show ? 'block' : 'none';
+}
+
+function destroyTrackMap() {
+  if (trackMap) {
+    trackMap.remove();
+    trackMap = null;
+    trackMarker = null;
+  }
+}
+
+function updateTrackMap(lat, lng) {
+  const mapEl = document.getElementById('trackMap');
+  if (!mapEl || typeof L === 'undefined' || typeof lat !== 'number' || typeof lng !== 'number') return;
+
+  if (!trackMap) {
+    trackMap = L.map('trackMap', { zoomControl: true, attributionControl: true }).setView([lat, lng], 14);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd',
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap &copy; CARTO'
+    }).addTo(trackMap);
+
+    const truckIcon = L.divIcon({
+      className: 'truck-map-marker marker-pulse',
+      html: '🚛',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
+    trackMarker = L.marker([lat, lng], { icon: truckIcon }).addTo(trackMap);
+
+    // The container is created while its parent panel is display:none,
+    // so Leaflet measures it as 0x0. Force a re-measure once it's visible.
+    window.setTimeout(function () { trackMap && trackMap.invalidateSize(); }, 250);
+  } else {
+    trackMarker.setLatLng([lat, lng]);
+    trackMap.panTo([lat, lng]);
+  }
+}
+
 function startLiveSimulation(query) {
   window.clearInterval(state.trackInterval);
   if (!query) return;
@@ -947,6 +1009,10 @@ function startLiveSimulation(query) {
         if (speedEl && details.gps) speedEl.textContent = details.gps.speed + ' km/h';
         if (locEl && details.gps) locEl.textContent = `GPS: ${details.gps.lat.toFixed(4)}, ${details.gps.lng.toFixed(4)}`;
         if (gpsEl) gpsEl.textContent = 'Just now';
+        if (details.gps && typeof details.gps.lat === 'number' && typeof details.gps.lng === 'number') {
+          showTrackMap(true);
+          updateTrackMap(details.gps.lat, details.gps.lng);
+        }
       })
       .catch(function () { /* silent — keep last known values on a transient error */ });
   }, 8000);

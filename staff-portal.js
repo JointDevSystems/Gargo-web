@@ -38,6 +38,29 @@
     return isNaN(d.getTime()) ? String(raw) : d.toLocaleString('en-KE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 
+  // Only these prefixes are messages we deliberately wrote as safe,
+  // human-facing copy (form validation, business rules, auth outcomes).
+  // Anything else — raw Postgrest/Supabase errors, RLS policy text,
+  // column/table names, network errors — never reaches the screen.
+  // The real error is always still logged to the console for debugging.
+  const SAFE_ERROR_PREFIXES = [
+    'Not enough space in',
+    'A reason is required',
+    'Enter the booking reference',
+    'Select a zone',
+    'Enter a valid TEU amount',
+    'Enter your email and password',
+    'Incorrect email or password',
+    'Please sign in',
+  ];
+
+  function friendlyError(err, fallback) {
+    console.error('[staff-portal]', fallback, err);
+    const msg = (err && err.message) || '';
+    return SAFE_ERROR_PREFIXES.some(function (p) { return msg.indexOf(p) === 0; }) ? msg : fallback;
+  }
+
+
   function showGate() {
     el('gate').style.display = 'block';
     el('notStaff').style.display = 'none';
@@ -76,7 +99,7 @@
         return checkStaffAndEnter(res.data.user);
       })
       .catch(function (err) {
-        errEl.textContent = err.message || 'Sign-in failed. Please try again.';
+        errEl.textContent = friendlyError(err, 'Sign-in failed. Please try again.');
       })
       .finally(function () {
         btn.disabled = false; btn.textContent = 'SIGN IN';
@@ -120,7 +143,7 @@
 
   function loadReviewQueue() {
     const wrap = el('reviewList');
-    wrap.innerHTML = '<div class="empty">Loading…</div>';
+    wrap.innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading…</div>';
 
     window.bookingDocs.reviewQueue(currentReviewStatus)
       .then(function (docs) {
@@ -131,7 +154,7 @@
         wrap.innerHTML = docs.map(renderDocCard).join('');
       })
       .catch(function (err) {
-        wrap.innerHTML = '<div class="empty">Could not load documents — ' + esc(err.message || 'please retry') + '</div>';
+        wrap.innerHTML = '<div class="empty">' + esc(friendlyError(err, 'Could not load documents right now. Please try again.')) + '</div>';
       });
   }
   window.loadReviewQueue = loadReviewQueue;
@@ -215,7 +238,7 @@
   window.viewDoc = function (filePath) {
     window.bookingDocs.getDownloadUrl(filePath, 300)
       .then(function (url) { window.open(url, '_blank', 'noopener'); })
-      .catch(function (err) { alert(err.message || 'Could not open document.'); });
+      .catch(function (err) { alert(friendlyError(err, 'Could not open document. Please try again.')); });
   };
 
   window.toggleRejectNote = function (docId) {
@@ -238,7 +261,7 @@
         }, 700);
       })
       .catch(function (err) {
-        if (line) { line.textContent = err.message || 'Could not verify.'; line.style.color = '#ef4444'; }
+        if (line) { line.textContent = friendlyError(err, 'Could not verify. Please try again.'); line.style.color = '#ef4444'; }
         disableCard(docId, false);
       });
   };
@@ -264,7 +287,7 @@
         }, 700);
       })
       .catch(function (err) {
-        if (line) { line.textContent = err.message || 'Could not reject.'; line.style.color = '#ef4444'; }
+        if (line) { line.textContent = friendlyError(err, 'Could not reject. Please try again.'); line.style.color = '#ef4444'; }
         disableCard(docId, false);
       });
   };
@@ -287,7 +310,7 @@
   function loadZones() {
     const wrap = el('zoneTableWrap');
     const select = el('allocZone');
-    wrap.innerHTML = '<div class="empty">Loading…</div>';
+    wrap.innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading…</div>';
 
     window.bookingDocs.storageAvailability()
       .then(function (zones) {
@@ -324,7 +347,7 @@
           }).join('');
       })
       .catch(function (err) {
-        wrap.innerHTML = '<div class="empty">Could not load storage zones — ' + esc(err.message || 'please retry') + '</div>';
+        wrap.innerHTML = '<div class="empty">' + esc(friendlyError(err, 'Could not load storage zones right now. Please try again.')) + '</div>';
       });
   }
 
@@ -348,7 +371,7 @@
         loadZones();
       })
       .catch(function (err) {
-        msg.textContent = err.message || 'Could not allocate storage.'; msg.style.color = '#ef4444';
+        msg.textContent = friendlyError(err, 'Could not allocate storage. Please try again.'); msg.style.color = '#ef4444';
       });
   };
 

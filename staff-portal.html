@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Staff Portal · Gargo Haven</title>
+<link rel="icon" type="image/png" href="images/gargologo222.png">
 <meta name="robots" content="noindex, nofollow">
 <style>
   :root {
@@ -84,6 +85,13 @@
 
   .section-title { font-size: 12px; letter-spacing: 1px; color: #888; margin: 22px 0 12px; text-transform: uppercase; }
   .empty { color: #777; font-size: 13px; padding: 30px 0; text-align: center; }
+  .loading-row { display: flex; align-items: center; justify-content: center; gap: 10px; color: #888; font-size: 13px; padding: 30px 0; }
+  .spinner {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid var(--border); border-top-color: var(--gold);
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
 
   .doc-card {
@@ -142,9 +150,12 @@
 <body>
 
 <header>
-  <div>
-    <h1>Gargo Haven — Staff Portal</h1>
-    <div class="sub">DOCUMENT REVIEW &amp; DEPOT STORAGE</div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <img src="images/gargologo222.png" alt="Gargo Haven" style="height:34px;width:auto;">
+    <div>
+      <h1>Staff Portal</h1>
+      <div class="sub">DOCUMENT REVIEW &amp; DEPOT STORAGE</div>
+    </div>
   </div>
   <div id="whoami" style="display:none;">
     <span id="whoamiName">—</span>
@@ -168,7 +179,7 @@
   <div id="notStaff" style="display:none;">
     <div class="icon">🔒</div>
     <h2 style="color:#fff;">This account isn't authorized for staff access</h2>
-    <p>If you believe this is a mistake, ask an administrator to add your account to <code>staff_members</code>.</p>
+    <p>If you believe this is a mistake, please contact your system administrator to request staff access.</p>
     <button class="btn" style="margin-top:14px;" onclick="staffLogout()">SIGN OUT</button>
   </div>
 
@@ -188,12 +199,12 @@
         <button class="filter-chip" data-status="all" onclick="switchReviewFilter('all',this)">All</button>
         <button class="filter-chip refresh-chip" onclick="loadReviewQueue()">↻ Refresh</button>
       </div>
-      <div id="reviewList"><div class="empty">Loading…</div></div>
+      <div id="reviewList"><div class="loading-row"><span class="spinner"></span> Loading…</div></div>
     </div>
 
     <div class="tab-panel" id="tab-storage">
       <div class="section-title">Zone Capacity</div>
-      <div id="zoneTableWrap"><div class="empty">Loading…</div></div>
+      <div id="zoneTableWrap"><div class="loading-row"><span class="spinner"></span> Loading…</div></div>
 
       <div class="section-title">Allocate Storage to a Booking</div>
       <div class="alloc-form">
