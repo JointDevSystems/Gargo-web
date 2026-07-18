@@ -80,6 +80,37 @@ async function ghSubmitContact(payload) {
 // added here — RLS policy "Users can read own bookings" (auth.uid() = user_id)
 // already scopes every row to the caller, so this can't leak other clients'
 // bookings even if called with a stale/forged payload.
+// Lets a signed-in client correct their own booking (e.g. a typo'd
+// container number, wrong pickup date) before staff have processed it.
+// No explicit user_id check here — same reasoning as ghMyBookings: RLS
+// policy "Users can update own pending bookings" must scope this to
+// auth.uid() = user_id (and ideally status = 'pending'), so this can't be
+// used to edit someone else's booking even if bookingId is guessed/forged.
+// EDITABLE_BOOKING_FIELDS is an allowlist so a caller can never smuggle
+// in a status/user_id/quote override through this path.
+const EDITABLE_BOOKING_FIELDS = [
+  'full_name', 'email', 'phone', 'company',
+  'container', 'cargo_type', 'pickup_location', 'dropoff_location',
+  'pickup_date', 'notes', 'preferred_zone',
+];
+async function ghUpdateBooking(bookingId, patch) {
+  if (!bookingId) throw new Error('Booking reference is required');
+  const safePatch = {};
+  EDITABLE_BOOKING_FIELDS.forEach(function (k) {
+    if (Object.prototype.hasOwnProperty.call(patch, k)) safePatch[k] = patch[k];
+  });
+  if (!Object.keys(safePatch).length) throw new Error('Nothing to update');
+
+  const { data, error } = await ghRequireClient()
+    .from('public_bookings')
+    .update(safePatch)
+    .eq('id', bookingId)
+    .select('*')
+    .single();
+  if (error) throw new Error(error.message || 'Could not update booking — please try again');
+  return { booking: data };
+}
+
 async function ghMyBookings({ limit = 5, offset = 0 } = {}) {
   const { data: sessionData } = await ghRequireClient().auth.getSession();
   if (!sessionData || !sessionData.session) {
@@ -143,6 +174,7 @@ window.bridge = {
   trackQuery: ghTrackQuery,
   fleetStatus: ghFleetStatus,
   submitBooking: ghSubmitBooking,
+  updateBooking: ghUpdateBooking,
   submitContact: ghSubmitContact,
   myBookings: ghMyBookings,
   authRegister: ghAuthRegister,
@@ -317,6 +349,8 @@ function closeModal() {
   document.body.style.overflow = '';
 }
 window.closeModal = closeModal;
+window.openModal = openModal;
+window.showNotification = showNotification;
 function initModal() {
   const overlay = document.getElementById('modalOverlay');
   if (!overlay) return;
@@ -549,6 +583,121 @@ function generateBookingRef() {
   const num = Math.floor(1000 + Math.random() * 8999);
   return 'GH-2024-' + num;
 }
+
+// Which MOVEMENT DETAILS fields apply to each service type, and how the
+// origin/destination selects should be constrained. Storage bookings don't
+// need a destination (it's always the depot); repair/wash/reefer jobs
+// happen at the depot so destination is fixed too; repatriation always
+// starts at the depot and ends at a port.
+const SERVICE_FIELD_CONFIG = {
+  'Depot Storage': {
+    origin: true, destination: false, duration: true, zonePref: true,
+    originLabel: 'Origin / Coming From', fixedDest: 'Gargo Haven Depot',
+    hint: 'Depot storage — tell us where the container is coming from. It will be booked into our depot; you can optionally request a storage zone.',
+  },
+  'Port Haulage': {
+    origin: true, destination: true, duration: false, zonePref: false,
+    originLabel: 'Origin / Pickup Point', destLabel: 'Destination / Drop Point',
+    hint: 'Port haulage — a one-way move between two points, no depot storage included.',
+  },
+  'Container Repair': {
+    origin: true, destination: false, duration: false, zonePref: false,
+    originLabel: 'Container Currently At', fixedDest: 'Gargo Haven Depot',
+    hint: 'Container repair — performed at our IICL-certified depot bays.',
+  },
+  'Container Washing': {
+    origin: true, destination: false, duration: false, zonePref: false,
+    originLabel: 'Container Currently At', fixedDest: 'Gargo Haven Depot',
+    hint: 'Container washing — performed at our depot.',
+  },
+  'Reefer Management': {
+    origin: true, destination: false, duration: true, zonePref: false,
+    originLabel: 'Container Currently At', fixedDest: 'Gargo Haven Depot',
+    hint: 'Reefer management — genset monitoring at our depot for the duration you specify.',
+  },
+  'Full Transport Package': {
+    origin: true, destination: true, duration: true, zonePref: true,
+    originLabel: 'Origin / Pickup Point', destLabel: 'Destination / Drop Point',
+    hint: 'Full transport package — haulage plus depot storage in one booking.',
+  },
+  'Repatriation to Port': {
+    origin: false, destination: true, duration: false, zonePref: false,
+    fixedOrigin: 'Gargo Haven Depot', destLabel: 'Return To (Port)',
+    portOnlyDest: true,
+    hint: 'Repatriation to port — for empties or cleared containers already in our depot, being returned to a shipping line at the port.',
+  },
+};
+const DEFAULT_SERVICE_TYPE = 'Depot Storage';
+const PORT_ONLY_OPTIONS = ['Mombasa Port (KPA)', 'APM Terminals Mombasa', 'APM Terminals'];
+
+function setSelectValue(selectEl, value) {
+  if (!selectEl) return;
+  const opt = Array.prototype.find.call(selectEl.options, function (o) { return o.value === value || o.text === value; });
+  if (opt) selectEl.value = opt.value;
+}
+
+function applyServiceFieldVisibility(serviceType) {
+  const cfg = SERVICE_FIELD_CONFIG[serviceType] || SERVICE_FIELD_CONFIG[DEFAULT_SERVICE_TYPE];
+
+  const originGroup = document.getElementById('fGroup-origin');
+  const destGroup = document.getElementById('fGroup-dest');
+  const durationGroup = document.getElementById('fGroup-duration');
+  const zoneGroup = document.getElementById('fGroup-zone');
+  const originEl = document.getElementById('fOrigin');
+  const destEl = document.getElementById('fDest');
+  const originLabelEl = document.getElementById('fOriginLabel');
+  const destLabelEl = document.getElementById('fDestLabel');
+  const durationLabelEl = document.getElementById('fDurationLabel');
+  const hintEl = document.getElementById('serviceFieldsHint');
+
+  if (originGroup) originGroup.style.display = cfg.origin ? '' : 'none';
+  if (destGroup) destGroup.style.display = cfg.destination ? '' : 'none';
+  if (durationGroup) durationGroup.style.display = cfg.duration ? '' : 'none';
+  if (zoneGroup) zoneGroup.style.display = cfg.zonePref ? '' : 'none';
+
+  if (originLabelEl) originLabelEl.textContent = cfg.originLabel || 'Origin / Pickup Point';
+  if (destLabelEl) destLabelEl.textContent = cfg.destLabel || 'Destination / Drop Point';
+  if (durationLabelEl) durationLabelEl.textContent = serviceType === 'Reefer Management' ? 'Monitoring Duration (days)' : 'Storage Duration (days)';
+  if (hintEl) hintEl.textContent = cfg.hint || '';
+
+  // Fixed/implied values that aren't shown as their own field still need
+  // to be sent with the booking, since getRequiredDocTypes() and pricing
+  // both depend on origin/destination being populated.
+  if (!cfg.destination && cfg.fixedDest && destEl) setSelectValue(destEl, cfg.fixedDest);
+  if (!cfg.origin && cfg.fixedOrigin && originEl) setSelectValue(originEl, cfg.fixedOrigin);
+
+  // Repatriation only makes sense returning TO a port, so trim the
+  // destination select down to port-only options while it's active.
+  if (destEl) {
+    Array.prototype.forEach.call(destEl.options, function (o) {
+      o.hidden = !!cfg.portOnlyDest && PORT_ONLY_OPTIONS.indexOf(o.value || o.text) === -1;
+    });
+    if (cfg.portOnlyDest && PORT_ONLY_OPTIONS.indexOf(destEl.value) === -1) setSelectValue(destEl, PORT_ONLY_OPTIONS[0]);
+  }
+
+  if (cfg.zonePref) loadZonePreferenceOptions();
+}
+window.applyServiceFieldVisibility = applyServiceFieldVisibility;
+
+let _zonePrefLoaded = false;
+function loadZonePreferenceOptions() {
+  if (_zonePrefLoaded) return;
+  const sel = document.getElementById('fZonePref');
+  if (!sel || !window.bookingDocs || !window.bookingDocs.storageAvailability) return;
+  _zonePrefLoaded = true;
+  window.bookingDocs.storageAvailability()
+    .then(function (zones) {
+      (zones || []).forEach(function (z) {
+        const free = Math.max((z.capacity_teu || 0) - (z.occupied_teu || 0), 0);
+        const opt = document.createElement('option');
+        opt.value = z.zone_name;
+        opt.textContent = z.zone_name + ' (' + free + ' TEU free)';
+        sel.appendChild(opt);
+      });
+    })
+    .catch(function () { /* optional field — silently leave "No preference" only */ });
+}
+
 function initBookingPage() {
   const refEl = document.getElementById('bookingRef');
   if (refEl && (!state.bookingRefNumber || refEl.textContent.indexOf('PENDING') !== -1)) {
@@ -560,12 +709,14 @@ function initBookingPage() {
     const today = new Date().toISOString().split('T')[0];
     dateEl.min = today;
   }
+  applyServiceFieldVisibility(state.selectedCargoType || DEFAULT_SERVICE_TYPE);
   calcQuote();
 }
 function selectCargoType(el) {
   $$('.cargo-type-btn').forEach(function (b) { b.classList.remove('selected'); });
   el.classList.add('selected');
   state.selectedCargoType = el.textContent.trim();
+  applyServiceFieldVisibility(state.selectedCargoType);
   calcQuote();
 }
 window.selectCargoType = selectCargoType;
@@ -604,6 +755,14 @@ function calcQuote() {
     total = 3200 * qty;
   } else if (state.selectedCargoType === 'Reefer Management') {
     total = 950 * Math.max(duration, 1) * qty + haulageBase * 0.3 * qty;
+  } else if (state.selectedCargoType === 'Repatriation to Port') {
+    // Always depot → port; distance factor uses the fixed depot origin
+    // and whichever port the client selected as the return destination.
+    const dest = destEl ? destEl.value : 'Mombasa Port (KPA)';
+    const fOrigin = ROUTE_FACTOR['Gargo Haven Depot'] !== undefined ? ROUTE_FACTOR['Gargo Haven Depot'] : 1;
+    const fDest = ROUTE_FACTOR[dest] !== undefined ? ROUTE_FACTOR[dest] : 2;
+    const factor = Math.max(0.6, 1 + Math.abs(fOrigin - fDest) * 0.18);
+    total = haulageBase * factor * qty;
   } else {
     total = haulageBase * qty;
   }
@@ -654,6 +813,14 @@ function submitBooking() {
     quote_amount: quoteAmount,
     notes: get('fNotes')
   };
+
+  // Optional: only sent when the client actually picked a zone, so
+  // bookings for service types without the zone-preference field (or
+  // where "No preference" was left selected) are unaffected. Requires a
+  // `preferred_zone` text column on public_bookings — see the migration
+  // note shipped alongside this change.
+  const zonePref = get('fZonePref');
+  if (zonePref) payload.preferred_zone = zonePref;
 
   // Bookings that will need document uploads (storage/haulage) must be
   // created by a logged-in user — booking.user_id is set once at insert
@@ -828,7 +995,13 @@ function doTrack() {
       state.lastTrack = { details: details, query: query };
       renderTrackResult(details, query);
       if (resultEl) resultEl.classList.add('visible');
-      showNotification('Record found', 'Trip ' + details.trip.id + ' – ' + details.trip.status, '✅');
+      if (details.trip) {
+        showNotification('Record found', 'Trip ' + details.trip.id + ' – ' + details.trip.status, '✅');
+      } else if (details.storage) {
+        showNotification('Record found', 'In storage — ' + (details.storage.zone_name || details.storage.zone || 'depot'), '✅');
+      } else {
+        showNotification('Record found', 'Booking located', '✅');
+      }
       startLiveSimulation(query);
     })
     .catch(function (err) {
@@ -861,61 +1034,97 @@ function pick(obj, keys) {
 
 function renderTrackResult(details, query) {
 
-  const { trip, truck, driver, events, gps } = details;
+  const { trip, truck, driver, events, gps, storage, booking } = details;
 
-  // Populate basic fields
-  setText('res-id', trip.container || trip.id);
-  setText('res-route', (trip.origin || '—') + ' → ' + (trip.destination || '—'));
-  setText('res-eta', trip.status === 'active' ? 'In transit' : (trip.status === 'completed' ? 'Delivered' : '—'));
-  setText('res-booked', trip.created || '—');
+  // Storage bookings (Depot Storage / awaiting repatriation) may not have
+  // an active haulage trip at all — fall back to the booking record for
+  // the header fields, and hide the truck/driver panels since there's no
+  // truck currently moving this container.
+  const hasTrip = !!trip;
+  const source = hasTrip ? trip : (booking || {});
+
+  setText('res-id', source.container || source.id || query);
+  setText('res-route', hasTrip ? ((trip.origin || '—') + ' → ' + (trip.destination || '—')) : ((booking && booking.pickup_location) || '—') + ' → ' + ((booking && booking.dropoff_location) || 'Gargo Haven Depot'));
+  setText('res-eta', hasTrip ? (trip.status === 'active' ? 'In transit' : (trip.status === 'completed' ? 'Delivered' : '—')) : (storage ? 'In depot storage' : '—'));
+  setText('res-booked', source.created || (booking && booking.created_at) || '—');
 
   const statusEl = document.getElementById('res-status');
+  const displayStatus = hasTrip ? trip.status : ((booking && booking.status) || (storage ? 'in_storage' : 'pending'));
   if (statusEl) {
-    statusEl.textContent = trip.status.charAt(0).toUpperCase() + trip.status.slice(1);
-    statusEl.className = 'status-badge ' + (trip.status === 'active' ? 'status-transit' : trip.status === 'completed' ? 'status-delivered' : 'status-pending');
+    statusEl.textContent = displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1).replace(/_/g, ' ');
+    statusEl.className = 'status-badge ' + (displayStatus === 'active' ? 'status-transit' : (displayStatus === 'completed' || displayStatus === 'in_storage') ? 'status-delivered' : 'status-pending');
   }
 
-  // Truck info — tolerant of reg/registration/licence_plate/plate naming,
-  // and falls back to flat fields on the trip itself (e.g. truck_reg)
-  // in case the RPC doesn't nest a `truck` object at all.
-  setText('truckReg', pick(truck, ['reg', 'registration', 'licence_plate', 'licencePlate', 'plate', 'vehicle_reg'])
-    || pick(trip, ['truck_reg', 'truckReg', 'vehicle_reg']) || '—');
-  setText('truckType', pick(truck, ['type', 'truck_type', 'vehicle_type', 'make'])
-    || pick(trip, ['truck_type', 'truckType']) || '—');
-  setText('truckFuel', pick(truck, ['status', 'truck_status', 'vehicle_status'])
-    || pick(trip, ['truck_status', 'truckStatus']) || '—');
+  // Truck & driver panels only apply while a trip is actually associated
+  // with this record — a container sitting in storage has neither.
+  const truckPanel = document.getElementById('truckReg') && document.getElementById('truckReg').closest('.truck-panel');
+  const driverPanelEl = document.getElementById('driverName') && document.getElementById('driverName').closest('.truck-panel');
+  if (truckPanel) truckPanel.style.display = hasTrip ? '' : 'none';
+  if (driverPanelEl) driverPanelEl.style.display = hasTrip ? '' : 'none';
 
-  // Driver info — tolerant of name/phone/licence naming (UK "licence" vs
-  // US "license"), and falls back to flat fields on the trip itself.
-  const driverName = pick(driver, ['name', 'driver_name', 'full_name']) || pick(trip, ['driver_name', 'driverName']) || '—';
-  setText('driverName', driverName);
+  if (hasTrip) {
+    // Truck info — tolerant of reg/registration/licence_plate/plate naming,
+    // and falls back to flat fields on the trip itself (e.g. truck_reg)
+    // in case the RPC doesn't nest a `truck` object at all.
+    setText('truckReg', pick(truck, ['reg', 'registration', 'licence_plate', 'licencePlate', 'plate', 'vehicle_reg'])
+      || pick(trip, ['truck_reg', 'truckReg', 'vehicle_reg']) || '—');
+    setText('truckType', pick(truck, ['type', 'truck_type', 'vehicle_type', 'make'])
+      || pick(trip, ['truck_type', 'truckType']) || '—');
+    setText('truckFuel', pick(truck, ['status', 'truck_status', 'vehicle_status'])
+      || pick(trip, ['truck_status', 'truckStatus']) || '—');
 
-  const driverPhone = pick(driver, ['phone', 'mobile', 'phone_number', 'contact']) || pick(trip, ['driver_phone', 'driverPhone']);
-  const phoneEl = document.getElementById('driverPhone');
-  if (phoneEl) {
-    phoneEl.textContent = driverPhone || '—';
-    phoneEl.parentElement.href = driverPhone ? 'tel:' + String(driverPhone).replace(/\s/g, '') : '#';
+    // Driver info — tolerant of name/phone/licence naming (UK "licence" vs
+    // US "license"), and falls back to flat fields on the trip itself.
+    const driverNameVal = pick(driver, ['name', 'driver_name', 'full_name']) || pick(trip, ['driver_name', 'driverName']) || '—';
+    setText('driverName', driverNameVal);
+
+    const driverPhone = pick(driver, ['phone', 'mobile', 'phone_number', 'contact']) || pick(trip, ['driver_phone', 'driverPhone']);
+    const phoneEl = document.getElementById('driverPhone');
+    if (phoneEl) {
+      phoneEl.textContent = driverPhone || '—';
+      phoneEl.parentElement.href = driverPhone ? 'tel:' + String(driverPhone).replace(/\s/g, '') : '#';
+    }
+
+    const driverLicence = pick(driver, ['licence', 'license', 'licence_no', 'license_no', 'licenceNo', 'licenseNo'])
+      || pick(trip, ['driver_licence', 'driver_license']) || '—';
+    setText('driverLicence', driverLicence);
   }
 
-  const driverLicence = pick(driver, ['licence', 'license', 'licence_no', 'license_no', 'licenceNo', 'licenseNo'])
-    || pick(trip, ['driver_licence', 'driver_license']) || '—';
-  setText('driverLicence', driverLicence);
+  // Storage panel — zone, offload time, and the driver who delivered the
+  // container into the depot. Shown whenever the RPC returns a `storage`
+  // object, independent of whether there's also an active trip (e.g. a
+  // Full Transport Package booking that's now sitting in storage).
+  const storagePanel = document.getElementById('storagePanel');
+  if (storage) {
+    if (storagePanel) storagePanel.style.display = '';
+    setText('storageZone', pick(storage, ['zone_name', 'zone']) || '—');
+    setText('storageOffloadTime', fmtDateTime(pick(storage, ['offloaded_at', 'offload_time', 'gate_in_time'])) || '—');
+    setText('storageStatus', (pick(storage, ['status', 'storage_status']) || '—'));
+    setText('storageDeliveredBy', pick(storage, ['delivered_by', 'delivered_by_name', 'driver_name']) || '—');
+    const storagePhone = pick(storage, ['delivered_by_phone', 'driver_phone']);
+    const storagePhoneEl = document.getElementById('storageDeliveredByPhone');
+    if (storagePhoneEl) storagePhoneEl.textContent = storagePhone || '—';
+  } else if (storagePanel) {
+    storagePanel.style.display = 'none';
+  }
 
   // Location & speed
   let locationText = '—';
-  if (trip.status === 'active' && gps) {
+  if (hasTrip && trip.status === 'active' && gps) {
     locationText = `GPS: ${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)}`;
-  } else if (trip.status === 'completed') {
+  } else if (hasTrip && trip.status === 'completed') {
     locationText = trip.destination || '—';
-  } else {
+  } else if (hasTrip) {
     locationText = trip.origin || '—';
+  } else if (storage) {
+    locationText = pick(storage, ['zone_name', 'zone']) || 'Gargo Haven Depot';
   }
   setText('truckLocation', locationText);
   setText('truckSpeed', gps ? `${gps.speed} km/h` : '—');
 
   // Live GPS map — only meaningful while the truck is actually moving
   // and we have real coordinates for it.
-  if (trip.status === 'active' && gps && typeof gps.lat === 'number' && typeof gps.lng === 'number') {
+  if (hasTrip && trip.status === 'active' && gps && typeof gps.lat === 'number' && typeof gps.lng === 'number') {
     showTrackMap(true);
     updateTrackMap(gps.lat, gps.lng);
   } else {
@@ -929,12 +1138,19 @@ function renderTrackResult(details, query) {
   const timelineEl = document.getElementById('trackTimeline');
   if (timelineEl && events && events.length) {
     const mapped = events.map(function (ev, idx) {
-      return { t: ev.ts || '—', e: ev.label + (ev.detail ? ' — ' + ev.detail : ''), done: idx < events.length - 1 || trip.status === 'completed' };
+      return { t: ev.ts || '—', e: ev.label + (ev.detail ? ' — ' + ev.detail : ''), done: idx < events.length - 1 || (hasTrip && trip.status === 'completed') };
     });
     timelineEl.innerHTML = renderTimeline(mapped);
   } else if (timelineEl) {
     timelineEl.innerHTML = '<div class="empty-state">No timeline events yet</div>';
   }
+}
+
+function fmtDateTime(raw) {
+  if (!raw) return null;
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return String(raw);
+  return d.toLocaleString('en-KE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 function setText(id, val) {
@@ -999,7 +1215,7 @@ function startLiveSimulation(query) {
   state.trackInterval = window.setInterval(function () {
     window.bridge.trackQuery(query)
       .then(function (details) {
-        if (details.trip.status !== 'active') {
+        if (!details.trip || details.trip.status !== 'active') {
           window.clearInterval(state.trackInterval);
           return;
         }
@@ -1039,7 +1255,19 @@ function downloadTrackingReport() {
     return;
   }
   const { details, query } = state.lastTrack;
-  const { trip, truck, driver, events } = details;
+  const { trip: rawTrip, truck, driver, events, storage, booking } = details;
+  const hasTrip = !!rawTrip;
+  // Storage-only bookings (no active haulage trip) still need a trip-shaped
+  // object so the rest of this function can render without special-casing
+  // every field — built from the booking/storage records instead.
+  const trip = rawTrip || {
+    container: (booking && booking.container) || query,
+    id: query,
+    origin: (booking && booking.pickup_location) || '—',
+    destination: (booking && booking.dropoff_location) || (storage && (storage.zone_name || storage.zone)) || 'Gargo Haven Depot',
+    status: (booking && booking.status) || (storage ? 'in_storage' : 'pending'),
+    created: (booking && booking.created_at) || '—',
+  };
   const btn = document.getElementById('trDownloadBtn');
 
   if (!window.jspdf || !window.jspdf.jsPDF) {
@@ -1098,7 +1326,26 @@ function downloadTrackingReport() {
     ];
     y = pdfKeyValueRows(doc, bookingRows, marginX, y, pageWidth);
 
-    // Section: Truck details
+    // Section: Storage details (only present for depot-storage bookings)
+    if (storage) {
+      y += 16;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('STORAGE DETAILS', marginX, y);
+      y += 8;
+      doc.line(marginX, y, pageWidth - marginX, y);
+      y += 20;
+      const storageRows = [
+        ['Zone', pick(storage, ['zone_name', 'zone']) || '—'],
+        ['Offload Time', fmtDateTime(pick(storage, ['offloaded_at', 'offload_time', 'gate_in_time'])) || '—'],
+        ['Storage Status', pick(storage, ['status', 'storage_status']) || '—'],
+        ['Delivered By', pick(storage, ['delivered_by', 'delivered_by_name', 'driver_name']) || '—'],
+      ];
+      y = pdfKeyValueRows(doc, storageRows, marginX, y, pageWidth);
+    }
+
+    // Section: Truck details — only meaningful when there's an active trip
+    if (hasTrip) {
     y += 16;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
@@ -1127,6 +1374,7 @@ function downloadTrackingReport() {
       ['Licence', pick(driver, ['licence', 'license', 'licence_no', 'license_no', 'licenceNo', 'licenseNo']) || pick(trip, ['driver_licence', 'driver_license']) || '—'],
     ];
     y = pdfKeyValueRows(doc, driverRows, marginX, y, pageWidth);
+    }
 
     // Section: Timeline
     if (events && events.length) {
@@ -1188,7 +1436,16 @@ function pdfKeyValueRows(doc, rows, marginX, y, pageWidth) {
 
 /** Fallback download used if jsPDF isn't available for any reason. */
 function downloadTrackingReportAsText(details, query) {
-  const { trip, truck, driver, events } = details;
+  const { trip: rawTrip, truck, driver, events, storage, booking } = details;
+  const hasTrip = !!rawTrip;
+  const trip = rawTrip || {
+    container: (booking && booking.container) || query,
+    id: query,
+    origin: (booking && booking.pickup_location) || '—',
+    destination: (booking && booking.dropoff_location) || (storage && (storage.zone_name || storage.zone)) || 'Gargo Haven Depot',
+    status: (booking && booking.status) || (storage ? 'in_storage' : 'pending'),
+    created: (booking && booking.created_at) || '—',
+  };
   const lines = [];
   lines.push('GARGO LOGISTICS — SHIPMENT TRACKING REPORT');
   lines.push('Generated: ' + new Date().toLocaleString());
@@ -1199,14 +1456,24 @@ function downloadTrackingReportAsText(details, query) {
   lines.push('Status: ' + (trip.status || '—'));
   lines.push('Booked: ' + (trip.created || '—'));
   lines.push('');
-  lines.push('TRUCK DETAILS');
-  lines.push('Registration: ' + (pick(truck, ['reg', 'registration', 'licence_plate']) || '—'));
-  lines.push('Type: ' + (pick(truck, ['type', 'truck_type', 'vehicle_type']) || '—'));
-  lines.push('');
-  lines.push('DRIVER DETAILS');
-  lines.push('Name: ' + (pick(driver, ['name', 'driver_name', 'full_name']) || '—'));
-  lines.push('Phone: ' + (pick(driver, ['phone', 'mobile', 'phone_number']) || '—'));
-  lines.push('');
+  if (storage) {
+    lines.push('STORAGE DETAILS');
+    lines.push('Zone: ' + (pick(storage, ['zone_name', 'zone']) || '—'));
+    lines.push('Offload Time: ' + (fmtDateTime(pick(storage, ['offloaded_at', 'offload_time', 'gate_in_time'])) || '—'));
+    lines.push('Storage Status: ' + (pick(storage, ['status', 'storage_status']) || '—'));
+    lines.push('Delivered By: ' + (pick(storage, ['delivered_by', 'delivered_by_name', 'driver_name']) || '—'));
+    lines.push('');
+  }
+  if (hasTrip) {
+    lines.push('TRUCK DETAILS');
+    lines.push('Registration: ' + (pick(truck, ['reg', 'registration', 'licence_plate']) || '—'));
+    lines.push('Type: ' + (pick(truck, ['type', 'truck_type', 'vehicle_type']) || '—'));
+    lines.push('');
+    lines.push('DRIVER DETAILS');
+    lines.push('Name: ' + (pick(driver, ['name', 'driver_name', 'full_name']) || '—'));
+    lines.push('Phone: ' + (pick(driver, ['phone', 'mobile', 'phone_number']) || '—'));
+    lines.push('');
+  }
   if (events && events.length) {
     lines.push('TIMELINE');
     events.forEach(function (ev) {
@@ -4428,25 +4695,99 @@ window.demoTrack = demoTrack;
   }
 
   
-  function renderDocChips(docs) {
+  // Keeps only the most recent document per doc_type — a client who
+  // re-uploads after a rejection ends up with two rows for that type
+  // (the old rejected one + the new pending one); the dashboard should
+  // only ever show the latest status per type, not the stale rejected one.
+  function latestDocsByType(docs) {
+    var byType = {};
+    (docs || []).forEach(function (d) {
+      var existing = byType[d.doc_type];
+      if (!existing || new Date(d.uploaded_at) > new Date(existing.uploaded_at)) byType[d.doc_type] = d;
+    });
+    return byType;
+  }
+
+  function renderDocChips(docs, bookingId) {
     if (!docs || !docs.length) return '';
-    var chips = docs.map(function (d) {
-      var label = DOC_TYPE_LABELS_SHORT[d.doc_type] || d.doc_type;
-      var statusLabel = (d.status || 'pending_review').replace('_', ' ');
+    var byType = latestDocsByType(docs);
+    var rows = Object.keys(byType).map(function (docType) {
+      var d = byType[docType];
+      var label = DOC_TYPE_LABELS_SHORT[docType] || docType;
+      var statusLabel = (d.status || 'pending_review').replace(/_/g, ' ');
       var cls = ghDocStatusClass(d.status);
-      return (
-        '<span class="gh-booking-status ' + cls + '" style="font-size:10.5px;padding:3px 8px;margin:2px 6px 0 0;display:inline-block;">' +
+      var chip = (
+        '<span class="gh-booking-status ' + cls + '" style="font-size:10.5px;padding:3px 8px;margin:2px 6px 4px 0;display:inline-block;">' +
         ghEscapeHtml(label) + ': ' + ghEscapeHtml(statusLabel) +
         '</span>'
       );
+      if (d.status !== 'rejected') return chip;
+
+      // Rejected — show the reviewer's reason and a way to fix it
+      // straight from the dashboard, instead of making the client
+      // start a whole new booking over one bad document.
+      var reason = d.review_notes ? '<div style="font-size:11px;color:var(--red,#e05252);margin:2px 0 4px;">Reason: ' + ghEscapeHtml(d.review_notes) + '</div>' : '';
+      var reuploadId = 'reupload_' + docType + '_' + bookingId;
+      var statusLineId = 'reuploadStatus_' + docType + '_' + bookingId;
+      return (
+        chip + reason +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+        '<input type="file" id="' + reuploadId + '" accept=".pdf,.jpg,.jpeg,.png" style="font-size:11px;color:var(--gray-pale);max-width:180px;" />' +
+        '<button class="btn-secondary" style="padding:5px 10px;font-size:11px;" onclick="handleDocReupload(' + jsStrArg(bookingId) + ',' + jsStrArg(docType) + ')">Re-upload</button>' +
+        '</div>' +
+        '<div id="' + statusLineId + '" style="font-size:11px;margin-bottom:6px;"></div>'
+      );
     }).join('');
-    return '<div style="margin-top:6px;">' + chips + '</div>';
+    return '<div style="margin-top:6px;">' + rows + '</div>';
   }
+
+  function jsStrArg(value) {
+    return "'" + String(value).replace(/'/g, "\\'") + "'";
+  }
+
+  window.handleDocReupload = function (bookingId, docType) {
+    var reuploadId = 'reupload_' + docType + '_' + bookingId;
+    var statusLineId = 'reuploadStatus_' + docType + '_' + bookingId;
+    var fileInput = document.getElementById(reuploadId);
+    var statusEl = document.getElementById(statusLineId);
+    var file = fileInput && fileInput.files[0];
+
+    if (!file) {
+      if (statusEl) { statusEl.textContent = 'Choose a file first.'; statusEl.style.color = '#e6a23c'; }
+      return;
+    }
+    if (!window.bookingDocs) {
+      if (statusEl) { statusEl.textContent = 'Upload service unavailable — please refresh and try again.'; statusEl.style.color = '#e6a23c'; }
+      return;
+    }
+
+    if (statusEl) { statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--gray-pale)'; }
+    window.bookingDocs.uploadBookingDocument({ bookingId: bookingId, docType: docType, file: file })
+      .then(function () {
+        if (statusEl) { statusEl.textContent = '✓ Re-uploaded — pending review'; statusEl.style.color = '#4caf50'; }
+        if (fileInput) fileInput.disabled = true;
+        // Refresh so the dashboard reflects the new pending status
+        // instead of the stale rejected chip.
+        setTimeout(loadMyBookings, 900);
+      })
+      .catch(function (err) {
+        if (statusEl) { statusEl.textContent = err.message || 'Upload failed — please try again'; statusEl.style.color = '#e05252'; }
+      });
+  };
 
   function renderStorageLine(b) {
     if (!b.storage_status) return '';
     var label = String(b.storage_status).replace(/_/g, ' ');
     return '<div class="gh-booking-route" style="margin-top:4px;">Storage: ' + ghEscapeHtml(label) + '</div>';
+  }
+
+  function isBookingEditable(b) {
+    var s = (b.status || 'pending').toLowerCase();
+    // Once staff have moved a booking past "pending" (confirmed, in
+    // progress, completed, cancelled...) the client shouldn't be able to
+    // change origin/destination/container details out from under them —
+    // only a fresh, unprocessed booking is safe to self-edit.
+    return s.indexOf('pending') !== -1;
   }
 
   function renderBookingRow(b, docsByBooking) {
@@ -4459,6 +4800,7 @@ window.demoTrack = demoTrack;
     var statusClass = ghStatusClass(status);
     var dateLabel = ghFormatBookingDate(b.created_at || b.pickup_date);
     var docs = (docsByBooking && docsByBooking[ref]) || [];
+    var editable = isBookingEditable(b);
 
     return (
       '<div class="gh-booking-row">' +
@@ -4467,12 +4809,15 @@ window.demoTrack = demoTrack;
           '<div class="gh-booking-service">' + ghEscapeHtml(service) + '</div>' +
           (route ? '<div class="gh-booking-route">' + ghEscapeHtml(route) + '</div>' : '') +
           renderStorageLine(b) +
-          renderDocChips(docs) +
+          renderDocChips(docs, ref) +
+          (editable ? '<button class="btn-secondary" style="padding:5px 10px;font-size:11px;margin-top:4px;" onclick="openBookingEditModal(' + jsStrArg(ref) + ')">Edit Booking</button>' : '') +
         '</div>' +
         '<div class="gh-booking-status ' + statusClass + '">' + ghEscapeHtml(status) + '</div>' +
       '</div>'
     );
   }
+
+  var _lastBookingsById = {};
 
   function loadMyBookings() {
     var container = document.getElementById('gh-dash-bookings-list');
@@ -4483,6 +4828,8 @@ window.demoTrack = demoTrack;
     window.bridge.myBookings({ limit: 5, offset: 0 })
       .then(function (result) {
         var bookings = result.bookings || [];
+        _lastBookingsById = {};
+        bookings.forEach(function (b) { _lastBookingsById[b.id] = b; });
 
         if (!bookings.length) {
           container.innerHTML =
@@ -4521,6 +4868,74 @@ window.demoTrack = demoTrack;
           '<div class="gh-dash-empty"><p>Could not load your bookings right now. Please try again shortly.</p></div>';
       });
   }
+
+  var GH_LOCATION_OPTIONS = ['Mombasa Port (KPA)', 'APM Terminals', 'APM Terminals Mombasa', 'Gargo Haven Depot', 'Mombasa Gargo Haven Depot', 'Consolebase ICD', 'Hakika Container Depot', 'Kibarani Depot', 'Fortune Container Depot', 'Client Yard / Factory'];
+
+  function ghLocationSelect(id, current) {
+    var opts = GH_LOCATION_OPTIONS.map(function (loc) {
+      return '<option' + (loc === current ? ' selected' : '') + '>' + ghEscapeHtml(loc) + '</option>';
+    }).join('');
+    return '<select class="form-select" id="' + id + '">' + opts + '</select>';
+  }
+
+  window.openBookingEditModal = function (bookingId) {
+    var b = _lastBookingsById[bookingId];
+    if (!b) {
+      showNotification('Booking not found', 'Please refresh your dashboard and try again.', '⚠️');
+      return;
+    }
+
+    var html = [
+      '<p style="color:var(--gray-pale);font-size:12.5px;line-height:1.6;margin-bottom:14px;">',
+      'Correct the details below. This is only available while your booking is still pending — once our team starts processing it, changes go through support instead.',
+      '</p>',
+      '<div class="form-grid" style="display:grid;gap:12px;">',
+      '<div class="form-group"><label class="form-label">Container Number</label>',
+      '<input type="text" class="form-input" id="editContainerNo" value="' + ghEscapeHtml(b.container || '') + '"></div>',
+      '<div class="form-group"><label class="form-label">Origin / Pickup Point</label>',
+      ghLocationSelect('editOrigin', b.pickup_location),
+      '</div>',
+      '<div class="form-group"><label class="form-label">Destination / Drop Point</label>',
+      ghLocationSelect('editDest', b.dropoff_location),
+      '</div>',
+      '<div class="form-group"><label class="form-label">Requested Date</label>',
+      '<input type="date" class="form-input" id="editDate" value="' + ghEscapeHtml((b.pickup_date || '').slice(0, 10)) + '"></div>',
+      '<div class="form-group"><label class="form-label">Phone / WhatsApp</label>',
+      '<input type="tel" class="form-input" id="editPhone" value="' + ghEscapeHtml(b.phone || '') + '"></div>',
+      '<div class="form-group full"><label class="form-label">Special Instructions</label>',
+      '<textarea class="form-textarea" id="editNotes">' + ghEscapeHtml(b.notes || '') + '</textarea></div>',
+      '</div>',
+      '<div id="editBookingMsg" style="font-size:12px;margin:10px 0;min-height:14px;"></div>',
+      '<button class="btn-primary" style="width:100%;" onclick="saveBookingEdit(' + jsStrArg(bookingId) + ')">Save Changes</button>',
+    ].join('');
+
+    openModal('Edit Booking · ' + bookingId, html);
+  };
+
+  window.saveBookingEdit = function (bookingId) {
+    var msgEl = document.getElementById('editBookingMsg');
+    var get = function (id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+
+    var patch = {
+      container: get('editContainerNo'),
+      pickup_location: get('editOrigin'),
+      dropoff_location: get('editDest'),
+      pickup_date: get('editDate'),
+      phone: get('editPhone'),
+      notes: get('editNotes'),
+    };
+
+    if (msgEl) { msgEl.textContent = 'Saving…'; msgEl.style.color = 'var(--gray-pale)'; }
+
+    window.bridge.updateBooking(bookingId, patch)
+      .then(function () {
+        if (msgEl) { msgEl.textContent = '✓ Booking updated'; msgEl.style.color = '#4caf50'; }
+        setTimeout(function () { closeModal(); loadMyBookings(); }, 700);
+      })
+      .catch(function (err) {
+        if (msgEl) { msgEl.textContent = err.message || 'Could not save changes — please try again.'; msgEl.style.color = '#e05252'; }
+      });
+  };
 
   
   function wireLoginButton() {

@@ -1264,18 +1264,20 @@
               <button class="cargo-type-btn" onclick="selectCargoType(this)"><span class="cargo-type-icon"></span>Container Washing</button>
               <button class="cargo-type-btn" onclick="selectCargoType(this)"><span class="cargo-type-icon"></span>Reefer Management</button>
               <button class="cargo-type-btn" onclick="selectCargoType(this)"><span class="cargo-type-icon"></span>Full Transport Package</button>
+              <button class="cargo-type-btn" onclick="selectCargoType(this)"><span class="cargo-type-icon"></span>Repatriation to Port</button>
             </div>
 
             <div class="form-section-title">02 — MOVEMENT DETAILS</div>
+            <div class="form-hint" id="serviceFieldsHint" style="font-size:11.5px;color:var(--gray-pale,#999);margin:-6px 0 14px;line-height:1.6;"></div>
             <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label">Origin / Pickup Point</label>
+              <div class="form-group" id="fGroup-origin">
+                <label class="form-label" id="fOriginLabel">Origin / Pickup Point</label>
                 <select class="form-select" id="fOrigin" onchange="calcQuote()">
                   <option>Mombasa Port (KPA)</option><option>APM Terminals</option><option>Mombasa Gargo Haven Depot</option><option>Consolebase ICD</option><option>Hakika Container Depot</option><option>Kibarani Depot</option><option>Fortune Container Depot</option><option>Client Yard / Factory</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label class="form-label">Destination / Drop Point</label>
+              <div class="form-group" id="fGroup-dest">
+                <label class="form-label" id="fDestLabel">Destination / Drop Point</label>
                 <select class="form-select" id="fDest" onchange="calcQuote()">
                   <option>Gargo Haven Depot</option><option>Mombasa Port (KPA)</option><option>APM Terminals Mombasa</option><option>Consolebase ICD</option><option>Hakika Container Depot</option><option>Kibarani Depot</option><option>Fortune Container Depot</option><option>Client Yard / Factory</option>
                 </select>
@@ -1304,9 +1306,15 @@
                 <label class="form-label">Requested Date</label>
                 <input type="date" class="form-input" id="fDate">
               </div>
-              <div class="form-group">
-                <label class="form-label">Storage Duration (days)</label>
+              <div class="form-group" id="fGroup-duration">
+                <label class="form-label" id="fDurationLabel">Storage Duration (days)</label>
                 <input type="number" class="form-input" id="fDuration" value="1" min="0" onchange="calcQuote()" oninput="calcQuote()">
+              </div>
+              <div class="form-group" id="fGroup-zone">
+                <label class="form-label">Preferred Storage Zone (optional)</label>
+                <select class="form-select" id="fZonePref">
+                  <option value="">No preference</option>
+                </select>
               </div>
               <div class="form-group full">
                 <label class="form-label">Special Instructions</label>
@@ -1482,6 +1490,19 @@
               <div>
                 <div class="track-info-label">Status</div>
                 <div class="track-info-value"><span class="status-badge" id="res-status">—</span></div>
+              </div>
+            </div>
+
+            <div class="truck-panel" id="storagePanel" style="display:none;">
+              <div class="truck-panel-title">STORAGE DETAILS</div>
+              <div class="truck-details-grid">
+                <div class="truck-detail-item"><div class="tdl">ZONE</div><div class="tdv" id="storageZone">—</div></div>
+                <div class="truck-detail-item"><div class="tdl">OFFLOAD TIME</div><div class="tdv" id="storageOffloadTime">—</div></div>
+                <div class="truck-detail-item"><div class="tdl">STORAGE STATUS</div><div class="tdv" id="storageStatus">—</div></div>
+              </div>
+              <div class="truck-details-grid" style="margin-top:10px;">
+                <div class="truck-detail-item"><div class="tdl">DELIVERED BY</div><div class="tdv" id="storageDeliveredBy">—</div></div>
+                <div class="truck-detail-item"><div class="tdl">DRIVER PHONE</div><div class="tdv" id="storageDeliveredByPhone">—</div></div>
               </div>
             </div>
 
