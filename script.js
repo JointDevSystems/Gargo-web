@@ -1,6 +1,5 @@
 const GH_SUPABASE_URL = 'https://okisjizcyidvvwdwehaa.supabase.co';
 const GH_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9raXNqaXpjeWlkdnZ3ZHdlaGFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MTYzNjMsImV4cCI6MjA5ODM5MjM2M30.O_0EeK297a07B7FLunpWr6HDlqrfP5Z8Owyp3qE4hQE';
-
 let ghSupabase = null;
 let ghInitError = null;
 try {
@@ -12,21 +11,17 @@ try {
 } catch (e) {
   ghInitError = e;
   console.error('script.js: could not initialize Supabase client —', e.message);
-  
   document.addEventListener('DOMContentLoaded', function () {
     const banner = document.createElement('div');
-    banner.textContent = '⚠ Live tracking, booking, and login are temporarily unavailable — please refresh the page or try again shortly.';
+    banner.textContent = ' Live tracking, booking, and login are temporarily unavailable — please refresh the page or try again shortly.';
     banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#b91c1c;color:#fff;text-align:center;padding:10px 16px;font-family:sans-serif;font-size:13px;';
     document.body.prepend(banner);
   });
 }
-
 function ghRequireClient() {
   if (!ghSupabase) throw new Error('Service temporarily unavailable — please refresh the page and try again.');
   return ghSupabase;
 }
-
-
 async function ghTrackQuery(query) {
   const q = (query || '').trim();
   if (!q) throw new Error('Enter a container, booking ref, truck reg, or driver name');
@@ -35,59 +30,35 @@ async function ghTrackQuery(query) {
   if (!data) throw new Error('No matching record found');
   return data;
 }
-
-
 async function ghFleetStatus() {
   const { data, error } = await ghRequireClient().rpc('public_fleet_status');
   if (error) throw new Error(error.message || 'Could not load fleet status');
   return { trucks: data || [] };
 }
-
-
 async function ghSubmitBooking(payload) {
   const id = (window.crypto && window.crypto.randomUUID)
     ? window.crypto.randomUUID()
     : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-
-  
+      const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
   const { data: sessionData } = await ghRequireClient().auth.getSession();
   const userId = sessionData && sessionData.session ? sessionData.session.user.id : null;
-
   const { error } = await ghRequireClient()
     .from('public_bookings')
     .insert(Object.assign({ id, user_id: userId }, payload));
   if (error) throw new Error(error.message || 'Booking failed — please try again');
   return { booking: { id } };
 }
-
 async function ghSubmitContact(payload) {
-  
   const { data: sessionData } = await ghRequireClient().auth.getSession();
   const userId = sessionData && sessionData.session ? sessionData.session.user.id : null;
-
   const { error } = await ghRequireClient()
     .from('public_contact_messages')
     .insert(Object.assign({ user_id: userId }, payload));
   if (error) throw new Error(error.message || 'Message failed — please try again');
   return { ok: true };
 }
-
-
-// Fetches only the current user's own bookings. No explicit user_id filter is
-// added here — RLS policy "Users can read own bookings" (auth.uid() = user_id)
-// already scopes every row to the caller, so this can't leak other clients'
-// bookings even if called with a stale/forged payload.
-// Lets a signed-in client correct their own booking (e.g. a typo'd
-// container number, wrong pickup date) before staff have processed it.
-// No explicit user_id check here — same reasoning as ghMyBookings: RLS
-// policy "Users can update own pending bookings" must scope this to
-// auth.uid() = user_id (and ideally status = 'pending'), so this can't be
-// used to edit someone else's booking even if bookingId is guessed/forged.
-// EDITABLE_BOOKING_FIELDS is an allowlist so a caller can never smuggle
-// in a status/user_id/quote override through this path.
 const EDITABLE_BOOKING_FIELDS = [
   'full_name', 'email', 'phone', 'company',
   'container', 'cargo_type', 'pickup_location', 'dropoff_location',
@@ -100,7 +71,6 @@ async function ghUpdateBooking(bookingId, patch) {
     if (Object.prototype.hasOwnProperty.call(patch, k)) safePatch[k] = patch[k];
   });
   if (!Object.keys(safePatch).length) throw new Error('Nothing to update');
-
   const { data, error } = await ghRequireClient()
     .from('public_bookings')
     .update(safePatch)
@@ -110,24 +80,19 @@ async function ghUpdateBooking(bookingId, patch) {
   if (error) throw new Error(error.message || 'Could not update booking — please try again');
   return { booking: data };
 }
-
 async function ghMyBookings({ limit = 5, offset = 0 } = {}) {
   const { data: sessionData } = await ghRequireClient().auth.getSession();
   if (!sessionData || !sessionData.session) {
     return { bookings: [], total: 0 };
   }
-
   const { data, error, count } = await ghRequireClient()
     .from('public_bookings')
     .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
-
   if (error) throw new Error(error.message || 'Could not load your bookings');
   return { bookings: data || [], total: count || 0 };
 }
-
-
 function ghMapAuthUser(u) {
   if (!u) return null;
   const meta = u.user_metadata || {};
@@ -141,35 +106,28 @@ function ghMapAuthUser(u) {
     created: u.created_at ? new Date(u.created_at).toLocaleDateString() : '—',
   };
 }
-
 async function ghAuthRegister({ name, email, phone, company, role, password }) {
   const { data, error } = await ghRequireClient().auth.signUp({
     email, password,
     options: { data: { name, phone, company, role } },
   });
   if (error) throw new Error(error.message || 'Could not create account. Please try again.');
-  
   return { user: ghMapAuthUser(data.user), needsEmailConfirmation: !data.session };
 }
-
 async function ghAuthLogin({ email, password }) {
   const { data, error } = await ghRequireClient().auth.signInWithPassword({ email, password });
   if (error) throw new Error(error.message || 'Incorrect email or password. Please try again.');
   return { user: ghMapAuthUser(data.user) };
 }
-
 async function ghAuthLogout() {
   const { error } = await ghRequireClient().auth.signOut();
   if (error) throw new Error(error.message || 'Could not sign out. Please try again.');
 }
-
-
 async function ghAuthCurrentUser() {
   const { data, error } = await ghRequireClient().auth.getSession();
   if (error || !data.session) return null;
   return ghMapAuthUser(data.session.user);
 }
-
 window.bridge = {
   trackQuery: ghTrackQuery,
   fleetStatus: ghFleetStatus,
@@ -182,1488 +140,1223 @@ window.bridge = {
   authLogout: ghAuthLogout,
   authCurrentUser: ghAuthCurrentUser,
 };
-
-
 (function () {
-'use strict';
-
-
-const state = {
-  currentPage: 'home',
-  bookingRefNumber: null,
-  selectedCargoType: 'Depot Storage',
-  faqFilter: 'all',
-  trackInterval: null,
-  heroSlideIndex: 0,
-  heroSlideInterval: null
-};
-
-
-const ROUTE_FACTOR = {
-  'Mombasa Port (KPA)': 0,
-  'APM Terminals': 1,
-  'APM Terminals Mombasa': 1,
-  'Gargo Haven Depot': 2,
-  'Consolebase ICD': 3,
-  'Hakika Depot': 3.2,
-  'Hakika Container Depot': 3.2,
-  'Kibarani Depot': 2.6,
-  'Fortune Container Depot': 3.6,
-  'Client Yard / Factory': 4.2
-};
-
-const CONTAINER_SIZE_RATE = {
-  '20ft Standard': 8500,
-  '40ft Standard': 11000,
-  '40ft High Cube': 12500,
-  '45ft High Cube': 13500,
-  '20ft Reefer': 15500,
-  '40ft Reefer': 18500,
-  'Flat-Rack / Open Top': 14000
-};
-
-const STORAGE_RATE_PER_TEU_DAY = 350;
-
-
-const FAQ_DATA = [
- { cat: 'depot', q: 'What are your depot storage rates?', a: 'Our standard depot storage rate is KES 350 per TEU per day, which includes CCTV-monitored yard storage, gate-in/gate-out service, and EIR documentation. Bulk and long-term rates are available on request.' },
-  { cat: 'depot', q: 'Do you store both empty and laden containers?', a: 'Gargo Haven primarily specialises in empty container storage and depot management. We do not store laden cargo containers, but we can arrange short-term holding for containers awaiting stuffing or de-stuffing through our partner facilities.' },
-  { cat: 'depot', q: 'What is your gate-in / gate-out turnaround time?', a: 'Our digital gate management system processes containers in under 30 minutes on average. With 4 gate lanes and biometric access control, we keep queues to a minimum even during peak vessel discharge periods.' },
-  { cat: 'tracking', q: 'How do I track my container?', a: 'Visit the Track page and search by container number, booking reference, truck registration, or EIR number. You will see real-time GPS location, current status, and a full movement timeline.' },
-  { cat: 'tracking', q: 'How often is GPS location updated?', a: 'All trucks in our fleet are fitted with GPS telematics that update location every 60 seconds while in transit. Depot yard positions are updated in real time as containers are moved by our reach stackers.' },
-  { cat: 'tracking', q: 'Can I get SMS or email alerts on container status?', a: 'Yes. Clients with a registered account can opt in to SMS and email notifications for key milestones — gate-in, gate-out, dispatch, and delivery. Contact our support team to enable alerts on your account.' },
-  { cat: 'transport', q: 'Which routes do you cover in Mombasa?', a: 'We cover all major Mombasa container corridors, including Mombasa Port (KPA), APM Terminals, Consolebase ICD, Hakika Depot, Kibarani Depot, and Fortune Container Depot, plus direct delivery to client yards.' },
-  { cat: 'transport', q: 'How much does port haulage cost?', a: 'Port haulage starts from KES 8,500 per move depending on origin, destination, and container size. Use the Cost Estimator on our homepage or the live quote calculator on the Booking page for an instant estimate.' }, 
-  { cat: 'transport', q: 'Do you offer reefer truck transport?', a: 'Yes, we operate genset-equipped reefer trucks capable of maintaining temperatures as low as -25°C, suitable for pharmaceutical and perishable cargo movements across all our service corridors.' },
-  { cat: 'docs', q: 'What documentation do I receive after a move?', a: 'You will receive a digital Equipment Interchange Receipt (EIR), a gate pass, and a movement/delivery receipt for every transaction. All documents are paperless and accessible through your client portal.' },
-  { cat: 'docs', q: 'Are you KPA licensed and IICL certified?', a: 'Yes. Gargo Haven is a KPA-licensed depot operator, IICL-certified for container inspection and repair, KRA-compliant for customs documentation, and ISO 9001 certified for quality management.' },
-  { cat: 'docs', q: 'How do I file a claim for container damage?', a: 'Damage claims can be filed through our Claims Portal or by contacting our support team directly with your EIR number and supporting photos. Our team will respond with an assessment within 48 hours.' }
-];
-
-
-const TICKER_ITEMS = [
-  '🚢 KPA LICENSED DEPOT OPERATOR',
-  '📦 5,000+ TEU CAPACITY AT MIRITINI',
-  '🚛 120+ GPS-TRACKED TRUCKS',
-  '⚡ 30-MINUTE GATE TURNAROUND',
-  '❄️ 200+ REEFER PLUG-IN POINTS',
-  '🛡 IICL CERTIFIED · ISO 9001',
-  '📡 LIVE CONTAINER & TRUCK TRACKING',
-  '🕐 24/7 DEPOT OPERATIONS'
-];
-
-
-
-const TRACK_SAMPLES = {
-  container: {
-    'MSCU1234567': {
-      route: 'APM Terminals → Gargo Haven Depot', eta: 'Today, 14:30', status: 'On Truck — In Transit', statusClass: 'status-transit',
-      truckReg: 'KCB 421G', driver: 'Ali Hassan Mwangi', phone: '+254 700 111 222', location: 'Moi Ave, approaching Makupa Causeway', speed: '48 km/h', gps: '2 minutes ago',
-      timeline: [
-        { t: 'Today, 12:05', e: 'Gate-out from APM Terminals', done: true },
-        { t: 'Today, 12:20', e: 'Departed on truck KCB 421G', done: true },
-        { t: 'Today, 13:10', e: 'Passed Makupa Causeway checkpoint', done: true },
-        { t: 'Today, 14:30 (Est.)', e: 'Gate-in at Gargo Haven Depot', done: false }
-      ]
+  'use strict';
+  const state = {
+    currentPage: 'home',
+    bookingRefNumber: null,
+    selectedCargoType: 'Depot Storage',
+    faqFilter: 'all',
+    trackInterval: null,
+    heroSlideIndex: 0,
+    heroSlideInterval: null
+  };
+  const ROUTE_FACTOR = {
+    'Mombasa Port (KPA)': 0,
+    'APM Terminals': 1,
+    'APM Terminals Mombasa': 1,
+    'Gargo Haven Depot': 2,
+    'Consolebase ICD': 3,
+    'Hakika Depot': 3.2,
+    'Hakika Container Depot': 3.2,
+    'Kibarani Depot': 2.6,
+    'Fortune Container Depot': 3.6,
+    'Client Yard / Factory': 4.2
+  };
+  const CONTAINER_SIZE_RATE = {
+    '20ft Standard': 8500,
+    '40ft Standard': 11000,
+    '40ft High Cube': 12500,
+    '45ft High Cube': 13500,
+    '20ft Reefer': 15500,
+    '40ft Reefer': 18500,
+    'Flat-Rack / Open Top': 14000
+  };
+  const STORAGE_RATE_PER_TEU_DAY = 350;
+  const FAQ_DATA = [
+    { cat: 'depot', q: 'What are your depot storage rates?', a: 'Our standard depot storage rate is KES 350 per TEU per day, which includes CCTV-monitored yard storage, gate-in/gate-out service, and EIR documentation. Bulk and long-term rates are available on request.' },
+    { cat: 'depot', q: 'Do you store both empty and laden containers?', a: 'Gargo Haven primarily specialises in empty container storage and depot management. We do not store laden cargo containers, but we can arrange short-term holding for containers awaiting stuffing or de-stuffing through our partner facilities.' },
+    { cat: 'depot', q: 'What is your gate-in / gate-out turnaround time?', a: 'Our digital gate management system processes containers in under 30 minutes on average. With 4 gate lanes and biometric access control, we keep queues to a minimum even during peak vessel discharge periods.' },
+    { cat: 'tracking', q: 'How do I track my container?', a: 'Visit the Track page and search by container number, booking reference, truck registration, or EIR number. You will see real-time GPS location, current status, and a full movement timeline.' },
+    { cat: 'tracking', q: 'How often is GPS location updated?', a: 'All trucks in our fleet are fitted with GPS telematics that update location every 60 seconds while in transit. Depot yard positions are updated in real time as containers are moved by our reach stackers.' },
+    { cat: 'tracking', q: 'Can I get SMS or email alerts on container status?', a: 'Yes. Clients with a registered account can opt in to SMS and email notifications for key milestones — gate-in, gate-out, dispatch, and delivery. Contact our support team to enable alerts on your account.' },
+    { cat: 'transport', q: 'Which routes do you cover in Mombasa?', a: 'We cover all major Mombasa container corridors, including Mombasa Port (KPA), APM Terminals, Consolebase ICD, Hakika Depot, Kibarani Depot, and Fortune Container Depot, plus direct delivery to client yards.' },
+    { cat: 'transport', q: 'How much does port haulage cost?', a: 'Port haulage starts from KES 8,500 per move depending on origin, destination, and container size. Use the Cost Estimator on our homepage or the live quote calculator on the Booking page for an instant estimate.' },
+    { cat: 'transport', q: 'Do you offer reefer truck transport?', a: 'Yes, we operate genset-equipped reefer trucks capable of maintaining temperatures as low as -25°C, suitable for pharmaceutical and perishable cargo movements across all our service corridors.' },
+    { cat: 'docs', q: 'What documentation do I receive after a move?', a: 'You will receive a digital Equipment Interchange Receipt (EIR), a gate pass, and a movement/delivery receipt for every transaction. All documents are paperless and accessible through your client portal.' },
+    { cat: 'docs', q: 'Are you KPA licensed and IICL certified?', a: 'Yes. Gargo Haven is a KPA-licensed depot operator, IICL-certified for container inspection and repair, KRA-compliant for customs documentation, and ISO 9001 certified for quality management.' },
+    { cat: 'docs', q: 'How do I file a claim for container damage?', a: 'Damage claims can be filed through our Claims Portal or by contacting our support team directly with your EIR number and supporting photos. Our team will respond with an assessment within 48 hours.' }
+  ];
+  const TICKER_ITEMS = [
+    '🚢 KPA LICENSED DEPOT OPERATOR',
+    '📦 5,000+ TEU CAPACITY AT MIRITINI',
+    ' 120+ GPS-TRACKED TRUCKS',
+    '⚡ 30-MINUTE GATE TURNAROUND',
+    '❄️ 200+ REEFER PLUG-IN POINTS',
+    '🛡 IICL CERTIFIED · ISO 9001',
+    '📡 LIVE CONTAINER & TRUCK TRACKING',
+    '🕐 24/7 DEPOT OPERATIONS'
+  ];
+  const TRACK_SAMPLES = {
+    container: {
+      'MSCU1234567': {
+        route: 'APM Terminals → Gargo Haven Depot', eta: 'Today, 14:30', status: 'On Truck — In Transit', statusClass: 'status-transit',
+        truckReg: 'KCB 421G', driver: 'Ali Hassan Mwangi', phone: '+254 700 111 222', location: 'Moi Ave, approaching Makupa Causeway', speed: '48 km/h', gps: '2 minutes ago',
+        timeline: [
+          { t: 'Today, 12:05', e: 'Gate-out from APM Terminals', done: true },
+          { t: 'Today, 12:20', e: 'Departed on truck KCB 421G', done: true },
+          { t: 'Today, 13:10', e: 'Passed Makupa Causeway checkpoint', done: true },
+          { t: 'Today, 14:30 (Est.)', e: 'Gate-in at Gargo Haven Depot', done: false }
+        ]
+      },
+      'TCKU9876543': {
+        route: 'Mombasa Port (KPA) → Gargo Haven Depot', eta: 'Today, 16:00', status: 'In Depot Yard', statusClass: 'status-pending',
+        truckReg: '—', driver: '—', phone: '—', location: 'Zone A — General Storage, Gargo Haven Depot', speed: '0 km/h', gps: '5 minutes ago',
+        timeline: [
+          { t: 'Yesterday, 09:15', e: 'Gate-in at Mombasa Port (KPA)', done: true },
+          { t: 'Yesterday, 11:40', e: 'Loaded onto truck for transfer', done: true },
+          { t: 'Yesterday, 13:55', e: 'Gate-in at Gargo Haven Depot', done: true },
+          { t: 'Yesterday, 14:10', e: 'Placed in Zone A — General Storage', done: true }
+        ]
+      },
+      'GHTU0001234': {
+        route: 'Gargo Haven Depot → Consolebase ICD', eta: 'Tomorrow, 09:00', status: 'Scheduled — Awaiting Dispatch', statusClass: 'status-pending',
+        truckReg: 'KDB 889T', driver: 'Fatma Said Omar', phone: '+254 700 333 555', location: 'Gargo Haven Depot — Gate 2 staging area', speed: '0 km/h', gps: '12 minutes ago',
+        timeline: [
+          { t: 'Today, 10:00', e: 'Booking confirmed', done: true },
+          { t: 'Today, 10:30', e: 'Truck assigned — KDB 889T', done: true },
+          { t: 'Tomorrow, 09:00 (Est.)', e: 'Scheduled dispatch from depot', done: false },
+          { t: 'Tomorrow, 10:15 (Est.)', e: 'Gate-in at Consolebase ICD', done: false }
+        ]
+      }
     },
-    'TCKU9876543': {
-      route: 'Mombasa Port (KPA) → Gargo Haven Depot', eta: 'Today, 16:00', status: 'In Depot Yard', statusClass: 'status-pending',
-      truckReg: '—', driver: '—', phone: '—', location: 'Zone A — General Storage, Gargo Haven Depot', speed: '0 km/h', gps: '5 minutes ago',
-      timeline: [
-        { t: 'Yesterday, 09:15', e: 'Gate-in at Mombasa Port (KPA)', done: true },
-        { t: 'Yesterday, 11:40', e: 'Loaded onto truck for transfer', done: true },
-        { t: 'Yesterday, 13:55', e: 'Gate-in at Gargo Haven Depot', done: true },
-        { t: 'Yesterday, 14:10', e: 'Placed in Zone A — General Storage', done: true }
-      ]
-    },
-    'GHTU0001234': {
-      route: 'Gargo Haven Depot → Consolebase ICD', eta: 'Tomorrow, 09:00', status: 'Scheduled — Awaiting Dispatch', statusClass: 'status-pending',
-      truckReg: 'KDB 889T', driver: 'Fatma Said Omar', phone: '+254 700 333 555', location: 'Gargo Haven Depot — Gate 2 staging area', speed: '0 km/h', gps: '12 minutes ago',
-      timeline: [
-        { t: 'Today, 10:00', e: 'Booking confirmed', done: true },
-        { t: 'Today, 10:30', e: 'Truck assigned — KDB 889T', done: true },
-        { t: 'Tomorrow, 09:00 (Est.)', e: 'Scheduled dispatch from depot', done: false },
-        { t: 'Tomorrow, 10:15 (Est.)', e: 'Gate-in at Consolebase ICD', done: false }
-      ]
+    truck: {
+      'KCB 421G': { reg: 'KCB 421G', driver: 'Ali Hassan Mwangi', loc: 'Makupa Causeway, Mombasa' },
+      'KDB 889T': { reg: 'KDB 889T', driver: 'Fatma Said Omar', loc: 'Gargo Haven Depot, Gate 2' },
+      'ALI HASSAN': { reg: 'KCB 421G', driver: 'Ali Hassan Mwangi', loc: 'Makupa Causeway, Mombasa' }
     }
-  },
-  truck: {
-    'KCB 421G': { reg: 'KCB 421G', driver: 'Ali Hassan Mwangi', loc: 'Makupa Causeway, Mombasa' },
-    'KDB 889T': { reg: 'KDB 889T', driver: 'Fatma Said Omar', loc: 'Gargo Haven Depot, Gate 2' },
-    'ALI HASSAN': { reg: 'KCB 421G', driver: 'Ali Hassan Mwangi', loc: 'Makupa Causeway, Mombasa' }
+  };
+  function fmt(num) {
+    return Math.round(num).toLocaleString('en-US');
   }
-};
-
-
-function fmt(num) {
-  return Math.round(num).toLocaleString('en-US');
-}
-function $(sel) { return document.querySelector(sel); }
-function $$(sel) { return Array.from(document.querySelectorAll(sel)); }
-
-
-function initLoader() {
-  const loader = document.getElementById('loader');
-  if (!loader) return;
-  window.setTimeout(function () {
-    loader.classList.add('hidden');
+  function $(sel) { return document.querySelector(sel); }
+  function $$(sel) { return Array.from(document.querySelectorAll(sel)); }
+  function initLoader() {
+    const loader = document.getElementById('loader');
+    if (!loader) return;
     window.setTimeout(function () {
-      loader.style.display = 'none';
-    }, 600);
-  }, 1100);
-}
-
-
-function showNotification(title, sub, icon) {
-  const notif = document.getElementById('notification');
-  const textEl = document.getElementById('notif-text');
-  const subEl = document.getElementById('notif-sub');
-  const iconEl = notif ? notif.querySelector('.notif-icon') : null;
-  if (!notif) return;
-  if (textEl) textEl.textContent = title;
-  if (subEl) subEl.textContent = sub;
-  if (iconEl && icon) iconEl.textContent = icon;
-  notif.classList.add('show');
-  window.clearTimeout(notif._hideTimer);
-  notif._hideTimer = window.setTimeout(function () {
-    notif.classList.remove('show');
-  }, 4200);
-}
-
-
-
-function openModal(title, html) {
-  const overlay = document.getElementById('modalOverlay');
-  const titleEl = document.getElementById('modalTitle');
-  const bodyEl = document.getElementById('modalBody');
-  if (!overlay) return;
-  if (titleEl) titleEl.textContent = title;
-  if (bodyEl) bodyEl.innerHTML = html;
-  overlay.classList.add('active');
-  document.body.style.overflow = 'hidden';
-}
-function closeModal() {
-  const overlay = document.getElementById('modalOverlay');
-  if (!overlay) return;
-  overlay.classList.remove('active');
-  document.body.style.overflow = '';
-}
-window.closeModal = closeModal;
-window.openModal = openModal;
-window.showNotification = showNotification;
-function initModal() {
-  const overlay = document.getElementById('modalOverlay');
-  if (!overlay) return;
-  overlay.addEventListener('click', function (e) {
-    if (e.target === overlay) closeModal();
-  });
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') closeModal();
-  });
-}
-
-
-function initTicker() {
-  const inner = document.getElementById('tickerInner');
-  if (!inner) return;
-  const doubled = TICKER_ITEMS.concat(TICKER_ITEMS);
-  inner.innerHTML = doubled.map(function (item) {
-    return '<span class="ticker-item">' + item + '</span>';
-  }).join('<span class="ticker-sep">  •  </span>');
-}
-
-
-function initHeroSlideshow() {
-  const slides = $$('.hero-slide-content');
-  const indicators = $$('.indicator');
-  if (!slides.length) return;
-
-  const totalSlides = slides.length;
-  const SLIDE_DURATION = 6000; 
-
-  function goToSlide(index) {
-    
-    slides.forEach(function(slide) {
-      slide.classList.remove('active');
-    });
-    indicators.forEach(function(ind) {
-      ind.classList.remove('active');
-    });
-
-    
-    slides[index].classList.add('active');
-    if (indicators[index]) indicators[index].classList.add('active');
-
-    state.heroSlideIndex = index;
+      loader.classList.add('hidden');
+      window.setTimeout(function () {
+        loader.style.display = 'none';
+      }, 600);
+    }, 1100);
   }
-
-
-  state.heroSlideInterval = window.setInterval(function() {
-    const nextIndex = (state.heroSlideIndex + 1) % totalSlides;
-    goToSlide(nextIndex);
-  }, SLIDE_DURATION);
-
-  
-  indicators.forEach(function(indicator, idx) {
-    indicator.addEventListener('click', function() {
-      window.clearInterval(state.heroSlideInterval);
-      goToSlide(idx);
-     
-      state.heroSlideInterval = window.setInterval(function() {
-        const nextIndex = (state.heroSlideIndex + 1) % totalSlides;
-        goToSlide(nextIndex);
-      }, SLIDE_DURATION);
+  function showNotification(title, sub, icon) {
+    const notif = document.getElementById('notification');
+    const textEl = document.getElementById('notif-text');
+    const subEl = document.getElementById('notif-sub');
+    const iconEl = notif ? notif.querySelector('.notif-icon') : null;
+    if (!notif) return;
+    if (textEl) textEl.textContent = title;
+    if (subEl) subEl.textContent = sub;
+    if (iconEl && icon) iconEl.textContent = icon;
+    notif.classList.add('show');
+    window.clearTimeout(notif._hideTimer);
+    notif._hideTimer = window.setTimeout(function () {
+      notif.classList.remove('show');
+    }, 4200);
+  }
+  function openModal(title, html) {
+    const overlay = document.getElementById('modalOverlay');
+    const titleEl = document.getElementById('modalTitle');
+    const bodyEl = document.getElementById('modalBody');
+    if (!overlay) return;
+    if (titleEl) titleEl.textContent = title;
+    if (bodyEl) bodyEl.innerHTML = html;
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal() {
+    const overlay = document.getElementById('modalOverlay');
+    if (!overlay) return;
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  window.closeModal = closeModal;
+  window.openModal = openModal;
+  window.showNotification = showNotification;
+  function initModal() {
+    const overlay = document.getElementById('modalOverlay');
+    if (!overlay) return;
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) closeModal();
     });
-  });
-
-  
-  goToSlide(0);
-}
-
-
-function navigateToPage(pageId) {
-  const pages = $$('.page');
-  pages.forEach(function (p) { p.classList.remove('active-page'); });
-  const target = document.getElementById(pageId + '-page');
-  if (target) {
-    target.classList.add('active-page');
-  } else if (document.getElementById('home-page')) {
-    document.getElementById('home-page').classList.add('active-page');
-    pageId = 'home';
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeModal();
+    });
   }
-  state.currentPage = pageId;
-
- 
-  $$('.nav-link, .mobile-nav-link').forEach(function (link) {
-    link.classList.remove('active-link');
-  });
-
-  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
-
-  
-  if (pageId === 'booking') initBookingPage();
-  if (pageId === 'track') initTrackPage();
-  if (pageId === 'fleet') initFleetLivePanel();
-  if (pageId === 'home' || pageId === undefined) {
-    runCalc();
+  function initTicker() {
+    const inner = document.getElementById('tickerInner');
+    if (!inner) return;
+    const doubled = TICKER_ITEMS.concat(TICKER_ITEMS);
+    inner.innerHTML = doubled.map(function (item) {
+      return '<span class="ticker-item">' + item + '</span>';
+    }).join('<span class="ticker-sep">  •  </span>');
   }
-
-  closeMobileMenu();
-}
-window.navigateToPage = navigateToPage;
-
-
-function openMobileMenu() {
-  const panel = document.getElementById('mobileMenuPanel');
-  if (panel) panel.classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeMobileMenu() {
-  const panel = document.getElementById('mobileMenuPanel');
-  if (panel) panel.classList.remove('open');
-  document.body.style.overflow = '';
-}
-window.closeMobileMenu = closeMobileMenu;
-function initMobileMenu() {
-  const toggle = document.getElementById('menuToggle');
-  const closeBtn = document.getElementById('closeMenu');
-  if (toggle) toggle.addEventListener('click', openMobileMenu);
-  if (closeBtn) closeBtn.addEventListener('click', closeMobileMenu);
-}
-
-
-function initScrollTop() {
-  const btn = document.getElementById('scrollTop');
-  if (!btn) return;
-  window.addEventListener('scroll', function () {
-    if (window.scrollY > 480) {
-      btn.classList.add('visible');
-    } else {
-      btn.classList.remove('visible');
+  function initHeroSlideshow() {
+    const slides = $$('.hero-slide-content');
+    const indicators = $$('.indicator');
+    if (!slides.length) return;
+    const totalSlides = slides.length;
+    const SLIDE_DURATION = 6000;
+    function goToSlide(index) {
+      slides.forEach(function(slide) {
+        slide.classList.remove('active');
+      });
+      indicators.forEach(function(ind) {
+        ind.classList.remove('active');
+      });
+      slides[index].classList.add('active');
+      if (indicators[index]) indicators[index].classList.add('active');
+      state.heroSlideIndex = index;
     }
-  });
-}
-
-
-function initChatbot() {
-  const btn = document.getElementById('chatbotBtn');
-  if (!btn) return;
-  btn.addEventListener('click', function () {
-    openModal('Gargo Haven Support', [
-      '<p style="margin-bottom:14px;color:var(--gray-pale);line-height:1.7;">Hi there 👋 Need help with a booking, tracking, or a general enquiry? Reach our 24/7 team directly, or jump to the right page below.</p>',
-      '<div style="display:flex;flex-direction:column;gap:10px;">',
-      '<a href="tel:+254116307751" style="color:var(--gold);font-weight:600;">📞 Call 24/7 Operations: +254 7116307751</a>',
-      '<a href="https://wa.me/254108613789" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600;">💬 WhatsApp: +254 108613789</a>',
-      '<a href="mailto:info@gargo.co.ke" style="color:var(--gold);font-weight:600;">📧 info@gargo.co.ke</a>',
-      '</div>',
-      '<div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;">',
-      '<button class="btn-primary" onclick="closeModal();navigateToPage(\'booking\')">Make a Booking</button>',
-      '<button class="btn-secondary" onclick="closeModal();navigateToPage(\'track\')">Track a Container</button>',
-      '</div>'
-    ].join(''));
-  });
-}
-
-
-
-function runCalc() {
-  const originEl = document.getElementById('calcOrigin');
-  const destEl = document.getElementById('calcDest');
-  const qtyEl = document.getElementById('calcWeight');
-  const sizeEl = document.getElementById('calcService');
-  const routeOut = document.getElementById('calcRoute');
-  const totalOut = document.getElementById('calcTotal');
-  if (!originEl || !destEl || !sizeEl) return;
-
-  const origin = originEl.value;
-  const dest = destEl.value;
-  const qty = Math.max(1, parseInt(qtyEl && qtyEl.value, 10) || 1);
-  const baseRate = parseFloat(sizeEl.value) || 11000;
-  const sizeLabel = sizeEl.options[sizeEl.selectedIndex].textContent.replace(' Standard', '').replace(' Cube', 'Cube');
-
-  let factor = 1;
-  if (origin === dest) {
-    factor = 0.4;
-  } else {
-    const fOrigin = ROUTE_FACTOR[origin] !== undefined ? ROUTE_FACTOR[origin] : 2;
-    const fDest = ROUTE_FACTOR[dest] !== undefined ? ROUTE_FACTOR[dest] : 2;
-    factor = Math.max(0.6, 1 + Math.abs(fOrigin - fDest) * 0.18);
+    state.heroSlideInterval = window.setInterval(function() {
+      const nextIndex = (state.heroSlideIndex + 1) % totalSlides;
+      goToSlide(nextIndex);
+    }, SLIDE_DURATION);
+    indicators.forEach(function(indicator, idx) {
+      indicator.addEventListener('click', function() {
+        window.clearInterval(state.heroSlideInterval);
+        goToSlide(idx);
+        state.heroSlideInterval = window.setInterval(function() {
+          const nextIndex = (state.heroSlideIndex + 1) % totalSlides;
+          goToSlide(nextIndex);
+        }, SLIDE_DURATION);
+      });
+    });
+    goToSlide(0);
   }
-
-  const total = baseRate * factor * qty;
-
-  if (routeOut) {
-    routeOut.textContent = origin + ' → ' + dest + ' · ' + sizeLabel.replace('40ft Standard', '40ft').replace('20ft Standard', '20ft');
+  function navigateToPage(pageId) {
+    const pages = $$('.page');
+    pages.forEach(function (p) { p.classList.remove('active-page'); });
+    const target = document.getElementById(pageId + '-page');
+    if (target) {
+      target.classList.add('active-page');
+    } else if (document.getElementById('home-page')) {
+      document.getElementById('home-page').classList.add('active-page');
+      pageId = 'home';
+    }
+    state.currentPage = pageId;
+    $$('.nav-link, .mobile-nav-link').forEach(function (link) {
+      link.classList.remove('active-link');
+    });
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+    if (pageId === 'booking') initBookingPage();
+    if (pageId === 'track') initTrackPage();
+    if (pageId === 'fleet') initFleetLivePanel();
+    if (pageId === 'home' || pageId === undefined) {
+      runCalc();
+    }
+    closeMobileMenu();
   }
-  if (totalOut) totalOut.textContent = fmt(total);
-}
-window.runCalc = runCalc;
-
-
-function renderFaq() {
-  const list = document.getElementById('faqList');
-  if (!list) return;
-  const items = state.faqFilter === 'all' ? FAQ_DATA : FAQ_DATA.filter(function (f) { return f.cat === state.faqFilter; });
-  list.innerHTML = items.map(function (item, i) {
-    return (
-      '<div class="faq-item">' +
+  window.navigateToPage = navigateToPage;
+  function openMobileMenu() {
+    const panel = document.getElementById('mobileMenuPanel');
+    if (panel) panel.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMobileMenu() {
+    const panel = document.getElementById('mobileMenuPanel');
+    if (panel) panel.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  window.closeMobileMenu = closeMobileMenu;
+  function initMobileMenu() {
+    const toggle = document.getElementById('menuToggle');
+    const closeBtn = document.getElementById('closeMenu');
+    if (toggle) toggle.addEventListener('click', openMobileMenu);
+    if (closeBtn) closeBtn.addEventListener('click', closeMobileMenu);
+  }
+  function initScrollTop() {
+    const btn = document.getElementById('scrollTop');
+    if (!btn) return;
+    window.addEventListener('scroll', function () {
+      if (window.scrollY > 480) {
+        btn.classList.add('visible');
+      } else {
+        btn.classList.remove('visible');
+      }
+    });
+  }
+  function initChatbot() {
+    const btn = document.getElementById('chatbotBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      openModal('Gargo Haven Support', [
+        '<p style="margin-bottom:14px;color:var(--gray-pale);line-height:1.7;">Hi there 👋 Need help with a booking, tracking, or a general enquiry? Reach our 24/7 team directly, or jump to the right page below.</p>',
+        '<div style="display:flex;flex-direction:column;gap:10px;">',
+        '<a href="tel:+254116307751" style="color:var(--gold);font-weight:600;">📞 Call 24/7 Operations: +254 7116307751</a>',
+        '<a href="https://wa.me/254108613789" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600;">💬 WhatsApp: +254 108613789</a>',
+        '<a href="mailto:info@gargo.co.ke" style="color:var(--gold);font-weight:600;"> info@gargo.co.ke</a>',
+        '</div>',
+        '<div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;">',
+        '<button class="btn-primary" onclick="closeModal();navigateToPage(\'booking\')">Make a Booking</button>',
+        '<button class="btn-secondary" onclick="closeModal();navigateToPage(\'track\')">Track a Container</button>',
+        '</div>'
+      ].join(''));
+    });
+  }
+  function runCalc() {
+    const originEl = document.getElementById('calcOrigin');
+    const destEl = document.getElementById('calcDest');
+    const qtyEl = document.getElementById('calcWeight');
+    const sizeEl = document.getElementById('calcService');
+    const routeOut = document.getElementById('calcRoute');
+    const totalOut = document.getElementById('calcTotal');
+    if (!originEl || !destEl || !sizeEl) return;
+    const origin = originEl.value;
+    const dest = destEl.value;
+    const qty = Math.max(1, parseInt(qtyEl && qtyEl.value, 10) || 1);
+    const baseRate = parseFloat(sizeEl.value) || 11000;
+    const sizeLabel = sizeEl.options[sizeEl.selectedIndex].textContent.replace(' Standard', '').replace(' Cube', 'Cube');
+    let factor = 1;
+    if (origin === dest) {
+      factor = 0.4;
+    } else {
+      const fOrigin = ROUTE_FACTOR[origin] !== undefined ? ROUTE_FACTOR[origin] : 2;
+      const fDest = ROUTE_FACTOR[dest] !== undefined ? ROUTE_FACTOR[dest] : 2;
+      factor = Math.max(0.6, 1 + Math.abs(fOrigin - fDest) * 0.18);
+    }
+    const total = baseRate * factor * qty;
+    if (routeOut) {
+      routeOut.textContent = origin + ' → ' + dest + ' · ' + sizeLabel.replace('40ft Standard', '40ft').replace('20ft Standard', '20ft');
+    }
+    if (totalOut) totalOut.textContent = fmt(total);
+  }
+  window.runCalc = runCalc;
+  function renderFaq() {
+    const list = document.getElementById('faqList');
+    if (!list) return;
+    const items = state.faqFilter === 'all' ? FAQ_DATA : FAQ_DATA.filter(function (f) { return f.cat === state.faqFilter; });
+    list.innerHTML = items.map(function (item, i) {
+      return (
+        '<div class="faq-item">' +
         '<div class="faq-q" onclick="window.__toggleFaq(this)">' +
-          '<span>' + item.q + '</span>' +
-          '<span class="faq-arrow">›</span>' +
+        '<span>' + item.q + '</span>' +
+        '<span class="faq-arrow">›</span>' +
         '</div>' +
         '<div class="faq-a">' + item.a + '</div>' +
-      '</div>'
-    );
-  }).join('');
-}
-function toggleFaq(qEl) {
-  const isOpen = qEl.classList.contains('open');
-  $$('.faq-q').forEach(function (q) {
-    q.classList.remove('open');
-    const ans = q.parentElement.querySelector('.faq-a');
-    if (ans) ans.classList.remove('visible');
-  });
-  if (!isOpen) {
-    qEl.classList.add('open');
-    const ans = qEl.parentElement.querySelector('.faq-a');
-    if (ans) ans.classList.add('visible');
+        '</div>'
+      );
+    }).join('');
   }
-}
-window.__toggleFaq = toggleFaq;
-function faqFilter(cat, btnEl) {
-  state.faqFilter = cat;
-  $$('.faq-tab-btn').forEach(function (b) { b.classList.remove('faq-active'); });
-  if (btnEl) btnEl.classList.add('faq-active');
-  renderFaq();
-}
-window.faqFilter = faqFilter;
-
-
-function generateBookingRef() {
-  const num = Math.floor(1000 + Math.random() * 8999);
-  return 'GH-2024-' + num;
-}
-
-// Which MOVEMENT DETAILS fields apply to each service type, and how the
-// origin/destination selects should be constrained. Storage bookings don't
-// need a destination (it's always the depot); repair/wash/reefer jobs
-// happen at the depot so destination is fixed too; repatriation always
-// starts at the depot and ends at a port.
-const SERVICE_FIELD_CONFIG = {
-  'Depot Storage': {
-    origin: true, destination: false, duration: true, zonePref: true,
-    originLabel: 'Origin / Coming From', fixedDest: 'Gargo Haven Depot',
-    hint: 'Depot storage — tell us where the container is coming from. It will be booked into our depot; you can optionally request a storage zone.',
-  },
-  'Port Haulage': {
-    origin: true, destination: true, duration: false, zonePref: false,
-    originLabel: 'Origin / Pickup Point', destLabel: 'Destination / Drop Point',
-    hint: 'Port haulage — a one-way move between two points, no depot storage included.',
-  },
-  'Container Repair': {
-    origin: true, destination: false, duration: false, zonePref: false,
-    originLabel: 'Container Currently At', fixedDest: 'Gargo Haven Depot',
-    hint: 'Container repair — performed at our IICL-certified depot bays.',
-  },
-  'Container Washing': {
-    origin: true, destination: false, duration: false, zonePref: false,
-    originLabel: 'Container Currently At', fixedDest: 'Gargo Haven Depot',
-    hint: 'Container washing — performed at our depot.',
-  },
-  'Reefer Management': {
-    origin: true, destination: false, duration: true, zonePref: false,
-    originLabel: 'Container Currently At', fixedDest: 'Gargo Haven Depot',
-    hint: 'Reefer management — genset monitoring at our depot for the duration you specify.',
-  },
-  'Full Transport Package': {
-    origin: true, destination: true, duration: true, zonePref: true,
-    originLabel: 'Origin / Pickup Point', destLabel: 'Destination / Drop Point',
-    hint: 'Full transport package — haulage plus depot storage in one booking.',
-  },
-  'Repatriation to Port': {
-    origin: false, destination: true, duration: false, zonePref: false,
-    fixedOrigin: 'Gargo Haven Depot', destLabel: 'Return To (Port)',
-    portOnlyDest: true,
-    hint: 'Repatriation to port — for empties or cleared containers already in our depot, being returned to a shipping line at the port.',
-  },
-};
-const DEFAULT_SERVICE_TYPE = 'Depot Storage';
-const PORT_ONLY_OPTIONS = ['Mombasa Port (KPA)', 'APM Terminals Mombasa', 'APM Terminals'];
-
-function setSelectValue(selectEl, value) {
-  if (!selectEl) return;
-  const opt = Array.prototype.find.call(selectEl.options, function (o) { return o.value === value || o.text === value; });
-  if (opt) selectEl.value = opt.value;
-}
-
-function applyServiceFieldVisibility(serviceType) {
-  const cfg = SERVICE_FIELD_CONFIG[serviceType] || SERVICE_FIELD_CONFIG[DEFAULT_SERVICE_TYPE];
-
-  const originGroup = document.getElementById('fGroup-origin');
-  const destGroup = document.getElementById('fGroup-dest');
-  const durationGroup = document.getElementById('fGroup-duration');
-  const zoneGroup = document.getElementById('fGroup-zone');
-  const originEl = document.getElementById('fOrigin');
-  const destEl = document.getElementById('fDest');
-  const originLabelEl = document.getElementById('fOriginLabel');
-  const destLabelEl = document.getElementById('fDestLabel');
-  const durationLabelEl = document.getElementById('fDurationLabel');
-  const hintEl = document.getElementById('serviceFieldsHint');
-
-  if (originGroup) originGroup.style.display = cfg.origin ? '' : 'none';
-  if (destGroup) destGroup.style.display = cfg.destination ? '' : 'none';
-  if (durationGroup) durationGroup.style.display = cfg.duration ? '' : 'none';
-  if (zoneGroup) zoneGroup.style.display = cfg.zonePref ? '' : 'none';
-
-  if (originLabelEl) originLabelEl.textContent = cfg.originLabel || 'Origin / Pickup Point';
-  if (destLabelEl) destLabelEl.textContent = cfg.destLabel || 'Destination / Drop Point';
-  if (durationLabelEl) durationLabelEl.textContent = serviceType === 'Reefer Management' ? 'Monitoring Duration (days)' : 'Storage Duration (days)';
-  if (hintEl) hintEl.textContent = cfg.hint || '';
-
-  // Fixed/implied values that aren't shown as their own field still need
-  // to be sent with the booking, since getRequiredDocTypes() and pricing
-  // both depend on origin/destination being populated.
-  if (!cfg.destination && cfg.fixedDest && destEl) setSelectValue(destEl, cfg.fixedDest);
-  if (!cfg.origin && cfg.fixedOrigin && originEl) setSelectValue(originEl, cfg.fixedOrigin);
-
-  // Repatriation only makes sense returning TO a port, so trim the
-  // destination select down to port-only options while it's active.
-  if (destEl) {
-    Array.prototype.forEach.call(destEl.options, function (o) {
-      o.hidden = !!cfg.portOnlyDest && PORT_ONLY_OPTIONS.indexOf(o.value || o.text) === -1;
+  function toggleFaq(qEl) {
+    const isOpen = qEl.classList.contains('open');
+    $$('.faq-q').forEach(function (q) {
+      q.classList.remove('open');
+      const ans = q.parentElement.querySelector('.faq-a');
+      if (ans) ans.classList.remove('visible');
     });
-    if (cfg.portOnlyDest && PORT_ONLY_OPTIONS.indexOf(destEl.value) === -1) setSelectValue(destEl, PORT_ONLY_OPTIONS[0]);
-  }
-
-  if (cfg.zonePref) loadZonePreferenceOptions();
-}
-window.applyServiceFieldVisibility = applyServiceFieldVisibility;
-
-let _zonePrefLoaded = false;
-function loadZonePreferenceOptions() {
-  if (_zonePrefLoaded) return;
-  const sel = document.getElementById('fZonePref');
-  if (!sel || !window.bookingDocs || !window.bookingDocs.storageAvailability) return;
-  _zonePrefLoaded = true;
-  window.bookingDocs.storageAvailability()
-    .then(function (zones) {
-      (zones || []).forEach(function (z) {
-        const free = Math.max((z.capacity_teu || 0) - (z.occupied_teu || 0), 0);
-        const opt = document.createElement('option');
-        opt.value = z.zone_name;
-        opt.textContent = z.zone_name + ' (' + free + ' TEU free)';
-        sel.appendChild(opt);
-      });
-    })
-    .catch(function () { /* optional field — silently leave "No preference" only */ });
-}
-
-function initBookingPage() {
-  const refEl = document.getElementById('bookingRef');
-  if (refEl && (!state.bookingRefNumber || refEl.textContent.indexOf('PENDING') !== -1)) {
-    state.bookingRefNumber = generateBookingRef();
-    refEl.textContent = state.bookingRefNumber;
-  }
-  const dateEl = document.getElementById('fDate');
-  if (dateEl && !dateEl.value) {
-    const today = new Date().toISOString().split('T')[0];
-    dateEl.min = today;
-  }
-  applyServiceFieldVisibility(state.selectedCargoType || DEFAULT_SERVICE_TYPE);
-  calcQuote();
-}
-function selectCargoType(el) {
-  $$('.cargo-type-btn').forEach(function (b) { b.classList.remove('selected'); });
-  el.classList.add('selected');
-  state.selectedCargoType = el.textContent.trim();
-  applyServiceFieldVisibility(state.selectedCargoType);
-  calcQuote();
-}
-window.selectCargoType = selectCargoType;
-function calcQuote() {
-  const quoteOut = document.getElementById('liveQuote');
-  if (!quoteOut) return;
-  const sizeEl = document.getElementById('fContainerSize');
-  const qtyEl = document.getElementById('fPackages');
-  const durationEl = document.getElementById('fDuration');
-  const originEl = document.getElementById('fOrigin');
-  const destEl = document.getElementById('fDest');
-
-  const qty = Math.max(1, parseInt(qtyEl && qtyEl.value, 10) || 0);
-  const duration = Math.max(0, parseInt(durationEl && durationEl.value, 10) || 0);
-  const sizeLabel = sizeEl ? sizeEl.value : '40ft Standard';
-  const haulageBase = CONTAINER_SIZE_RATE[sizeLabel] || 11000;
-
-  let total = 0;
-
-  if (state.selectedCargoType === 'Depot Storage') {
-    const teu = sizeLabel.indexOf('40ft') !== -1 || sizeLabel.indexOf('45ft') !== -1 ? 2 : 1;
-    total = STORAGE_RATE_PER_TEU_DAY * teu * Math.max(duration, 1) * qty;
-  } else if (state.selectedCargoType === 'Port Haulage' || state.selectedCargoType === 'Full Transport Package') {
-    const origin = originEl ? originEl.value : 'Mombasa Port (KPA)';
-    const dest = destEl ? destEl.value : 'Gargo Haven Depot';
-    const fOrigin = ROUTE_FACTOR[origin] !== undefined ? ROUTE_FACTOR[origin] : 2;
-    const fDest = ROUTE_FACTOR[dest] !== undefined ? ROUTE_FACTOR[dest] : 2;
-    const factor = origin === dest ? 0.4 : Math.max(0.6, 1 + Math.abs(fOrigin - fDest) * 0.18);
-    total = haulageBase * factor * qty;
-    if (state.selectedCargoType === 'Full Transport Package') {
-      total += STORAGE_RATE_PER_TEU_DAY * Math.max(duration, 1) * qty;
+    if (!isOpen) {
+      qEl.classList.add('open');
+      const ans = qEl.parentElement.querySelector('.faq-a');
+      if (ans) ans.classList.add('visible');
     }
-  } else if (state.selectedCargoType === 'Container Repair') {
-    total = 6500 * qty;
-  } else if (state.selectedCargoType === 'Container Washing') {
-    total = 3200 * qty;
-  } else if (state.selectedCargoType === 'Reefer Management') {
-    total = 950 * Math.max(duration, 1) * qty + haulageBase * 0.3 * qty;
-  } else if (state.selectedCargoType === 'Repatriation to Port') {
-    // Always depot → port; distance factor uses the fixed depot origin
-    // and whichever port the client selected as the return destination.
-    const dest = destEl ? destEl.value : 'Mombasa Port (KPA)';
-    const fOrigin = ROUTE_FACTOR['Gargo Haven Depot'] !== undefined ? ROUTE_FACTOR['Gargo Haven Depot'] : 1;
-    const fDest = ROUTE_FACTOR[dest] !== undefined ? ROUTE_FACTOR[dest] : 2;
-    const factor = Math.max(0.6, 1 + Math.abs(fOrigin - fDest) * 0.18);
-    total = haulageBase * factor * qty;
-  } else {
-    total = haulageBase * qty;
   }
-
-  quoteOut.textContent = 'KES ' + fmt(total);
-}
-window.calcQuote = calcQuote;
-function submitBooking() {
-  const required = [
-    { id: 'fName', label: 'Full Name' },
-    { id: 'fEmail', label: 'Email Address' },
-    { id: 'fPhone', label: 'Phone / WhatsApp' }
-  ];
-  let missing = [];
-  required.forEach(function (f) {
-    const el = document.getElementById(f.id);
-    if (!el || !el.value.trim()) missing.push(f.label);
-  });
-  if (missing.length) {
-    showNotification('Missing Information', 'Please fill in: ' + missing.join(', '), '⚠️');
-    const firstMissingEl = document.getElementById(required[0].id);
-    if (firstMissingEl) firstMissingEl.focus();
-    return;
+  window.__toggleFaq = toggleFaq;
+  function faqFilter(cat, btnEl) {
+    state.faqFilter = cat;
+    $$('.faq-tab-btn').forEach(function (b) { b.classList.remove('faq-active'); });
+    if (btnEl) btnEl.classList.add('faq-active');
+    renderFaq();
   }
-
-  const emailEl = document.getElementById('fEmail');
-  if (emailEl && !/^\S+@\S+\.\S+$/.test(emailEl.value.trim())) {
-    showNotification('Invalid Email', 'Please enter a valid email address.', '⚠️');
-    emailEl.focus();
-    return;
+  window.faqFilter = faqFilter;
+  function generateBookingRef() {
+    const num = Math.floor(1000 + Math.random() * 8999);
+    return 'GH-2024-' + num;
   }
-
-  const get = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
-  const quoteText = (document.getElementById('liveQuote') || {}).textContent || '';
-  const quoteAmount = parseInt(quoteText.replace(/[^\d]/g, ''), 10) || null;
-
-  const payload = {
-    full_name: get('fName'),
-    email: get('fEmail'),
-    phone: get('fPhone'),
-    company: get('fCompany'),
-    service_type: state.selectedCargoType || 'Depot Storage',
-    cargo_type: get('fContainerSize'),
-    container: get('fContainerNo'),
-    pickup_location: get('fOrigin'),
-    dropoff_location: get('fDest'),
-    pickup_date: get('fDate'),
-    quote_amount: quoteAmount,
-    notes: get('fNotes')
+  const SERVICE_FIELD_CONFIG = {
+    'Depot Storage': {
+      origin: true, destination: false, duration: true, zonePref: true,
+      originLabel: 'Origin / Coming From', fixedDest: 'Gargo Haven Depot',
+      hint: 'Depot storage — tell us where the container is coming from. It will be booked into our depot; you can optionally request a storage zone.',
+    },
+    'Port Haulage': {
+      origin: true, destination: true, duration: false, zonePref: false,
+      originLabel: 'Origin / Pickup Point', destLabel: 'Destination / Drop Point',
+      hint: 'Port haulage — a one-way move between two points, no depot storage included.',
+    },
+    'Container Repair': {
+      origin: true, destination: false, duration: false, zonePref: false,
+      originLabel: 'Container Currently At', fixedDest: 'Gargo Haven Depot',
+      hint: 'Container repair — performed at our IICL-certified depot bays.',
+    },
+    'Container Washing': {
+      origin: true, destination: false, duration: false, zonePref: false,
+      originLabel: 'Container Currently At', fixedDest: 'Gargo Haven Depot',
+      hint: 'Container washing — performed at our depot.',
+    },
+    'Reefer Management': {
+      origin: true, destination: false, duration: true, zonePref: false,
+      originLabel: 'Container Currently At', fixedDest: 'Gargo Haven Depot',
+      hint: 'Reefer management — genset monitoring at our depot for the duration you specify.',
+    },
+    'Full Transport Package': {
+      origin: true, destination: true, duration: true, zonePref: true,
+      originLabel: 'Origin / Pickup Point', destLabel: 'Destination / Drop Point',
+      hint: 'Full transport package — haulage plus depot storage in one booking.',
+    },
+    'Repatriation to Port': {
+      origin: false, destination: true, duration: false, zonePref: false,
+      fixedOrigin: 'Gargo Haven Depot', destLabel: 'Return To (Port)',
+      portOnlyDest: true,
+      hint: 'Repatriation to port — for empties or cleared containers already in our depot, being returned to a shipping line at the port.',
+    },
   };
-
-  // Optional: only sent when the client actually picked a zone, so
-  // bookings for service types without the zone-preference field (or
-  // where "No preference" was left selected) are unaffected. Requires a
-  // `preferred_zone` text column on public_bookings — see the migration
-  // note shipped alongside this change.
-  const zonePref = get('fZonePref');
-  if (zonePref) payload.preferred_zone = zonePref;
-
-  // Bookings that will need document uploads (storage/haulage) must be
-  // created by a logged-in user — booking.user_id is set once at insert
-  // and can't be attached retroactively, so an anonymous booking here
-  // would permanently lock the client out of uploading its own documents.
-  const willNeedDocs = (window.bookingDocs && window.bookingDocs.getRequiredDocTypes)
-    ? window.bookingDocs.getRequiredDocTypes({
+  const DEFAULT_SERVICE_TYPE = 'Depot Storage';
+  const PORT_ONLY_OPTIONS = ['Mombasa Port (KPA)', 'APM Terminals Mombasa', 'APM Terminals'];
+  function setSelectValue(selectEl, value) {
+    if (!selectEl) return;
+    const opt = Array.prototype.find.call(selectEl.options, function (o) { return o.value === value || o.text === value; });
+    if (opt) selectEl.value = opt.value;
+  }
+  function applyServiceFieldVisibility(serviceType) {
+    const cfg = SERVICE_FIELD_CONFIG[serviceType] || SERVICE_FIELD_CONFIG[DEFAULT_SERVICE_TYPE];
+    const originGroup = document.getElementById('fGroup-origin');
+    const destGroup = document.getElementById('fGroup-dest');
+    const durationGroup = document.getElementById('fGroup-duration');
+    const zoneGroup = document.getElementById('fGroup-zone');
+    const originEl = document.getElementById('fOrigin');
+    const destEl = document.getElementById('fDest');
+    const originLabelEl = document.getElementById('fOriginLabel');
+    const destLabelEl = document.getElementById('fDestLabel');
+    const durationLabelEl = document.getElementById('fDurationLabel');
+    const hintEl = document.getElementById('serviceFieldsHint');
+    if (originGroup) originGroup.style.display = cfg.origin ? '' : 'none';
+    if (destGroup) destGroup.style.display = cfg.destination ? '' : 'none';
+    if (durationGroup) durationGroup.style.display = cfg.duration ? '' : 'none';
+    if (zoneGroup) zoneGroup.style.display = cfg.zonePref ? '' : 'none';
+    if (originLabelEl) originLabelEl.textContent = cfg.originLabel || 'Origin / Pickup Point';
+    if (destLabelEl) destLabelEl.textContent = cfg.destLabel || 'Destination / Drop Point';
+    if (durationLabelEl) durationLabelEl.textContent = serviceType === 'Reefer Management' ? 'Monitoring Duration (days)' : 'Storage Duration (days)';
+    if (hintEl) hintEl.textContent = cfg.hint || '';
+    if (!cfg.destination && cfg.fixedDest && destEl) setSelectValue(destEl, cfg.fixedDest);
+    if (!cfg.origin && cfg.fixedOrigin && originEl) setSelectValue(originEl, cfg.fixedOrigin);
+    if (destEl) {
+      Array.prototype.forEach.call(destEl.options, function (o) {
+        o.hidden = !!cfg.portOnlyDest && PORT_ONLY_OPTIONS.indexOf(o.value || o.text) === -1;
+      });
+      if (cfg.portOnlyDest && PORT_ONLY_OPTIONS.indexOf(destEl.value) === -1) setSelectValue(destEl, PORT_ONLY_OPTIONS[0]);
+    }
+    if (cfg.zonePref) loadZonePreferenceOptions();
+  }
+  window.applyServiceFieldVisibility = applyServiceFieldVisibility;
+  let _zonePrefLoaded = false;
+  function loadZonePreferenceOptions() {
+    if (_zonePrefLoaded) return;
+    const sel = document.getElementById('fZonePref');
+    if (!sel || !window.bookingDocs || !window.bookingDocs.storageAvailability) return;
+    _zonePrefLoaded = true;
+    window.bookingDocs.storageAvailability()
+      .then(function (zones) {
+        (zones || []).forEach(function (z) {
+          const free = Math.max((z.capacity_teu || 0) - (z.occupied_teu || 0), 0);
+          const opt = document.createElement('option');
+          opt.value = z.zone_name;
+          opt.textContent = z.zone_name + ' (' + free + ' TEU free)';
+          sel.appendChild(opt);
+        });
+      })
+      .catch(function () { /* optional field — silently leave "No preference" only */ });
+  }
+  function initBookingPage() {
+    const refEl = document.getElementById('bookingRef');
+    if (refEl && (!state.bookingRefNumber || refEl.textContent.indexOf('PENDING') !== -1)) {
+      state.bookingRefNumber = generateBookingRef();
+      refEl.textContent = state.bookingRefNumber;
+    }
+    const dateEl = document.getElementById('fDate');
+    if (dateEl && !dateEl.value) {
+      const today = new Date().toISOString().split('T')[0];
+      dateEl.min = today;
+    }
+    applyServiceFieldVisibility(state.selectedCargoType || DEFAULT_SERVICE_TYPE);
+    calcQuote();
+  }
+  function selectCargoType(el) {
+    $$('.cargo-type-btn').forEach(function (b) { b.classList.remove('selected'); });
+    el.classList.add('selected');
+    state.selectedCargoType = el.textContent.trim();
+    applyServiceFieldVisibility(state.selectedCargoType);
+    calcQuote();
+  }
+  window.selectCargoType = selectCargoType;
+  function calcQuote() {
+    const quoteOut = document.getElementById('liveQuote');
+    if (!quoteOut) return;
+    const sizeEl = document.getElementById('fContainerSize');
+    const qtyEl = document.getElementById('fPackages');
+    const durationEl = document.getElementById('fDuration');
+    const originEl = document.getElementById('fOrigin');
+    const destEl = document.getElementById('fDest');
+    const qty = Math.max(1, parseInt(qtyEl && qtyEl.value, 10) || 0);
+    const duration = Math.max(0, parseInt(durationEl && durationEl.value, 10) || 0);
+    const sizeLabel = sizeEl ? sizeEl.value : '40ft Standard';
+    const haulageBase = CONTAINER_SIZE_RATE[sizeLabel] || 11000;
+    let total = 0;
+    if (state.selectedCargoType === 'Depot Storage') {
+      const teu = sizeLabel.indexOf('40ft') !== -1 || sizeLabel.indexOf('45ft') !== -1 ? 2 : 1;
+      total = STORAGE_RATE_PER_TEU_DAY * teu * Math.max(duration, 1) * qty;
+    } else if (state.selectedCargoType === 'Port Haulage' || state.selectedCargoType === 'Full Transport Package') {
+      const origin = originEl ? originEl.value : 'Mombasa Port (KPA)';
+      const dest = destEl ? destEl.value : 'Gargo Haven Depot';
+      const fOrigin = ROUTE_FACTOR[origin] !== undefined ? ROUTE_FACTOR[origin] : 2;
+      const fDest = ROUTE_FACTOR[dest] !== undefined ? ROUTE_FACTOR[dest] : 2;
+      const factor = origin === dest ? 0.4 : Math.max(0.6, 1 + Math.abs(fOrigin - fDest) * 0.18);
+      total = haulageBase * factor * qty;
+      if (state.selectedCargoType === 'Full Transport Package') {
+        total += STORAGE_RATE_PER_TEU_DAY * Math.max(duration, 1) * qty;
+      }
+    } else if (state.selectedCargoType === 'Container Repair') {
+      total = 6500 * qty;
+    } else if (state.selectedCargoType === 'Container Washing') {
+      total = 3200 * qty;
+    } else if (state.selectedCargoType === 'Reefer Management') {
+      total = 950 * Math.max(duration, 1) * qty + haulageBase * 0.3 * qty;
+    } else if (state.selectedCargoType === 'Repatriation to Port') {
+      const dest = destEl ? destEl.value : 'Mombasa Port (KPA)';
+      const fOrigin = ROUTE_FACTOR['Gargo Haven Depot'] !== undefined ? ROUTE_FACTOR['Gargo Haven Depot'] : 1;
+      const fDest = ROUTE_FACTOR[dest] !== undefined ? ROUTE_FACTOR[dest] : 2;
+      const factor = Math.max(0.6, 1 + Math.abs(fOrigin - fDest) * 0.18);
+      total = haulageBase * factor * qty;
+    } else {
+      total = haulageBase * qty;
+    }
+    quoteOut.textContent = 'KES ' + fmt(total);
+  }
+  window.calcQuote = calcQuote;
+  function submitBooking() {
+    const required = [
+      { id: 'fName', label: 'Full Name' },
+      { id: 'fEmail', label: 'Email Address' },
+      { id: 'fPhone', label: 'Phone / WhatsApp' }
+    ];
+    let missing = [];
+    required.forEach(function (f) {
+      const el = document.getElementById(f.id);
+      if (!el || !el.value.trim()) missing.push(f.label);
+    });
+    if (missing.length) {
+      showNotification('Missing Information', 'Please fill in: ' + missing.join(', '), '⚠️');
+      const firstMissingEl = document.getElementById(required[0].id);
+      if (firstMissingEl) firstMissingEl.focus();
+      return;
+    }
+    const emailEl = document.getElementById('fEmail');
+    if (emailEl && !/^\S+@\S+\.\S+$/.test(emailEl.value.trim())) {
+      showNotification('Invalid Email', 'Please enter a valid email address.', '⚠️');
+      emailEl.focus();
+      return;
+    }
+    const get = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    const quoteText = (document.getElementById('liveQuote') || {}).textContent || '';
+    const quoteAmount = parseInt(quoteText.replace(/[^\d]/g, ''), 10) || null;
+    const payload = {
+      full_name: get('fName'),
+      email: get('fEmail'),
+      phone: get('fPhone'),
+      company: get('fCompany'),
+      service_type: state.selectedCargoType || 'Depot Storage',
+      cargo_type: get('fContainerSize'),
+      container: get('fContainerNo'),
+      pickup_location: get('fOrigin'),
+      dropoff_location: get('fDest'),
+      pickup_date: get('fDate'),
+      quote_amount: quoteAmount,
+      notes: get('fNotes')
+    };
+    const zonePref = get('fZonePref');
+    if (zonePref) payload.preferred_zone = zonePref;
+    const willNeedDocs = (window.bookingDocs && window.bookingDocs.getRequiredDocTypes)
+      ? window.bookingDocs.getRequiredDocTypes({
         serviceType: payload.service_type,
         origin: payload.pickup_location,
         destination: payload.dropoff_location,
       }).length > 0
-    : false;
-
-  function doSubmit() {
-
-  const btn = document.querySelector('.form-submit');
-  if (btn) { btn.disabled = true; btn.textContent = 'SUBMITTING…'; }
-
-  window.bridge.submitBooking(payload)
-    .then(function (data) {
-      const ref = data.booking.id;
-      state.bookingRefNumber = ref;
-      const refEl = document.getElementById('bookingRef');
-      if (refEl) refEl.textContent = ref;
-
-      showNotification('Booking Submitted', 'Reference #' + ref + ' created', '✅');
-
-      const requiredDocs = (window.bookingDocs && window.bookingDocs.getRequiredDocTypes)
-        ? window.bookingDocs.getRequiredDocTypes({
-            serviceType: state.selectedCargoType,
-            origin: payload.pickup_location,
-            destination: payload.dropoff_location,
-          })
-        : [];
-
-      openModal('Booking Confirmed', [
-        '<p style="color:var(--gray-pale);line-height:1.7;margin-bottom:14px;">Thank you! Your booking request has been received.</p>',
-        '<div style="background:rgba(201,162,39,0.08);border:1px solid var(--gold-dark);border-radius:8px;padding:16px;margin-bottom:14px;">',
-        '<div style="font-size:13px;color:var(--gray-pale);">Booking Reference</div>',
-        '<div style="font-size:22px;font-weight:700;color:var(--gold);">' + ref + '</div>',
-        '</div>',
-        '<p style="color:var(--gray-pale);line-height:1.7;">Service: <strong style="color:#fff;">' + (state.selectedCargoType || payload.service_type || 'Booking') + '</strong><br>Our team will confirm your booking within 2 hours via the contact details provided.</p>',
-        renderDocUploadSection(ref, requiredDocs),
-        '<button class="btn-primary" style="margin-top:16px;width:100%;" onclick="closeModal()">GOT IT</button>'
-      ].join(''));
-    })
-    .catch(function (err) {
-      showNotification('Booking Failed', err.message || 'Please try again', '❌');
-    })
-    .finally(function () {
-      if (btn) { btn.disabled = false; btn.textContent = 'SUBMIT BOOKING →'; }
-    });
-  } // end doSubmit
-
-  if (!willNeedDocs) {
-    doSubmit();
-    return;
+      : false;
+    function doSubmit() {
+      const btn = document.querySelector('.form-submit');
+      if (btn) { btn.disabled = true; btn.textContent = 'SUBMITTING…'; }
+      window.bridge.submitBooking(payload)
+        .then(function (data) {
+          const ref = data.booking.id;
+          state.bookingRefNumber = ref;
+          const refEl = document.getElementById('bookingRef');
+          if (refEl) refEl.textContent = ref;
+          showNotification('Booking Submitted', 'Reference #' + ref + ' created', '✅');
+          const requiredDocs = (window.bookingDocs && window.bookingDocs.getRequiredDocTypes)
+            ? window.bookingDocs.getRequiredDocTypes({
+              serviceType: state.selectedCargoType,
+              origin: payload.pickup_location,
+              destination: payload.dropoff_location,
+            })
+            : [];
+          openModal('Booking Confirmed', [
+            '<p style="color:var(--gray-pale);line-height:1.7;margin-bottom:14px;">Thank you! Your booking request has been received.</p>',
+            '<div style="background:rgba(201,162,39,0.08);border:1px solid var(--gold-dark);border-radius:8px;padding:16px;margin-bottom:14px;">',
+            '<div style="font-size:13px;color:var(--gray-pale);">Booking Reference</div>',
+            '<div style="font-size:22px;font-weight:700;color:var(--gold);">' + ref + '</div>',
+            '</div>',
+            '<p style="color:var(--gray-pale);line-height:1.7;">Service: <strong style="color:#fff;">' + (state.selectedCargoType || payload.service_type || 'Booking') + '</strong><br>Our team will confirm your booking within 2 hours via the contact details provided.</p>',
+            renderDocUploadSection(ref, requiredDocs),
+            '<button class="btn-primary" style="margin-top:16px;width:100%;" onclick="closeModal()">GOT IT</button>'
+          ].join(''));
+        })
+        .catch(function (err) {
+          showNotification('Booking Failed', err.message || 'Please try again', '❌');
+        })
+        .finally(function () {
+          if (btn) { btn.disabled = false; btn.textContent = 'SUBMIT BOOKING →'; }
+        });
+    }
+    if (!willNeedDocs) {
+      doSubmit();
+      return;
+    }
+    window.bridge.authCurrentUser()
+      .then(function (user) {
+        if (user) {
+          doSubmit();
+        } else {
+          showNotification(
+            'Sign In Required',
+            'This booking type requires document upload, so please sign in or create an account first — this links the booking to your account so you can upload the required paperwork afterward.',
+            '🔒'
+          );
+        }
+      })
+      .catch(function () {
+        showNotification('Sign In Required', 'Please sign in before submitting this booking.', '');
+      });
   }
-
-  // This service type will require a document upload — confirm the
-  // booker is signed in first, since booking.user_id can't be attached
-  // after the fact.
-  window.bridge.authCurrentUser()
-    .then(function (user) {
-      if (user) {
-        doSubmit();
-      } else {
-        showNotification(
-          'Sign In Required',
-          'This booking type requires document upload, so please sign in or create an account first — this links the booking to your account so you can upload the required paperwork afterward.',
-          '🔒'
-        );
-      }
-    })
-    .catch(function () {
-      showNotification('Sign In Required', 'Please sign in before submitting this booking.', '🔒');
-    });
-}
-window.submitBooking = submitBooking;
-
-
-const DOC_TYPE_LABELS = {
-  guarantee_form: 'Container Guarantee Form',
-  release_order: 'Release Order (CRO)',
-  delivery_order: 'Delivery Order',
-};
-
-// Builds the "please upload X" section shown inside the Booking
-// Confirmed modal, and reused inside the Edit Booking modal so a client
-// can (re)upload the same required documents at any time. requiredDocs is
-// an array from window.bookingDocs.getRequiredDocTypes() — empty array
-// renders nothing. existingDocs (optional) lets the caller show current
-// upload status per doc type instead of a blank picker every time.
-function renderDocUploadSection(bookingRef, requiredDocs, existingDocs) {
-  if (!requiredDocs || !requiredDocs.length) return '';
-  const byType = {};
-  (existingDocs || []).forEach(function (d) { byType[d.doc_type] = d; });
-
-  const rows = requiredDocs.map(function (docType) {
-    const label = DOC_TYPE_LABELS[docType] || docType;
-    const inputId = 'docFile_' + docType + '_' + bookingRef;
-    const statusId = 'docStatus_' + docType + '_' + bookingRef;
-    const existing = byType[docType];
-    const existingNote = existing
-      ? '<div style="font-size:11px;color:' + (existing.status === 'rejected' ? '#e05252' : existing.status === 'verified' ? '#4caf50' : 'var(--gold)') + ';margin-top:4px;">Current: ' + ghEscapeHtmlSafe(existing.file_name || 'uploaded file') + ' — ' + ghEscapeHtmlSafe((existing.status || 'pending_review').replace(/_/g, ' ')) + '</div>'
-      : '';
-    return (
-      '<div style="background:var(--black-4);border:1px solid var(--gray-dark);border-radius:8px;padding:14px 16px;margin-bottom:10px;">' +
+  window.submitBooking = submitBooking;
+  const DOC_TYPE_LABELS = {
+    guarantee_form: 'Container Guarantee Form',
+    release_order: 'Release Order (CRO)',
+    delivery_order: 'Delivery Order',
+  };
+  function renderDocUploadSection(bookingRef, requiredDocs, existingDocs) {
+    if (!requiredDocs || !requiredDocs.length) return '';
+    const byType = {};
+    (existingDocs || []).forEach(function (d) { byType[d.doc_type] = d; });
+    const rows = requiredDocs.map(function (docType) {
+      const label = DOC_TYPE_LABELS[docType] || docType;
+      // ✅ FIX: IDs must match what handleDocUploadClick() looks for — no spaces, no bookingRef appended.
+      const inputId = 'docFile_' + docType;
+      const statusId = 'docStatus_' + docType;
+      const existing = byType[docType];
+      const existingNote = existing
+        ? '<div style="font-size:11px;color:' + (existing.status === 'rejected' ? '#e05252' : existing.status === 'verified' ? '#4caf50' : 'var(--gold)') + ';margin-top:4px;">Current: ' + ghEscapeHtmlSafe(existing.file_name || 'uploaded file') + ' — ' + ghEscapeHtmlSafe((existing.status || 'pending_review').replace(/ /g, ' ')) + '</div>'
+        : '';
+      return (
+        '<div style="background:var(--black-4);border:1px solid var(--gray-dark);border-radius:8px;padding:14px 16px;margin-bottom:10px;">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;">' +
-          '<div style="font-size:12px;font-weight:700;letter-spacing:0.5px;color:#fff;text-transform:uppercase;">' + label + ' <span style="color:var(--gold);">*REQUIRED</span></div>' +
+        '<div style="font-size:12px;font-weight:700;letter-spacing:0.5px;color:#fff;text-transform:uppercase;">' + label + '  <span style="color:var(--gold);">*REQUIRED</span></div>' +
         '</div>' +
         existingNote +
         '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:' + (existingNote ? '10px' : '0') + ';">' +
-          '<label class="gh-file-picker" for="' + inputId + '">CHOOSE FILE</label>' +
-          '<input type="file" id="' + inputId + '" accept=".pdf,.jpg,.jpeg,.png" class="gh-file-input" onchange="ghUpdateFileLabel(this)" />' +
-          '<span class="gh-file-name" id="' + inputId + '_name">No file chosen</span>' +
-          '<button class="btn-primary" style="padding:8px 16px;font-size:11px;letter-spacing:0.8px;" onclick="handleDocUploadClick(\'' + bookingRef + '\',\'' + docType + '\')">UPLOAD</button>' +
+        '<label class="gh-file-picker" for="' + inputId + '">CHOOSE FILE</label>' +
+        '<input type="file" id="' + inputId + '" accept=".pdf,.jpg,.jpeg,.png" class="gh-file-input" onchange="ghUpdateFileLabel(this)"/>' +
+        '<span class="gh-file-name" id="' + inputId + '_name">No file chosen</span>' +
+        '<button class="btn-primary" style="padding:8px 16px;font-size:11px;letter-spacing:0.8px;" onclick="handleDocUploadClick(\'' + bookingRef + '\',\'' + docType + '\')">UPLOAD</button>' +
         '</div>' +
         '<div id="' + statusId + '" style="font-size:12px;margin-top:8px;"></div>' +
-      '</div>'
-    );
-  }).join('');
-
-  return (
-    '<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:16px;padding-top:16px;">' +
-    '<div style="font-size:13px;font-weight:700;letter-spacing:0.6px;color:#fff;text-transform:uppercase;margin-bottom:10px;">Required Documents</div>' +
-    '<p style="font-size:12px;color:var(--gray-pale);margin-bottom:12px;">Please upload the following before our team can verify this booking. Accepted: PDF, JPG, PNG.</p>' +
-    rows +
-    '</div>'
-  );
-}
-window.renderDocUploadSection = renderDocUploadSection;
-
-/** Small escaping helper for the doc-upload section (kept local so this file has no load-order dependency on other modules). */
-function ghEscapeHtmlSafe(str) {
-  const d = document.createElement('div');
-  d.textContent = str == null ? '' : String(str);
-  return d.innerHTML;
-}
-
-/** Mirrors the chosen filename next to our styled "Choose File" label, since the native input is visually hidden. */
-function ghUpdateFileLabel(inputEl) {
-  const nameEl = document.getElementById(inputEl.id + '_name');
-  if (nameEl) nameEl.textContent = (inputEl.files && inputEl.files[0]) ? inputEl.files[0].name : 'No file chosen';
-}
-window.ghUpdateFileLabel = ghUpdateFileLabel;
-
-function handleDocUploadClick(bookingRef, docType) {
-  const fileInput = document.getElementById('docFile_' + docType);
-  const statusEl = document.getElementById('docStatus_' + docType);
-  const file = fileInput && fileInput.files[0];
-
-  if (!file) {
-    if (statusEl) { statusEl.textContent = 'Please choose a file first.'; statusEl.style.color = '#e6a23c'; }
-    return;
-  }
-  if (!window.bookingDocs) {
-    if (statusEl) { statusEl.textContent = 'Upload service unavailable — please refresh and try again.'; statusEl.style.color = '#e6a23c'; }
-    return;
-  }
-
-  if (statusEl) { statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--gray-pale)'; }
-
-  window.bookingDocs.uploadBookingDocument({ bookingId: bookingRef, docType: docType, file: file })
-    .then(function () {
-      if (statusEl) { statusEl.textContent = '✓ Uploaded — pending verification'; statusEl.style.color = '#4caf50'; }
-      if (fileInput) fileInput.disabled = true;
-    })
-    .catch(function (err) {
-      if (statusEl) { statusEl.textContent = err.message || 'Upload failed — please try again'; statusEl.style.color = '#e05252'; }
-    });
-}
-window.handleDocUploadClick = handleDocUploadClick;
-
-
-
-function renderTimeline(events) {
-  return events.map(function (ev, idx) {
-    const isNextPending = !ev.done && (idx === 0 || events[idx - 1].done);
-    const dotClass = ev.done ? 'done' : (isNextPending ? 'active' : '');
+        '</div>'
+      );
+    }).join('');
     return (
-      '<div class="timeline-event">' +
-      '<div class="te-time">' + ev.t + '</div>' +
-      '<div class="te-dot-wrap"><div class="te-dot ' + dotClass + '"></div></div>' +
-      '<div><div class="te-event">' + ev.e + '</div></div>' +
+      '<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:16px;padding-top:16px;">' +
+      '<div style="font-size:13px;font-weight:700;letter-spacing:0.6px;color:#fff;text-transform:uppercase;margin-bottom:10px;">Required Documents</div>' +
+      '<p style="font-size:12px;color:var(--gray-pale);margin-bottom:12px;">Please upload the following before our team can verify this booking. Accepted: PDF, JPG, PNG.</p>' +
+      rows +
       '</div>'
     );
-  }).join('');
-}
-function doTrack() {
-  const inputEl = document.getElementById('trackInput');
-  const query = (inputEl ? inputEl.value : '').trim();
-  const resultEl = document.getElementById('trackResult');
-  if (!query) {
-    showNotification('Enter a Container, Booking Ref, Truck Reg, or Driver Name', 'e.g. MSCU1234567, GH-2024-0001, KDA 221C', 'ℹ️');
-    return;
   }
-
-  window.bridge.trackQuery(query)
-    .then(function (details) {
-      state.lastTrack = { details: details, query: query };
-      renderTrackResult(details, query);
-      if (resultEl) resultEl.classList.add('visible');
-      if (details.trip) {
-        showNotification('Record found', 'Trip ' + details.trip.id + ' – ' + details.trip.status, '✅');
-      } else if (details.storage) {
-        showNotification('Record found', 'In storage — ' + (details.storage.zone_name || details.storage.zone || 'depot'), '✅');
-      } else {
-        showNotification('Record found', 'Booking located', '✅');
-      }
-      startLiveSimulation(query);
-    })
-    .catch(function (err) {
-      state.lastTrack = null;
-      showNotification('No matching record found', err.message || 'Please check the number and try again', '❌');
-      window.clearInterval(state.trackInterval);
-    });
-}
-
-window.doTrack = doTrack;
-
-/** Closes the results panel — the only thing that should ever hide it once shown. */
-function closeTrackResult() {
-  const resultEl = document.getElementById('trackResult');
-  if (resultEl) resultEl.classList.remove('visible');
-  window.clearInterval(state.trackInterval);
-  destroyTrackMap();
-}
-window.closeTrackResult = closeTrackResult;
-
-
-/**
- * A container can never be simultaneously "in transit" and "in storage".
- * Once a trip is actively moving it (trip.status === 'active'), storage is
- * by definition released — this is the single source of truth for that
- * wording, used on-screen, in the PDF report, and in the text fallback so
- * all three always agree.
- */
-function getStorageStatusLabel(hasTrip, trip, storage) {
-  if (hasTrip && trip && trip.status === 'active') return 'Out of Storage — Dispatched';
-  const raw = pick(storage, ['status', 'storage_status']);
-  if (!raw) return '—';
-  const label = String(raw).replace(/_/g, ' ');
-  return label.charAt(0).toUpperCase() + label.slice(1);
-}
-
-/** Turns a raw enum-style status ("on_trip") into readable text ("On Trip") for display. */
-function humanizeStatusWord(raw) {
-  if (!raw || raw === '—') return raw || '—';
-  return String(raw).replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
-}
-
-function pick(obj, keys) {
-  if (!obj) return null;
-  for (let i = 0; i < keys.length; i++) {
-    const v = obj[keys[i]];
-    if (v !== undefined && v !== null && v !== '') return v;
+  window.renderDocUploadSection = renderDocUploadSection;
+  function ghEscapeHtmlSafe(str) {
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : String(str);
+    return d.innerHTML;
   }
-  return null;
-}
-
-function renderTrackResult(details, query) {
-
-  const { trip, truck, driver, events, gps, storage, booking } = details;
-
-  // Storage bookings (Depot Storage / awaiting repatriation) may not have
-  // an active haulage trip at all — fall back to the booking record for
-  // the header fields, and hide the truck/driver panels since there's no
-  // truck currently moving this container.
-  const hasTrip = !!trip;
-  const source = hasTrip ? trip : (booking || {});
-
-  setText('res-id', source.container || source.id || query);
-  setText('res-route', hasTrip ? ((trip.origin || '—') + ' → ' + (trip.destination || '—')) : ((booking && booking.pickup_location) || '—') + ' → ' + ((booking && booking.dropoff_location) || 'Gargo Haven Depot'));
-  setText('res-eta', hasTrip ? (trip.status === 'active' ? 'In transit' : (trip.status === 'completed' ? 'Delivered' : '—')) : (storage ? 'In depot storage' : '—'));
-  setText('res-booked', source.created || (booking && booking.created_at) || '—');
-
-  const statusEl = document.getElementById('res-status');
-  const displayStatus = hasTrip ? trip.status : ((booking && booking.status) || (storage ? 'in_storage' : 'pending'));
-  if (statusEl) {
-    statusEl.textContent = (displayStatus === 'active' ? 'In Transit' : displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1).replace(/_/g, ' '));
-    statusEl.className = 'status-badge ' + (displayStatus === 'active' ? 'status-transit' : (displayStatus === 'completed' || displayStatus === 'in_storage') ? 'status-delivered' : 'status-pending');
+  function ghUpdateFileLabel(inputEl) {
+    const nameEl = document.getElementById(inputEl.id + '_name');
+    if (nameEl) nameEl.textContent = (inputEl.files && inputEl.files[0]) ? inputEl.files[0].name : 'No file chosen';
   }
-
-  // A container is never simultaneously "in transit" and "in storage" —
-  // once a trip actively has it moving, storage is by definition released,
-  // no matter what a stale storage record might still say.
-  const tripInTransit = hasTrip && trip.status === 'active';
-
-  // Truck & driver panels only apply while a trip is actually associated
-  // with this record — a container sitting in storage has neither.
-  const truckPanel = document.getElementById('truckReg') && document.getElementById('truckReg').closest('.truck-panel');
-  const driverPanelEl = document.getElementById('driverName') && document.getElementById('driverName').closest('.truck-panel');
-  if (truckPanel) truckPanel.style.display = hasTrip ? '' : 'none';
-  if (driverPanelEl) driverPanelEl.style.display = hasTrip ? '' : 'none';
-
-  if (hasTrip) {
-    // Truck info — tolerant of reg/registration/licence_plate/plate naming,
-    // and falls back to flat fields on the trip itself (e.g. truck_reg)
-    // in case the RPC doesn't nest a `truck` object at all.
-    setText('truckReg', pick(truck, ['reg', 'registration', 'licence_plate', 'licencePlate', 'plate', 'vehicle_reg'])
-      || pick(trip, ['truck_reg', 'truckReg', 'vehicle_reg']) || '—');
-    setText('truckType', pick(truck, ['type', 'truck_type', 'vehicle_type', 'make'])
-      || pick(trip, ['truck_type', 'truckType']) || '—');
-    setText('truckFuel', humanizeStatusWord(pick(truck, ['status', 'truck_status', 'vehicle_status'])
-      || pick(trip, ['truck_status', 'truckStatus']) || '—'));
-
-    // Driver info — tolerant of name/phone/licence naming (UK "licence" vs
-    // US "license"), and falls back to flat fields on the trip itself.
-    const driverNameVal = pick(driver, ['name', 'driver_name', 'full_name']) || pick(trip, ['driver_name', 'driverName']) || '—';
-    setText('driverName', driverNameVal);
-
-    const driverPhone = pick(driver, ['phone', 'mobile', 'phone_number', 'contact']) || pick(trip, ['driver_phone', 'driverPhone']);
-    const phoneEl = document.getElementById('driverPhone');
-    if (phoneEl) {
-      phoneEl.textContent = driverPhone || '—';
-      phoneEl.parentElement.href = driverPhone ? 'tel:' + String(driverPhone).replace(/\s/g, '') : '#';
+  window.ghUpdateFileLabel = ghUpdateFileLabel;
+  function handleDocUploadClick(bookingRef, docType) {
+    const fileInput = document.getElementById('docFile_' + docType);
+    const statusEl = document.getElementById('docStatus_' + docType);
+    const file = fileInput && fileInput.files[0];
+    if (!file) {
+      if (statusEl) { statusEl.textContent = 'Please choose a file first.'; statusEl.style.color = '#e6a23c'; }
+      return;
     }
-
-    const driverLicence = pick(driver, ['licence', 'license', 'licence_no', 'license_no', 'licenceNo', 'licenseNo'])
-      || pick(trip, ['driver_licence', 'driver_license']) || '—';
-    setText('driverLicence', driverLicence);
-  }
-
-  // Storage panel — zone, offload time, and the driver who delivered the
-  // container into the depot. Shown whenever the RPC returns a `storage`
-  // object, independent of whether there's also an active trip (e.g. a
-  // Full Transport Package booking that's now sitting in storage).
-  const storagePanel = document.getElementById('storagePanel');
-  const storageBadgeEl = document.getElementById('storagePanelBadge');
-  if (storage) {
-    if (storagePanel) storagePanel.style.display = '';
-    setText('storageZone', pick(storage, ['zone_name', 'zone']) || '—');
-    setText('storageOffloadTime', fmtDateTime(pick(storage, ['offloaded_at', 'offload_time', 'gate_in_time'])) || '—');
-
-    const storageStatusEl = document.getElementById('storageStatus');
-    setText('storageStatus', getStorageStatusLabel(hasTrip, trip, storage));
-    if (tripInTransit) {
-      if (storageStatusEl) { storageStatusEl.classList.add('tdv-released'); storageStatusEl.classList.remove('tdv-in-storage'); }
-      if (storageBadgeEl) { storageBadgeEl.textContent = 'RELEASED'; storageBadgeEl.style.display = ''; storageBadgeEl.className = 'panel-mini-badge badge-released'; }
-    } else {
-      if (storageStatusEl) { storageStatusEl.classList.add('tdv-in-storage'); storageStatusEl.classList.remove('tdv-released'); }
-      if (storageBadgeEl) { storageBadgeEl.textContent = 'CURRENT'; storageBadgeEl.style.display = ''; storageBadgeEl.className = 'panel-mini-badge badge-current'; }
+    if (!window.bookingDocs) {
+      if (statusEl) { statusEl.textContent = 'Upload service unavailable — please refresh and try again.'; statusEl.style.color = '#e6a23c'; }
+      return;
     }
-
-    setText('storageDeliveredBy', pick(storage, ['delivered_by', 'delivered_by_name', 'driver_name']) || '—');
-    const storagePhone = pick(storage, ['delivered_by_phone', 'driver_phone']);
-    const storagePhoneEl = document.getElementById('storageDeliveredByPhone');
-    if (storagePhoneEl) storagePhoneEl.textContent = storagePhone || '—';
-  } else if (storagePanel) {
-    storagePanel.style.display = 'none';
+    if (statusEl) { statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--gray-pale)'; }
+    window.bookingDocs.uploadBookingDocument({ bookingId: bookingRef, docType: docType, file: file })
+      .then(function () {
+        if (statusEl) { statusEl.textContent = '✓ Uploaded — pending verification'; statusEl.style.color = '#4caf50'; }
+        if (fileInput) fileInput.disabled = true;
+      })
+      .catch(function (err) {
+        if (statusEl) { statusEl.textContent = err.message || 'Upload failed — please try again'; statusEl.style.color = '#e05252'; }
+      });
   }
-
-  // Location & speed
-  let locationText = '—';
-  if (hasTrip && trip.status === 'active' && gps) {
-    locationText = `GPS: ${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)}`;
-  } else if (hasTrip && trip.status === 'completed') {
-    locationText = trip.destination || '—';
-  } else if (hasTrip) {
-    locationText = trip.origin || '—';
-  } else if (storage) {
-    locationText = pick(storage, ['zone_name', 'zone']) || 'Gargo Haven Depot';
+  window.handleDocUploadClick = handleDocUploadClick;
+  function renderTimeline(events) {
+    return events.map(function (ev, idx) {
+      const isNextPending = !ev.done && (idx === 0 || events[idx - 1].done);
+      const dotClass = ev.done ? 'done' : (isNextPending ? 'active' : '');
+      return (
+        '<div class="timeline-event">' +
+        '<div class="te-time">' + ev.t + '</div>' +
+        '<div class="te-dot-wrap"><div class="te-dot ' + dotClass + '"></div></div>' +
+        '<div><div class="te-event">' + ev.e + '</div></div>' +
+        '</div>'
+      );
+    }).join('');
   }
-  setText('truckLocation', locationText);
-  setText('truckSpeed', gps ? `${gps.speed} km/h` : '—');
-
-  // Live GPS map — only meaningful while the truck is actually moving
-  // and we have real coordinates for it.
-  if (hasTrip && trip.status === 'active' && gps && typeof gps.lat === 'number' && typeof gps.lng === 'number') {
-    showTrackMap(true);
-    updateTrackMap(gps.lat, gps.lng);
-  } else {
-    showTrackMap(false);
-  }
-
-  // GPS update time
-  setText('gpsUpdate', new Date().toLocaleTimeString());
-
-  // Timeline
-  const timelineEl = document.getElementById('trackTimeline');
-  if (timelineEl && events && events.length) {
-    const mapped = events.map(function (ev, idx) {
-      return { t: ev.ts || '—', e: ev.label + (ev.detail ? ' — ' + ev.detail : ''), done: idx < events.length - 1 || (hasTrip && trip.status === 'completed') };
-    });
-    timelineEl.innerHTML = renderTimeline(mapped);
-  } else if (timelineEl) {
-    timelineEl.innerHTML = '<div class="empty-state">No timeline events yet</div>';
-  }
-}
-
-function fmtDateTime(raw) {
-  if (!raw) return null;
-  const d = new Date(raw);
-  if (isNaN(d.getTime())) return String(raw);
-  return d.toLocaleString('en-KE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
-
-function setText(id, val) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = val;
-}
-
-/* ---------------------------------------------------------------
-   Live GPS map (Leaflet + CARTO dark tiles, no API key required).
-   Lazily created on first result that has real coordinates, then
-   just re-centered/moved on every subsequent update so we're not
-   tearing down and rebuilding the map on every 8s poll.
---------------------------------------------------------------- */
-let trackMap = null;
-let trackMarker = null;
-
-function showTrackMap(show) {
-  const wrap = document.getElementById('trackMapWrap');
-  if (wrap) wrap.style.display = show ? 'block' : 'none';
-}
-
-function destroyTrackMap() {
-  if (trackMap) {
-    trackMap.remove();
-    trackMap = null;
-    trackMarker = null;
-  }
-}
-
-function updateTrackMap(lat, lng) {
-  const mapEl = document.getElementById('trackMap');
-  if (!mapEl || typeof L === 'undefined' || typeof lat !== 'number' || typeof lng !== 'number') return;
-
-  if (!trackMap) {
-    trackMap = L.map('trackMap', { zoomControl: true, attributionControl: true }).setView([lat, lng], 14);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      subdomains: 'abcd',
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap &copy; CARTO'
-    }).addTo(trackMap);
-
-    const truckIcon = L.divIcon({
-      className: 'truck-map-marker marker-pulse',
-      html: '🚛',
-      iconSize: [28, 28],
-      iconAnchor: [14, 14]
-    });
-    trackMarker = L.marker([lat, lng], { icon: truckIcon }).addTo(trackMap);
-
-    // The container is created while its parent panel is display:none,
-    // so Leaflet measures it as 0x0. Force a re-measure once it's visible.
-    window.setTimeout(function () { trackMap && trackMap.invalidateSize(); }, 250);
-  } else {
-    trackMarker.setLatLng([lat, lng]);
-    trackMap.panTo([lat, lng]);
-  }
-}
-
-function startLiveSimulation(query) {
-  window.clearInterval(state.trackInterval);
-  if (!query) return;
-  state.trackInterval = window.setInterval(function () {
+  function doTrack() {
+    const inputEl = document.getElementById('trackInput');
+    const query = (inputEl ? inputEl.value : '').trim();
+    const resultEl = document.getElementById('trackResult');
+    if (!query) {
+      showNotification('Enter a Container, Booking Ref, Truck Reg, or Driver Name', 'e.g. MSCU1234567, GH-2024-0001, KDA 221C', 'ℹ️');
+      return;
+    }
     window.bridge.trackQuery(query)
       .then(function (details) {
-        if (!details.trip || details.trip.status !== 'active') {
-          window.clearInterval(state.trackInterval);
-          return;
+        state.lastTrack = { details: details, query: query };
+        renderTrackResult(details, query);
+        if (resultEl) resultEl.classList.add('visible');
+        if (details.trip) {
+          showNotification('Record found', 'Trip ' + details.trip.id + ' – ' + details.trip.status, '✅');
+        } else if (details.storage) {
+          showNotification('Record found', 'In storage — ' + (details.storage.zone_name || details.storage.zone || 'depot'), '✅');
+        } else {
+          showNotification('Record found', 'Booking located', '✅');
         }
-        const speedEl = document.getElementById('truckSpeed');
-        const locEl = document.getElementById('truckLocation');
-        const gpsEl = document.getElementById('gpsUpdate');
-        if (speedEl && details.gps) speedEl.textContent = details.gps.speed + ' km/h';
-        if (locEl && details.gps) locEl.textContent = `GPS: ${details.gps.lat.toFixed(4)}, ${details.gps.lng.toFixed(4)}`;
-        if (gpsEl) gpsEl.textContent = 'Just now';
-        if (details.gps && typeof details.gps.lat === 'number' && typeof details.gps.lng === 'number') {
-          showTrackMap(true);
-          updateTrackMap(details.gps.lat, details.gps.lng);
-        }
+        startLiveSimulation(query);
       })
-      .catch(function () { /* silent — keep last known values on a transient error */ });
-  }, 8000);
-}
-function initTrackPage() {
-  const resultEl = document.getElementById('trackResult');
-  const inputEl = document.getElementById('trackInput');
-  if (resultEl && resultEl.classList.contains('visible') && inputEl && inputEl.value.trim()) {
-    startLiveSimulation(inputEl.value.trim());
+      .catch(function (err) {
+        state.lastTrack = null;
+        showNotification('No matching record found', err.message || 'Please check the number and try again', '❌');
+        window.clearInterval(state.trackInterval);
+      });
   }
-}
-
-/**
- * Builds a one-click, branded PDF of the currently displayed tracking
- * result (booking details, truck/driver info, and the full timeline) so
- * a customer can save or forward proof of their shipment status. Falls
- * back to a plain-text download if the PDF library failed to load
- * (e.g. blocked by a network/ad-blocker), so the feature still works
- * either way.
- */
-function downloadTrackingReport() {
-  if (!state.lastTrack || !state.lastTrack.details) {
-    showNotification('Nothing to download yet', 'Track a shipment first', 'ℹ️');
-    return;
+  window.doTrack = doTrack;
+  function closeTrackResult() {
+    const resultEl = document.getElementById('trackResult');
+    if (resultEl) resultEl.classList.remove('visible');
+    window.clearInterval(state.trackInterval);
+    destroyTrackMap();
   }
-  const { details, query } = state.lastTrack;
-  const { trip: rawTrip, truck, driver, events, storage, booking } = details;
-  const hasTrip = !!rawTrip;
-  // Storage-only bookings (no active haulage trip) still need a trip-shaped
-  // object so the rest of this function can render without special-casing
-  // every field — built from the booking/storage records instead.
-  const trip = rawTrip || {
-    container: (booking && booking.container) || query,
-    id: query,
-    origin: (booking && booking.pickup_location) || '—',
-    destination: (booking && booking.dropoff_location) || (storage && (storage.zone_name || storage.zone)) || 'Gargo Haven Depot',
-    status: (booking && booking.status) || (storage ? 'in_storage' : 'pending'),
-    created: (booking && booking.created_at) || '—',
-  };
-  const btn = document.getElementById('trDownloadBtn');
-
-  if (!window.jspdf || !window.jspdf.jsPDF) {
-    downloadTrackingReportAsText(details, query);
-    return;
+  window.closeTrackResult = closeTrackResult;
+  function getStorageStatusLabel(hasTrip, trip, storage) {
+    if (hasTrip && trip && trip.status === 'active') return 'Out of Storage — Dispatched';
+    const raw = pick(storage, ['status', 'storage_status']);
+    if (!raw) return '—';
+    const label = String(raw).replace(/_/g, ' ');
+    return label.charAt(0).toUpperCase() + label.slice(1);
   }
-
-  if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
-
-  try {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const marginX = 48;
-    let y = 56;
-
-    const gold = [201, 162, 39];
-    const dark = [20, 20, 20];
-    const gray = [110, 110, 110];
-
-    // Header
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.setTextColor(dark[0], dark[1], dark[2]);
-    doc.text('GARGO', marginX, y);
-    doc.setTextColor(gold[0], gold[1], gold[2]);
-    doc.text(' LOGISTICS', marginX + doc.getTextWidth('GARGO'), y);
-    doc.setDrawColor(gold[0], gold[1], gold[2]);
-    doc.setLineWidth(1.5);
-    doc.line(marginX, y + 10, pageWidth - marginX, y + 10);
-
-    y += 34;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(gray[0], gray[1], gray[2]);
-    doc.text('Shipment Tracking Report — generated ' + new Date().toLocaleString(), marginX, y);
-
-    // Section: Booking details
-    y += 30;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.setTextColor(dark[0], dark[1], dark[2]);
-    doc.text('BOOKING DETAILS', marginX, y);
-    y += 8;
-    doc.setDrawColor(225, 225, 225);
-    doc.setLineWidth(0.75);
-    doc.line(marginX, y, pageWidth - marginX, y);
-    y += 20;
-
-    const bookingRows = [
-      ['Container / Ref', trip.container || trip.id || query || '—'],
-      ['Route', (trip.origin || '—') + '  →  ' + (trip.destination || '—')],
-      ['Status', (trip.status ? trip.status.charAt(0).toUpperCase() + trip.status.slice(1) : '—')],
-      ['ETA', trip.status === 'active' ? 'In transit' : (trip.status === 'completed' ? 'Delivered' : '—')],
-      ['Booked', trip.created || '—'],
-    ];
-    y = pdfKeyValueRows(doc, bookingRows, marginX, y, pageWidth);
-
-    // Section: Storage details (only present for depot-storage bookings)
-    if (storage) {
-      y += 16;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('STORAGE DETAILS', marginX, y);
-      y += 8;
-      doc.line(marginX, y, pageWidth - marginX, y);
-      y += 20;
-      const storageRows = [
-        ['Zone', pick(storage, ['zone_name', 'zone']) || '—'],
-        ['Offload Time', fmtDateTime(pick(storage, ['offloaded_at', 'offload_time', 'gate_in_time'])) || '—'],
-        ['Storage Status', getStorageStatusLabel(hasTrip, trip, storage)],
-        ['Delivered By', pick(storage, ['delivered_by', 'delivered_by_name', 'driver_name']) || '—'],
-      ];
-      y = pdfKeyValueRows(doc, storageRows, marginX, y, pageWidth);
+  function humanizeStatusWord(raw) {
+    if (!raw || raw === '—') return raw || '—';
+    return String(raw).replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+  function pick(obj, keys) {
+    if (!obj) return null;
+    for (let i = 0; i < keys.length; i++) {
+      const v = obj[keys[i]];
+      if (v !== undefined && v !== null && v !== '') return v;
     }
-
-    // Section: Truck details — only meaningful when there's an active trip
+    return null;
+  }
+  function renderTrackResult(details, query) {
+    const { trip, truck, driver, events, gps, storage, booking } = details;
+    const hasTrip = !!trip;
+    const source = hasTrip ? trip : (booking || {});
+    setText('res-id', source.container || source.id || query);
+    setText('res-route', hasTrip ? ((trip.origin || '—') + ' → ' + (trip.destination || '—')) : ((booking && booking.pickup_location) || '—') + ' → ' + ((booking && booking.dropoff_location) || 'Gargo Haven Depot'));
+    setText('res-eta', hasTrip ? (trip.status === 'active' ? 'In transit' : (trip.status === 'completed' ? 'Delivered' : '—')) : (storage ? 'In depot storage' : '—'));
+    setText('res-booked', source.created || (booking && booking.created_at) || '—');
+    const statusEl = document.getElementById('res-status');
+    const displayStatus = hasTrip ? trip.status : ((booking && booking.status) || (storage ? 'in_storage' : 'pending'));
+    if (statusEl) {
+      statusEl.textContent = (displayStatus === 'active' ? 'In Transit' : displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1).replace(/_/g, ' '));
+      statusEl.className = 'status-badge ' + (displayStatus === 'active' ? 'status-transit' : (displayStatus === 'completed' || displayStatus === 'in_storage') ? 'status-delivered' : 'status-pending');
+    }
+    const tripInTransit = hasTrip && trip.status === 'active';
+    const truckPanel = document.getElementById('truckReg') && document.getElementById('truckReg').closest('.truck-panel');
+    const driverPanelEl = document.getElementById('driverName') && document.getElementById('driverName').closest('.truck-panel');
+    if (truckPanel) truckPanel.style.display = hasTrip ? '' : 'none';
+    if (driverPanelEl) driverPanelEl.style.display = hasTrip ? '' : 'none';
     if (hasTrip) {
-    y += 16;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text('TRUCK DETAILS', marginX, y);
-    y += 8;
-    doc.line(marginX, y, pageWidth - marginX, y);
-    y += 20;
-    const truckRows = [
-      ['Registration', pick(truck, ['reg', 'registration', 'licence_plate', 'licencePlate', 'plate', 'vehicle_reg']) || pick(trip, ['truck_reg', 'truckReg']) || '—'],
-      ['Type', pick(truck, ['type', 'truck_type', 'vehicle_type', 'make']) || pick(trip, ['truck_type', 'truckType']) || '—'],
-      ['Status', pick(truck, ['status', 'truck_status', 'vehicle_status']) || pick(trip, ['truck_status', 'truckStatus']) || '—'],
-    ];
-    y = pdfKeyValueRows(doc, truckRows, marginX, y, pageWidth);
-
-    // Section: Driver details
-    y += 16;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text('DRIVER DETAILS', marginX, y);
-    y += 8;
-    doc.line(marginX, y, pageWidth - marginX, y);
-    y += 20;
-    const driverRows = [
-      ['Name', pick(driver, ['name', 'driver_name', 'full_name']) || pick(trip, ['driver_name', 'driverName']) || '—'],
-      ['Phone', pick(driver, ['phone', 'mobile', 'phone_number', 'contact']) || pick(trip, ['driver_phone', 'driverPhone']) || '—'],
-      ['Licence', pick(driver, ['licence', 'license', 'licence_no', 'license_no', 'licenceNo', 'licenseNo']) || pick(trip, ['driver_licence', 'driver_license']) || '—'],
-    ];
-    y = pdfKeyValueRows(doc, driverRows, marginX, y, pageWidth);
+      setText('truckReg', pick(truck, ['reg', 'registration', 'licence_plate', 'licencePlate', 'plate', 'vehicle_reg'])
+        || pick(trip, ['truck_reg', 'truckReg', 'vehicle_reg']) || '—');
+      setText('truckType', pick(truck, ['type', 'truck_type', 'vehicle_type', 'make'])
+        || pick(trip, ['truck_type', 'truckType']) || '—');
+      setText('truckFuel', humanizeStatusWord(pick(truck, ['status', 'truck_status', 'vehicle_status'])
+        || pick(trip, ['truck_status', 'truckStatus']) || '—'));
+      const driverNameVal = pick(driver, ['name', 'driver_name', 'full_name']) || pick(trip, ['driver_name', 'driverName']) || '—';
+      setText('driverName', driverNameVal);
+      const driverPhone = pick(driver, ['phone', 'mobile', 'phone_number', 'contact']) || pick(trip, ['driver_phone', 'driverPhone']);
+      const phoneEl = document.getElementById('driverPhone');
+      if (phoneEl) {
+        phoneEl.textContent = driverPhone || '—';
+        phoneEl.parentElement.href = driverPhone ? 'tel:' + String(driverPhone).replace(/\s/g, '') : '#';
+      }
+      const driverLicence = pick(driver, ['licence', 'license', 'licence_no', 'license_no', 'licenceNo', 'licenseNo'])
+        || pick(trip, ['driver_licence', 'driver_license']) || '—';
+      setText('driverLicence', driverLicence);
     }
-
-    // Section: Timeline
-    if (events && events.length) {
-      y += 16;
+    const storagePanel = document.getElementById('storagePanel');
+    const storageBadgeEl = document.getElementById('storagePanelBadge');
+    if (storage) {
+      if (storagePanel) storagePanel.style.display = '';
+      setText('storageZone', pick(storage, ['zone_name', 'zone']) || '—');
+      setText('storageOffloadTime', fmtDateTime(pick(storage, ['offloaded_at', 'offload_time', 'gate_in_time'])) || '—');
+      const storageStatusEl = document.getElementById('storageStatus');
+      setText('storageStatus', getStorageStatusLabel(hasTrip, trip, storage));
+      if (tripInTransit) {
+        if (storageStatusEl) { storageStatusEl.classList.add('tdv-released'); storageStatusEl.classList.remove('tdv-in-storage'); }
+        if (storageBadgeEl) { storageBadgeEl.textContent = 'RELEASED'; storageBadgeEl.style.display = ''; storageBadgeEl.className = 'panel-mini-badge badge-released'; }
+      } else {
+        if (storageStatusEl) { storageStatusEl.classList.add('tdv-in-storage'); storageStatusEl.classList.remove('tdv-released'); }
+        if (storageBadgeEl) { storageBadgeEl.textContent = 'CURRENT'; storageBadgeEl.style.display = ''; storageBadgeEl.className = 'panel-mini-badge badge-current'; }
+      }
+      setText('storageDeliveredBy', pick(storage, ['delivered_by', 'delivered_by_name', 'driver_name']) || '—');
+      const storagePhone = pick(storage, ['delivered_by_phone', 'driver_phone']);
+      const storagePhoneEl = document.getElementById('storageDeliveredByPhone');
+      if (storagePhoneEl) storagePhoneEl.textContent = storagePhone || '—';
+    } else if (storagePanel) {
+      storagePanel.style.display = 'none';
+    }
+    let locationText = '—';
+    if (hasTrip && trip.status === 'active' && gps) {
+      locationText = `GPS: ${gps.lat.toFixed(4)}, ${gps.lng.toFixed(4)}`;
+    } else if (hasTrip && trip.status === 'completed') {
+      locationText = trip.destination || '—';
+    } else if (hasTrip) {
+      locationText = trip.origin || '—';
+    } else if (storage) {
+      locationText = pick(storage, ['zone_name', 'zone']) || 'Gargo Haven Depot';
+    }
+    setText('truckLocation', locationText);
+    setText('truckSpeed', gps ? `${gps.speed} km/h` : '—');
+    if (hasTrip && trip.status === 'active' && gps && typeof gps.lat === 'number' && typeof gps.lng === 'number') {
+      showTrackMap(true);
+      updateTrackMap(gps.lat, gps.lng);
+    } else {
+      showTrackMap(false);
+    }
+    setText('gpsUpdate', new Date().toLocaleTimeString());
+    const timelineEl = document.getElementById('trackTimeline');
+    if (timelineEl && events && events.length) {
+      const mapped = events.map(function (ev, idx) {
+        return { t: ev.ts || '—', e: ev.label + (ev.detail ? ' — ' + ev.detail : ''), done: idx < events.length - 1 || (hasTrip && trip.status === 'completed') };
+      });
+      timelineEl.innerHTML = renderTimeline(mapped);
+    } else if (timelineEl) {
+      timelineEl.innerHTML = '<div class="empty-state">No timeline events yet</div>';
+    }
+  }
+  function fmtDateTime(raw) {
+    if (!raw) return null;
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return String(raw);
+    return d.toLocaleString('en-KE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+  let trackMap = null;
+  let trackMarker = null;
+  function showTrackMap(show) {
+    const wrap = document.getElementById('trackMapWrap');
+    if (wrap) wrap.style.display = show ? 'block' : 'none';
+  }
+  function destroyTrackMap() {
+    if (trackMap) {
+      trackMap.remove();
+      trackMap = null;
+      trackMarker = null;
+    }
+  }
+  function updateTrackMap(lat, lng) {
+    const mapEl = document.getElementById('trackMap');
+    if (!mapEl || typeof L === 'undefined' || typeof lat !== 'number' || typeof lng !== 'number') return;
+    if (!trackMap) {
+      trackMap = L.map('trackMap', { zoomControl: true, attributionControl: true }).setView([lat, lng], 14);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 19,
+        attribution: '© OpenStreetMap © CARTO'
+      }).addTo(trackMap);
+      const truckIcon = L.divIcon({
+        className: 'truck-map-marker marker-pulse',
+        html: '',
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
+      });
+      trackMarker = L.marker([lat, lng], { icon: truckIcon }).addTo(trackMap);
+      window.setTimeout(function () { trackMap && trackMap.invalidateSize(); }, 250);
+    } else {
+      trackMarker.setLatLng([lat, lng]);
+      trackMap.panTo([lat, lng]);
+    }
+  }
+  function startLiveSimulation(query) {
+    window.clearInterval(state.trackInterval);
+    if (!query) return;
+    state.trackInterval = window.setInterval(function () {
+      window.bridge.trackQuery(query)
+        .then(function (details) {
+          if (!details.trip || details.trip.status !== 'active') {
+            window.clearInterval(state.trackInterval);
+            return;
+          }
+          const speedEl = document.getElementById('truckSpeed');
+          const locEl = document.getElementById('truckLocation');
+          const gpsEl = document.getElementById('gpsUpdate');
+          if (speedEl && details.gps) speedEl.textContent = details.gps.speed + ' km/h';
+          if (locEl && details.gps) locEl.textContent = `GPS: ${details.gps.lat.toFixed(4)}, ${details.gps.lng.toFixed(4)}`;
+          if (gpsEl) gpsEl.textContent = 'Just now';
+          if (details.gps && typeof details.gps.lat === 'number' && typeof details.gps.lng === 'number') {
+            showTrackMap(true);
+            updateTrackMap(details.gps.lat, details.gps.lng);
+          }
+        })
+        .catch(function () { /* silent */ });
+    }, 8000);
+  }
+  function initTrackPage() {
+    const resultEl = document.getElementById('trackResult');
+    const inputEl = document.getElementById('trackInput');
+    if (resultEl && resultEl.classList.contains('visible') && inputEl && inputEl.value.trim()) {
+      startLiveSimulation(inputEl.value.trim());
+    }
+  }
+  function downloadTrackingReport() {
+    if (!state.lastTrack || !state.lastTrack.details) {
+      showNotification('Nothing to download yet', 'Track a shipment first', 'ℹ️');
+      return;
+    }
+    const { details, query } = state.lastTrack;
+    const { trip: rawTrip, truck, driver, events, storage, booking } = details;
+    const hasTrip = !!rawTrip;
+    const trip = rawTrip || {
+      container: (booking && booking.container) || query,
+      id: query,
+      origin: (booking && booking.pickup_location) || '—',
+      destination: (booking && booking.dropoff_location) || (storage && (storage.zone_name || storage.zone)) || 'Gargo Haven Depot',
+      status: (booking && booking.status) || (storage ? 'in_storage' : 'pending'),
+      created: (booking && booking.created_at) || '—',
+    };
+    const btn = document.getElementById('trDownloadBtn');
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      downloadTrackingReportAsText(details, query);
+      return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const marginX = 48;
+      let y = 56;
+      const gold = [201, 162, 39];
+      const dark = [20, 20, 20];
+      const gray = [110, 110, 110];
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('TIMELINE', marginX, y);
-      y += 8;
-      doc.line(marginX, y, pageWidth - marginX, y);
-      y += 20;
+      doc.setFontSize(18);
+      doc.setTextColor(dark[0], dark[1], dark[2]);
+      doc.text('GARGO', marginX, y);
+      doc.setTextColor(gold[0], gold[1], gold[2]);
+      doc.text(' LOGISTICS', marginX + doc.getTextWidth('GARGO'), y);
+      doc.setDrawColor(gold[0], gold[1], gold[2]);
+      doc.setLineWidth(1.5);
+      doc.line(marginX, y + 10, pageWidth - marginX, y + 10);
+      y += 34;
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      events.forEach(function (ev) {
-        if (y > 760) { doc.addPage(); y = 56; }
-        doc.setTextColor(gold[0], gold[1], gold[2]);
-        doc.text(String(ev.ts || '—'), marginX, y);
-        doc.setTextColor(dark[0], dark[1], dark[2]);
-        const label = ev.label + (ev.detail ? ' — ' + ev.detail : '');
-        doc.text(label, marginX + 90, y);
-        y += 18;
-      });
-    }
-
-    // Footer
-    const pageCount = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
       doc.setTextColor(gray[0], gray[1], gray[2]);
-      doc.text('Gargo Logistics Ltd — generated automatically for reference only. For disputes, contact support.', marginX, 810);
-    }
-
-    const safeId = String(trip.container || trip.id || query || 'shipment').replace(/[^a-zA-Z0-9-]/g, '');
-    doc.save('Gargo-Tracking-' + safeId + '.pdf');
-  } catch (e) {
-    console.error('PDF generation failed, falling back to text file:', e);
-    downloadTrackingReportAsText(details, query);
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '⬇ Download Report'; }
-  }
-}
-window.downloadTrackingReport = downloadTrackingReport;
-
-/** Renders an array of [label, value] pairs as aligned rows and returns the new y position. */
-function pdfKeyValueRows(doc, rows, marginX, y, pageWidth) {
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  rows.forEach(function (row) {
-    if (y > 760) { doc.addPage(); y = 56; }
-    doc.setTextColor(110, 110, 110);
-    doc.text(row[0], marginX, y);
-    doc.setTextColor(20, 20, 20);
-    doc.text(String(row[1]), marginX + 130, y);
-    y += 18;
-  });
-  return y;
-}
-
-/** Fallback download used if jsPDF isn't available for any reason. */
-function downloadTrackingReportAsText(details, query) {
-  const { trip: rawTrip, truck, driver, events, storage, booking } = details;
-  const hasTrip = !!rawTrip;
-  const trip = rawTrip || {
-    container: (booking && booking.container) || query,
-    id: query,
-    origin: (booking && booking.pickup_location) || '—',
-    destination: (booking && booking.dropoff_location) || (storage && (storage.zone_name || storage.zone)) || 'Gargo Haven Depot',
-    status: (booking && booking.status) || (storage ? 'in_storage' : 'pending'),
-    created: (booking && booking.created_at) || '—',
-  };
-  const lines = [];
-  lines.push('GARGO LOGISTICS — SHIPMENT TRACKING REPORT');
-  lines.push('Generated: ' + new Date().toLocaleString());
-  lines.push('');
-  lines.push('BOOKING DETAILS');
-  lines.push('Container / Ref: ' + (trip.container || trip.id || query || '—'));
-  lines.push('Route: ' + (trip.origin || '—') + '  ->  ' + (trip.destination || '—'));
-  lines.push('Status: ' + (trip.status || '—'));
-  lines.push('Booked: ' + (trip.created || '—'));
-  lines.push('');
-  if (storage) {
-    lines.push('STORAGE DETAILS');
-    lines.push('Zone: ' + (pick(storage, ['zone_name', 'zone']) || '—'));
-    lines.push('Offload Time: ' + (fmtDateTime(pick(storage, ['offloaded_at', 'offload_time', 'gate_in_time'])) || '—'));
-    lines.push('Storage Status: ' + getStorageStatusLabel(hasTrip, trip, storage));
-    lines.push('Delivered By: ' + (pick(storage, ['delivered_by', 'delivered_by_name', 'driver_name']) || '—'));
-    lines.push('');
-  }
-  if (hasTrip) {
-    lines.push('TRUCK DETAILS');
-    lines.push('Registration: ' + (pick(truck, ['reg', 'registration', 'licence_plate']) || '—'));
-    lines.push('Type: ' + (pick(truck, ['type', 'truck_type', 'vehicle_type']) || '—'));
-    lines.push('');
-    lines.push('DRIVER DETAILS');
-    lines.push('Name: ' + (pick(driver, ['name', 'driver_name', 'full_name']) || '—'));
-    lines.push('Phone: ' + (pick(driver, ['phone', 'mobile', 'phone_number']) || '—'));
-    lines.push('');
-  }
-  if (events && events.length) {
-    lines.push('TIMELINE');
-    events.forEach(function (ev) {
-      lines.push((ev.ts || '—') + '  —  ' + ev.label + (ev.detail ? ' (' + ev.detail + ')' : ''));
-    });
-  }
-  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const safeId = String(trip.container || trip.id || query || 'shipment').replace(/[^a-zA-Z0-9-]/g, '');
-  a.href = url;
-  a.download = 'Gargo-Tracking-' + safeId + '.txt';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-
-function initFleetLivePanel() {
-  const grid = document.getElementById('fleetLiveGrid');
-  if (!grid) return;
-  grid.innerHTML = '<div class="empty-state">Loading fleet status…</div>';
-  window.bridge.fleetStatus()
-    .then(function (data) {
-      if (!data.trucks || !data.trucks.length) {
-        grid.innerHTML = '<div class="empty-state">No trucks in the fleet yet</div>';
-        return;
+      doc.text('Shipment Tracking Report — generated ' + new Date().toLocaleString(), marginX, y);
+      y += 30;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(dark[0], dark[1], dark[2]);
+      doc.text('BOOKING DETAILS', marginX, y);
+      y += 8;
+      doc.setDrawColor(225, 225, 225);
+      doc.setLineWidth(0.75);
+      doc.line(marginX, y, pageWidth - marginX, y);
+      y += 20;
+      const bookingRows = [
+        ['Container / Ref', trip.container || trip.id || query || '—'],
+        ['Route', (trip.origin || '—') + '  →  ' + (trip.destination || '—')],
+        ['Status', (trip.status ? trip.status.charAt(0).toUpperCase() + trip.status.slice(1) : '—')],
+        ['ETA', trip.status === 'active' ? 'In transit' : (trip.status === 'completed' ? 'Delivered' : '—')],
+        ['Booked', trip.created || '—'],
+      ];
+      y = pdfKeyValueRows(doc, bookingRows, marginX, y, pageWidth);
+      if (storage) {
+        y += 16;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('STORAGE DETAILS', marginX, y);
+        y += 8;
+        doc.line(marginX, y, pageWidth - marginX, y);
+        y += 20;
+        const storageRows = [
+          ['Zone', pick(storage, ['zone_name', 'zone']) || '—'],
+          ['Offload Time', fmtDateTime(pick(storage, ['offloaded_at', 'offload_time', 'gate_in_time'])) || '—'],
+          ['Storage Status', getStorageStatusLabel(hasTrip, trip, storage)],
+          ['Delivered By', pick(storage, ['delivered_by', 'delivered_by_name', 'driver_name']) || '—'],
+        ];
+        y = pdfKeyValueRows(doc, storageRows, marginX, y, pageWidth);
       }
-      grid.innerHTML = data.trucks.map(function (t) {
-        const statusLabel = { on_trip: 'En Route', available: 'Available', maintenance: 'Maintenance', breakdown: 'Breakdown', off_duty: 'Off Duty' }[t.status] || t.status;
-        return (
-          '<div class="fleet-live-item">' +
-          '<strong>' + t.reg + '</strong>' +
-          '<div>' + statusLabel + '</div>' +
-          '<div style="opacity:.7;font-size:12px;">' + (t.type || '') + '</div>' +
-          '</div>'
-        );
-      }).join('');
-    })
-    .catch(function () {
-      grid.innerHTML = '<div class="empty-state">Could not load fleet status</div>';
-    });
-}
-
-
-function sendContact() {
-  const name = document.getElementById('cName');
-  const email = document.getElementById('cEmail');
-  const message = document.getElementById('cMessage');
-  if (!name || !name.value.trim() || !email || !email.value.trim() || !message || !message.value.trim()) {
-    showNotification('Missing Information', 'Please fill in your name, email, and message.', '⚠️');
-    return;
-  }
-  if (!/^\S+@\S+\.\S+$/.test(email.value.trim())) {
-    showNotification('Invalid Email', 'Please enter a valid email address.', '⚠️');
-    email.focus();
-    return;
-  }
-
-  const get = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
-  const payload = {
-    full_name: get('cName'),
-    company: get('cCompany'),
-    email: get('cEmail'),
-    phone: get('cPhone'),
-    subject: get('cSubject'),
-    contact_method: get('cContactMethod'),
-    message: get('cMessage')
-  };
-
-  window.bridge.submitContact(payload)
-    .then(function () {
-      showNotification('Message Sent', 'Our team will respond within 2 hours', '✅');
-      ['cName', 'cCompany', 'cEmail', 'cPhone', 'cMessage'].forEach(function (id) {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-      });
-      const subjectEl = document.getElementById('cSubject');
-      if (subjectEl) subjectEl.selectedIndex = 0;
-    })
-    .catch(function (err) {
-      showNotification('Message Failed', err.message || 'Please try again', '❌');
-    });
-}
-window.sendContact = sendContact;
-
-
-function init() {
-  initLoader();
-  initTicker();
-  initModal();
-  initMobileMenu();
-  initScrollTop();
-  initChatbot();
-  initHeroSlideshow();
-  renderFaq();
-  runCalc();
-  initFleetLivePanel();
-
-  const calcInputs = ['calcOrigin', 'calcDest', 'calcWeight', 'calcService'];
-  calcInputs.forEach(function (id) {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('change', runCalc);
-      el.addEventListener('input', runCalc);
+      if (hasTrip) {
+        y += 16;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('TRUCK DETAILS', marginX, y);
+        y += 8;
+        doc.line(marginX, y, pageWidth - marginX, y);
+        y += 20;
+        const truckRows = [
+          ['Registration', pick(truck, ['reg', 'registration', 'licence_plate', 'licencePlate', 'plate', 'vehicle_reg']) || pick(trip, ['truck_reg', 'truckReg']) || '—'],
+          ['Type', pick(truck, ['type', 'truck_type', 'vehicle_type', 'make']) || pick(trip, ['truck_type', 'truckType']) || '—'],
+          ['Status', pick(truck, ['status', 'truck_status', 'vehicle_status']) || pick(trip, ['truck_status', 'truckStatus']) || '—'],
+        ];
+        y = pdfKeyValueRows(doc, truckRows, marginX, y, pageWidth);
+        y += 16;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('DRIVER DETAILS', marginX, y);
+        y += 8;
+        doc.line(marginX, y, pageWidth - marginX, y);
+        y += 20;
+        const driverRows = [
+          ['Name', pick(driver, ['name', 'driver_name', 'full_name']) || pick(trip, ['driver_name', 'driverName']) || '—'],
+          ['Phone', pick(driver, ['phone', 'mobile', 'phone_number', 'contact']) || pick(trip, ['driver_phone', 'driverPhone']) || '—'],
+          ['Licence', pick(driver, ['licence', 'license', 'licence_no', 'license_no', 'licenceNo', 'licenseNo']) || pick(trip, ['driver_licence', 'driver_license']) || '—'],
+        ];
+        y = pdfKeyValueRows(doc, driverRows, marginX, y, pageWidth);
+      }
+      if (events && events.length) {
+        y += 16;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('TIMELINE', marginX, y);
+        y += 8;
+        doc.line(marginX, y, pageWidth - marginX, y);
+        y += 20;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        events.forEach(function (ev) {
+          if (y > 760) { doc.addPage(); y = 56; }
+          doc.setTextColor(gold[0], gold[1], gold[2]);
+          doc.text(String(ev.ts || '—'), marginX, y);
+          doc.setTextColor(dark[0], dark[1], dark[2]);
+          const label = ev.label + (ev.detail ? ' — ' + ev.detail : '');
+          doc.text(label, marginX + 90, y);
+          y += 18;
+        });
+      }
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(gray[0], gray[1], gray[2]);
+        doc.text('Gargo Logistics Ltd — generated automatically for reference only. For disputes, contact support.', marginX, 810);
+      }
+      const safeId = String(trip.container || trip.id || query || 'shipment').replace(/[^a-zA-Z0-9-]/g, '');
+      doc.save('Gargo-Tracking-' + safeId + '.pdf');
+    } catch (e) {
+      console.error('PDF generation failed, falling back to text file:', e);
+      downloadTrackingReportAsText(details, query);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '⬇ Download Report'; }
     }
-  });
-
-  if (document.getElementById('booking-page') && document.getElementById('booking-page').classList.contains('active-page')) {
-    initBookingPage();
   }
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+  window.downloadTrackingReport = downloadTrackingReport;
+  function pdfKeyValueRows(doc, rows, marginX, y, pageWidth) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    rows.forEach(function (row) {
+      if (y > 760) { doc.addPage(); y = 56; }
+      doc.setTextColor(110, 110, 110);
+      doc.text(row[0], marginX, y);
+      doc.setTextColor(20, 20, 20);
+      doc.text(String(row[1]), marginX + 130, y);
+      y += 18;
+    });
+    return y;
+  }
+  function downloadTrackingReportAsText(details, query) {
+    const { trip: rawTrip, truck, driver, events, storage, booking } = details;
+    const hasTrip = !!rawTrip;
+    const trip = rawTrip || {
+      container: (booking && booking.container) || query,
+      id: query,
+      origin: (booking && booking.pickup_location) || '—',
+      destination: (booking && booking.dropoff_location) || (storage && (storage.zone_name || storage.zone)) || 'Gargo Haven Depot',
+      status: (booking && booking.status) || (storage ? 'in_storage' : 'pending'),
+      created: (booking && booking.created_at) || '—',
+    };
+    const lines = [];
+    lines.push('GARGO LOGISTICS — SHIPMENT TRACKING REPORT');
+    lines.push('Generated: ' + new Date().toLocaleString());
+    lines.push('');
+    lines.push('BOOKING DETAILS');
+    lines.push('Container / Ref: ' + (trip.container || trip.id || query || '—'));
+    lines.push('Route: ' + (trip.origin || '—') + '  ->  ' + (trip.destination || '—'));
+    lines.push('Status: ' + (trip.status || '—'));
+    lines.push('Booked: ' + (trip.created || '—'));
+    lines.push('');
+    if (storage) {
+      lines.push('STORAGE DETAILS');
+      lines.push('Zone: ' + (pick(storage, ['zone_name', 'zone']) || '—'));
+      lines.push('Offload Time: ' + (fmtDateTime(pick(storage, ['offloaded_at', 'offload_time', 'gate_in_time'])) || '—'));
+      lines.push('Storage Status: ' + getStorageStatusLabel(hasTrip, trip, storage));
+      lines.push('Delivered By: ' + (pick(storage, ['delivered_by', 'delivered_by_name', 'driver_name']) || '—'));
+      lines.push('');
+    }
+    if (hasTrip) {
+      lines.push('TRUCK DETAILS');
+      lines.push('Registration: ' + (pick(truck, ['reg', 'registration', 'licence_plate']) || '—'));
+      lines.push('Type: ' + (pick(truck, ['type', 'truck_type', 'vehicle_type']) || '—'));
+      lines.push('');
+      lines.push('DRIVER DETAILS');
+      lines.push('Name: ' + (pick(driver, ['name', 'driver_name', 'full_name']) || '—'));
+      lines.push('Phone: ' + (pick(driver, ['phone', 'mobile', 'phone_number']) || '—'));
+      lines.push('');
+    }
+    if (events && events.length) {
+      lines.push('TIMELINE');
+      events.forEach(function (ev) {
+        lines.push((ev.ts || '—') + '  —  ' + ev.label + (ev.detail ? ' (' + ev.detail + ')' : ''));
+      });
+    }
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const safeId = String(trip.container || trip.id || query || 'shipment').replace(/[^a-zA-Z0-9-]/g, '');
+    a.href = url;
+    a.download = 'Gargo-Tracking-' + safeId + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+  function initFleetLivePanel() {
+    const grid = document.getElementById('fleetLiveGrid');
+    if (!grid) return;
+    grid.innerHTML = '<div class="empty-state">Loading fleet status…</div>';
+    window.bridge.fleetStatus()
+      .then(function (data) {
+        if (!data.trucks || !data.trucks.length) {
+          grid.innerHTML = '<div class="empty-state">No trucks in the fleet yet</div>';
+          return;
+        }
+        grid.innerHTML = data.trucks.map(function (t) {
+          const statusLabel = { on_trip: 'En Route', available: 'Available', maintenance: 'Maintenance', breakdown: 'Breakdown', off_duty: 'Off Duty' }[t.status] || t.status;
+          return (
+            '<div class="fleet-live-item">' +
+            '<strong>' + t.reg + '</strong>' +
+            '<div>' + statusLabel + '</div>' +
+            '<div style="opacity:.7;font-size:12px;">' + (t.type || '') + '</div>' +
+            '</div>'
+          );
+        }).join('');
+      })
+      .catch(function () {
+        grid.innerHTML = '<div class="empty-state">Could not load fleet status</div>';
+      });
+  }
+  function sendContact() {
+    const name = document.getElementById('cName');
+    const email = document.getElementById('cEmail');
+    const message = document.getElementById('cMessage');
+    if (!name || !name.value.trim() || !email || !email.value.trim() || !message || !message.value.trim()) {
+      showNotification('Missing Information', 'Please fill in your name, email, and message.', '⚠️');
+      return;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email.value.trim())) {
+      showNotification('Invalid Email', 'Please enter a valid email address.', '⚠️');
+      email.focus();
+      return;
+    }
+    const get = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    const payload = {
+      full_name: get('cName'),
+      company: get('cCompany'),
+      email: get('cEmail'),
+      phone: get('cPhone'),
+      subject: get('cSubject'),
+      contact_method: get('cContactMethod'),
+      message: get('cMessage')
+    };
+    window.bridge.submitContact(payload)
+      .then(function () {
+        showNotification('Message Sent', 'Our team will respond within 2 hours', '✅');
+        ['cName', 'cCompany', 'cEmail', 'cPhone', 'cMessage'].forEach(function (id) {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        const subjectEl = document.getElementById('cSubject');
+        if (subjectEl) subjectEl.selectedIndex = 0;
+      })
+      .catch(function (err) {
+        showNotification('Message Failed', err.message || 'Please try again', '❌');
+      });
+  }
+  window.sendContact = sendContact;
+  function init() {
+    initLoader();
+    initTicker();
+    initModal();
+    initMobileMenu();
+    initScrollTop();
+    initChatbot();
+    initHeroSlideshow();
+    renderFaq();
+    runCalc();
+    initFleetLivePanel();
+    const calcInputs = ['calcOrigin', 'calcDest', 'calcWeight', 'calcService'];
+    calcInputs.forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('change', runCalc);
+        el.addEventListener('input', runCalc);
+      }
+    });
+    if (document.getElementById('booking-page') && document.getElementById('booking-page').classList.contains('active-page')) {
+      initBookingPage();
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
-
-
 const SUBPAGES = {
-
   'company-overview': {
     parent: 'about',
     title: 'Company Overview',
@@ -1705,20 +1398,18 @@ const SUBPAGES = {
           <div class="stat-block"><div class="stat-num">400+</div><div class="stat-lbl">Clients</div><div class="stat-desc">Lines to SMEs</div></div>
         </div>
       </section>
-
-        <section class="cta-band-img" style="background-image:url('images/depot8.png')">
-    <div class="cta-band-overlay"></div>
-    <div class="cta-band-content">
-      <h2>Ready to Move Your Containers?</h2>
-      <p>Get an instant quote for depot storage or port haulage in seconds.</p>
-      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
-        <button class="btn-primary" onclick="navigateToPage('booking')">Start a Booking →</button>
-        <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
-      </div>
-    </div>
-  </section>`,
+      <section class="cta-band-img" style="background-image:url('images/depot8.png')">
+        <div class="cta-band-overlay"></div>
+        <div class="cta-band-content">
+          <h2>Ready to Move Your Containers?</h2>
+          <p>Get an instant quote for depot storage or port haulage in seconds.</p>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
+            <button class="btn-primary" onclick="navigateToPage('booking')">Start a Booking →</button>
+            <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
+          </div>
+        </div>
+      </section>`,
   },
-
   'mission-vision': {
     parent: 'about',
     title: 'Mission & Vision',
@@ -1734,7 +1425,7 @@ const SUBPAGES = {
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:56px;">
             <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:12px;padding:40px;">
-              <div class="section-tag" style="margin-bottom:20px;"> ✦ Our Mission</div>
+              <div class="section-tag" style="margin-bottom:20px;">  Our Mission</div>
               <h3 style="font-family:var(--font-main);font-size:18px;color:var(--white);margin-bottom:16px;">Reliable. Transparent. Professional.</h3>
               <p style="color:var(--gray-light);line-height:1.8; font-size:14px;">To provide Mombasa's port community with Africa's most reliable and transparent empty container depot and transport service — combining world-class infrastructure, digital innovation, and a people-first culture that delivers for every client, every move, every day.</p>
             </div>
@@ -1752,20 +1443,18 @@ const SUBPAGES = {
           </div>
         </div>
       </section>
-      
       <section class="cta-band-img" style="background-image:url('images/depot8.png')">
-    <div class="cta-band-overlay"></div>
-    <div class="cta-band-content">
-      <h2>Ready to Move Your Containers?</h2>
-      <p>Get an instant quote for depot storage or port haulage in seconds.</p>
-      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
-        <button class="btn-primary" onclick="navigateToPage('booking')">Start a Booking →</button>
-        <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
-      </div>
-    </div>
-  </section>`,
+        <div class="cta-band-overlay"></div>
+        <div class="cta-band-content">
+          <h2>Ready to Move Your Containers?</h2>
+          <p>Get an instant quote for depot storage or port haulage in seconds.</p>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
+            <button class="btn-primary" onclick="navigateToPage('booking')">Start a Booking →</button>
+            <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
+          </div>
+        </div>
+      </section>`,
   },
-
   'team': {
     parent: 'about',
     title: 'Leadership Team',
@@ -1788,35 +1477,6 @@ const SUBPAGES = {
                 <p>Visionary behind Gargo Haven's founding in 2014. Ben has over 15 years of experience in Mombasa port logistics, formerly managing container operations at KPA. He established Gargo Haven's foundational partnerships with APM Terminals and shaped the company's technology-first approach to depot management.</p>
               </div>
             </div>
-
-            <!--<div class="team-card">
-              <div class="team-avatar" style="font-size:32px;display:flex;align-items:center;justify-content:center;">👤</div>
-              <div class="team-info">
-                <h4>Operations Director</h4>
-                <span class="role">Head of Depot & Fleet Operations</span>
-                <p>Oversees day-to-day operations across all five depot locations and the 120+ truck fleet. Specialist in yard management systems and container throughput optimization. Led the expansion into Consolebase ICD and the Hakika and Fortune depot alliance agreements.</p>
-              </div>
-            </div>-->
-
-            <!--<div class="team-card">
-              <div class="team-avatar" style="font-size:32px;display:flex;align-items:center;justify-content:center;">👤</div>
-              <div class="team-info">
-                <h4>Head of Technology</h4>
-                <span class="role">Chief Technology Officer</span>
-                <p>Built Gargo Haven's GPS tracking and depot management platform from the ground up in 2018 — making Gargo the first Mombasa depot to offer real-time container and truck tracking. Manages the client portal, gate system, and EIR digitisation infrastructure.</p>
-              </div>
-            </div>-->
-
-           <!--<div class="team-card">
-              <div class="team-avatar" style="font-size:32px;display:flex;align-items:center;justify-content:center;">👤</div>
-              <div class="team-info">
-                <h4>Compliance & Customs Manager</h4>
-                <span class="role">Head of Documentation & Compliance</span>
-                <p>Manages all KRA customs documentation, KPA compliance, and EIR processing. Former KRA Customs Officer with deep knowledge of port regulations and bonded transport requirements. Ensures Gargo Haven's full regulatory compliance across all depot and transport operations.</p>
-              </div>
-            </div>-->
-
-
           </div>
           <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;">
             <h3 style="font-family:var(--font-main);font-size:22px;color:var(--white);margin-bottom:12px;">Join the Gargo Haven Team</h3>
@@ -1825,25 +1485,23 @@ const SUBPAGES = {
           </div>
         </div>
       </section>
-      
-        <section class="cta-band-img" style="background-image:url('images/depot8.png')">
-    <div class="cta-band-overlay"></div>
-    <div class="cta-band-content">
-      <h2>Ready to Move Your Containers?</h2>
-      <p>Get an instant quote for depot storage or port haulage in seconds.</p>
-      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
-        <button class="btn-primary" onclick="navigateToPage('booking')">Start a Booking →</button>
-        <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
-      </div>
-    </div>
-  </section>`,
+      <section class="cta-band-img" style="background-image:url('images/depot8.png')">
+        <div class="cta-band-overlay"></div>
+        <div class="cta-band-content">
+          <h2>Ready to Move Your Containers?</h2>
+          <p>Get an instant quote for depot storage or port haulage in seconds.</p>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
+            <button class="btn-primary" onclick="navigateToPage('booking')">Start a Booking →</button>
+            <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
+          </div>
+        </div>
+      </section>`,
   },
-
   'about-gargo': {
     parent: 'about',
     title: 'About Gargo Haven',
     hero: 'images/gargo1.png',
-    tag: ' ✦ Our Story',
+    tag: '  Our Story',
     render: () => `
       <section class="section-light">
         <div class="section-inner">
@@ -1879,80 +1537,25 @@ const SUBPAGES = {
           </div>
         </div>
       </section>
-      
-        <section class="cta-band-img" style="background-image:url('images/depot8.png')">
-    <div class="cta-band-overlay"></div>
-    <div class="cta-band-content">
-      <h2>Ready to Move Your Containers?</h2>
-      <p>Get an instant quote for depot storage or port haulage in seconds.</p>
-      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
-        <button class="btn-primary" onclick="navigateToPage('booking')">Start a Booking →</button>
-        <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
-      </div>
-    </div>
-  </section>`,
+      <section class="cta-band-img" style="background-image:url('images/depot8.png')">
+        <div class="cta-band-overlay"></div>
+        <div class="cta-band-content">
+          <h2>Ready to Move Your Containers?</h2>
+          <p>Get an instant quote for depot storage or port haulage in seconds.</p>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
+            <button class="btn-primary" onclick="navigateToPage('booking')">Start a Booking →</button>
+            <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
+          </div>
+        </div>
+      </section>`,
   },
-
   'certifications': {
     parent: 'about',
     title: 'Certifications & Accreditations',
     hero: 'images/gargo2.png',
     tag: ' ✦ Standards',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="section-header">
-            <div class="section-tag"> ✦ Accreditations</div>
-            <h2 class="section-title">Certified to the <span>Highest Standard</span></h2>
-            <p class="section-sub">Gargo Haven holds all major certifications required to serve Mombasa Port's international shipping community.</p>
-          </div>
-          <div class="cert-grid" style="margin-bottom:60px;">
-            <div class="cert-card" style="padding:36px 24px;">
-              <div class="ci" style="font-size:28px;margin-bottom:16px;">🏅</div>
-              <h5>IICL Certified</h5>
-              <span>Container Inspection & Repair</span>
-              <p style="color:var(--gray-light);font-size:13px;margin-top:12px;line-height:1.7;">Our M&R workshop and inspection team hold full IICL (Institute of International Container Lessors) certification — the gold standard for container condition assessment and repair globally. All damage surveys, repair estimates, and completed work meet IICL methodology.</p>
-            </div>
-            <div class="cert-card" style="padding:36px 24px;">
-              <div class="ci" style="font-size:28px;margin-bottom:16px;">🏛️</div>
-              <h5>KPA Licensed</h5>
-              <span>Kenya Ports Authority Depot Operator</span>
-              <p style="color:var(--gray-light);font-size:13px;margin-top:12px;line-height:1.7;">Gargo Haven holds an active Kenya Ports Authority depot operator licence, authorising us to accept and release containers linked to KPA-managed port operations. Our licence covers all container types including dry, reefer, OOG, and tank containers.</p>
-            </div>
-            <div class="cert-card" style="padding:36px 24px;">
-              <div class="ci" style="font-size:28px;margin-bottom:16px;">📋</div>
-              <h5>KRA Compliant</h5>
-              <span>Kenya Revenue Authority — Customs</span>
-              <p style="color:var(--gray-light);font-size:13px;margin-top:12px;line-height:1.7;">Full KRA compliance for all customs documentation, bonded transport, and container release processes. Our compliance team manages all KRA declarations, fumigation certificates, and customs-cleared container movements.</p>
-            </div>
-            <div class="cert-card" style="padding:36px 24px;">
-              <div class="ci" style="font-size:28px;margin-bottom:16px;">✅</div>
-              <h5>ISO 9001:2015</h5>
-              <span>Quality Management System</span>
-              <p style="color:var(--gray-light);font-size:13px;margin-top:12px;line-height:1.7;">ISO 9001:2015 certification covers all depot and transport operations — gate-in/gate-out procedures, EIR issuance, truck dispatch, container repair, and client documentation. Annual audits ensure continued conformance.</p>
-            </div>
-            <div class="cert-card" style="padding:36px 24px;">
-              <div class="ci" style="font-size:28px;margin-bottom:16px;">❄️</div>
-              <h5>Reefer Certified</h5>
-              <span>Refrigerated Container Management</span>
-              <p style="color:var(--gray-light);font-size:13px;margin-top:12px;line-height:1.7;">Our reefer yard team is trained and certified in pre-trip inspection, temperature monitoring, and reefer unit repair for all major brands. 200+ plug-in points. 24/7 temperature alarm monitoring. Genset hire available.</p>
-            </div>
-            <div class="cert-card" style="padding:36px 24px;">
-              <div class="ci" style="font-size:28px;margin-bottom:16px;">📍</div>
-              <h5>GPS Fleet Certified</h5>
-              <span>Real-Time Fleet Tracking</span>
-              <p style="color:var(--gray-light);font-size:13px;margin-top:12px;line-height:1.7;">Every Gargo Haven truck is fitted with a certified GPS tracking unit. Live position, speed, route history, and geofencing alerts are available to clients through our tracking portal at all times.</p>
-            </div>
-          </div>
-          <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;">
-            <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin-bottom:12px;">Need Compliance Documentation?</h3>
-            <p style="color:var(--gray-light);margin-bottom:24px;">Our compliance team can provide copies of all certificates and accreditation documents for your shipping line or auditor on request.</p>
-            <button class="btn-primary" onclick="navigateToPage('contact')">Request Documents →</button>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="section-header"> <div class="section-tag"> ✦ Accreditations</div> <h2 class="section-title">Certified to the <span>Highest Standard</span></h2> <p class="section-sub">Gargo Haven holds all major certifications required to serve Mombasa Port's international shipping community.</p> </div> <div class="cert-grid" style="margin-bottom:60px;"> <div class="cert-card" style="padding:36px 24px;"> <div class="ci" style="font-size:28px;margin-bottom:16px;">🏅</div> <h5>IICL Certified</h5> <span>Container Inspection & Repair</span> <p style="color:var(--gray-light);font-size:13px;margin-top:12px;line-height:1.7;">Our M&R workshop and inspection team hold full IICL (Institute of International Container Lessors) certification — the gold standard for container condition assessment and repair globally. All damage surveys, repair estimates, and completed work meet IICL methodology.</p> </div> <div class="cert-card" style="padding:36px 24px;"> <div class="ci" style="font-size:28px;margin-bottom:16px;">🏛️</div> <h5>KPA Licensed</h5> <span>Kenya Ports Authority Depot Operator</span> <p style="color:var(--gray-light);font-size:13px;margin-top:12px;line-height:1.7;">Gargo Haven holds an active Kenya Ports Authority depot operator licence, authorising us to accept and release containers linked to KPA-managed port operations. Our licence covers all container types including dry, reefer, OOG, and tank containers.</p> </div> <div class="cert-card" style="padding:36px 24px;"> <div class="ci" style="font-size:28px;margin-bottom:16px;">📋</div> <h5>KRA Compliant</h5> <span>Kenya Revenue Authority — Customs</span> <p style="color:var(--gray-light);font-size:13px;margin-top:12px;line-height:1.7;">Full KRA compliance for all customs documentation, bonded transport, and container release processes. Our compliance team manages all KRA declarations, fumigation certificates, and customs-cleared container movements.</p> </div> <div class="cert-card" style="padding:36px 24px;"> <div class="ci" style="font-size:28px;margin-bottom:16px;">✅</div> <h5>ISO 9001:2015</h5> <span>Quality Management System</span> <p style="color:var(--gray-light);font-size:13px;margin-top:12px;line-height:1.7;">ISO 9001:2015 certification covers all depot and transport operations — gate-in/gate-out procedures, EIR issuance, truck dispatch, container repair, and client documentation. Annual audits ensure continued conformance.</p> </div> <div class="cert-card" style="padding:36px 24px;"> <div class="ci" style="font-size:28px;margin-bottom:16px;">❄️</div> <h5>Reefer Certified</h5> <span>Refrigerated Container Management</span> <p style="color:var(--gray-light);font-size:13px;margin-top:12px;line-height:1.7;">Our reefer yard team is trained and certified in pre-trip inspection, temperature monitoring, and reefer unit repair for all major brands. 200+ plug-in points. 24/7 temperature alarm monitoring. Genset hire available.</p> </div> <div class="cert-card" style="padding:36px 24px;"> <div class="ci" style="font-size:28px;margin-bottom:16px;">📍</div> <h5>GPS Fleet Certified</h5> <span>Real-Time Fleet Tracking</span> <p style="color:var(--gray-light);font-size:13px;margin-top:12px;line-height:1.7;">Every Gargo Haven truck is fitted with a certified GPS tracking unit. Live position, speed, route history, and geofencing alerts are available to clients through our tracking portal at all times.</p> </div> </div> <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;"> <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin-bottom:12px;">Need Compliance Documentation?</h3> <p style="color:var(--gray-light);margin-bottom:24px;">Our compliance team can provide copies of all certificates and accreditation documents for your shipping line or auditor on request.</p> <button class="btn-primary" onclick="navigateToPage('contact')">Request Documents →</button> </div> </div> </section>`,
   },
-
   'partners': {
     parent: 'about',
     title: 'Partners & Alliances',
@@ -1966,1525 +1569,415 @@ const SUBPAGES = {
             <h2 class="section-title">A Network Built on <span>Trust</span></h2>
             <p class="section-sub">Gargo Haven's value to clients comes in large part from the strength of our partnerships across Mombasa's container ecosystem.</p>
           </div>
-
-
-          <!-- CLIENTS -->
           <section class="clients-section">
-          <div class="clients">
-            <div class="ticker-label">Our Trusted Partners</div>
-
-
-          <div class="ticker-track" id="ticker">
-          
-            <!--Original-->
-          <div style="text-align: center;">
-            <a  href="https://www.kpa.co.ke/" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/KPA Logo.png" alt="KPA Logo" style="width: 90px; height: 80px; margin-left: 6px;">
-              </div>
-              <p class="client-link">Kenya Ports Authority</p>
-            </a>
-          </div>
-
-          <div style="text-align: center;">
-            <a  href="https://www.kra.go.ke/" target="_blank">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/KRA.png" alt="KRA Logo" style="width: 140px; height: 50px; margin-left: 0px;">
-              </div>
-              <p class="client-link"> Kenya Revenue Authority</p>
-            </a>
-          </div>
-   
-            <div style="text-align: center;">
-              <a href="https://www.maersk.com/" target="_blank" class="client-block">
-                <div class="client-logo">
-                  <span class="cl-sep"></span>
-                  <img src="images/MAERSK.png" alt="MAERSK Logo" style="width: 100px; height: 60px; margin-left: 15px;">
+            <div class="clients">
+              <div class="ticker-label">Our Trusted Partners</div>
+              <div class="ticker-track" id="ticker">
+                <div style="text-align: center;">
+                  <a href="https://www.kpa.co.ke/" target="_blank" class="client-block">
+                    <div class="client-logo">
+                      <span class="cl-sep"></span>
+                      <img src="images/KPA Logo.png" alt="KPA Logo" style="width: 90px; height: 80px; margin-left: 6px;">
+                    </div>
+                    <p class="client-link">Kenya Ports Authority</p>
+                  </a>
                 </div>
-                <p class="client-link">MAERSK</p>
-              </a>
-            </div>
-   
-            <div style="text-align: center;">
-              <a href="https://www.msc.com/" target="_blank" class="client-block">
-                <div class="client-logo">
-                  <span class="cl-sep"></span>
-                  <img src="images/msc.png" alt="MSC Logo" style="width: 78px; height: 50px; margin-left: 25px;">
+                <div style="text-align: center;">
+                  <a href="https://www.kra.go.ke/" target="_blank">
+                    <div class="client-logo">
+                      <span class="cl-sep"></span>
+                      <img src="images/KRA.png" alt="KRA Logo" style="width: 140px; height: 50px; margin-left: 0px;">
+                    </div>
+                    <p class="client-link"> Kenya Revenue Authority</p>
+                  </a>
                 </div>
-                <p class="client-link" >Mediterenian Shipping Company</p>
-              </a>
-            </div>
-        
-          <div style="text-align: center;">
-            <a  href="https://hakikatransport.com/" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/Hakika TS logo.png" alt="Hakika TS Logo" style="width: 160px; height: 60px;">
-              </div>
-              <p class="client-link">Hakika Transport Services</p>
-            </a>
-          </div>
-
-          <div style="text-align: center;">
-            <a href="https://www.consolbase.co.ke/" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/consolbase.png" alt="Consolbase Logo" style="width: 100px; height: 40px; margin-left: 0px;">
-              </div>
-              <p class="client-link"> Consolbase Limited</p>
-            </a>
-          </div>
-
-          <div style="text-align: center;">
-            <a  href="https://jastarlogisticslimited.co.ke/" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/Jastar logo.png" alt="Jastar Logo" style="width: 70px; height: 60px; margin-left: 0px;">
-              </div>
-              <p class="client-link">Jastar Logistics</p>
-            </a>
-          </div>
-
-
-          <!--Duplicate logos for smooth scrolling--> 
-          <div style="text-align: center;">
-            <a  href="https://www.kpa.co.ke/" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/KPA Logo.png" alt="KPA Logo" style="width: 90px; height: 80px; margin-left: 6px;">
-              </div>
-              <p class="client-link">Kenya Ports Authority</p>
-            </a>
-          </div>
-
-          <div style="text-align: center;">
-            <a  href="https://www.kra.go.ke/" target="_blank">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/KRA.png" alt="KRA Logo" style="width: 140px; height: 50px; margin-left: 0px;">
-              </div>
-              <p class="client-link"> Kenya Revenue Authority</p>
-            </a>
-          </div>
-   
-            <div style="text-align: center;">
-              <a href="https://www.maersk.com/" target="_blank" class="client-block">
-                <div class="client-logo">
-                  <span class="cl-sep"></span>
-                  <img src="images/MAERSK.png" alt="MAERSK Logo" style="width: 100px; height: 60px; margin-left: 15px;">
+                <div style="text-align: center;">
+                  <a href="https://www.maersk.com/" target="_blank" class="client-block">
+                    <div class="client-logo">
+                      <span class="cl-sep"></span>
+                      <img src="images/MAERSK.png" alt="MAERSK Logo" style="width: 100px; height: 60px; margin-left: 15px;">
+                    </div>
+                    <p class="client-link">MAERSK</p>
+                  </a>
                 </div>
-                <p class="client-link">MAERSK</p>
-              </a>
-            </div>
-   
-            <div style="text-align: center;">
-              <a href="https://www.msc.com/" target="_blank" class="client-block">
-                <div class="client-logo">
-                  <span class="cl-sep"></span>
-                  <img src="images/msc.png" alt="MSC Logo" style="width: 78px; height: 50px; margin-left: 25px;">
+                <div style="text-align: center;">
+                  <a href="https://www.msc.com/" target="_blank" class="client-block">
+                    <div class="client-logo">
+                      <span class="cl-sep"></span>
+                      <img src="images/msc.png" alt="MSC Logo" style="width: 78px; height: 50px; margin-left: 25px;">
+                    </div>
+                    <p class="client-link">Mediterenian Shipping Company</p>
+                  </a>
                 </div>
-                <p class="client-link" >Mediterenian Shipping Company</p>
-              </a>
-            </div>
-        
-          <div style="text-align: center;">
-            <a  href="https://hakikatransport.com//" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/Hakika TS logo.png" alt="Hakika TS Logo" style="width: 160px; height: 60px;">
-              </div>
-              <p class="client-link">Hakika Transport Services</p>
-            </a>
-          </div>
-
-          <div style="text-align: center;">
-            <a href="https://www.consolbase.co.ke/" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/consolbase.png" alt="Consolbase Logo" style="width: 100px; height: 40px; margin-left: 0px;">
-              </div>
-              <p class="client-link"> Consolbase Limited</p>
-            </a>
-          </div>
-
-          <div style="text-align: center;">
-            <a  href="https://jastarlogisticslimited.co.ke/" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/Jastar logo.png" alt="Jastar Logo" style="width: 70px; height: 60px; margin-left: 0px;">
-              </div>
-              <p class="client-link">Jastar Logistics</p>
-            </a>
-          </div>
-    
-
-          <!--Additional duplicates for continuous scroll-->
-          <div style="text-align: center;">
-            <a  href="https://www.kpa.co.ke/" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/KPA Logo.png" alt="KPA Logo" style="width: 90px; height: 80px; margin-left: 6px;">
-              </div>
-              <p class="client-link">Kenya Ports Authority</p>
-            </a>
-          </div>
-
-          <div style="text-align: center;">
-            <a  href="https://www.kra.go.ke/" target="_blank">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/KRA.png" alt="KRA Logo" style="width: 140px; height: 50px; margin-left: 0px;">
-              </div>
-              <p class="client-link"> Kenya Revenue Authority</p>
-            </a>
-          </div>
-   
-            <div style="text-align: center;">
-              <a href="https://www.maersk.com/" target="_blank" class="client-block">
-                <div class="client-logo">
-                  <span class="cl-sep"></span>
-                  <img src="images/MAERSK.png" alt="MAERSK Logo" style="width: 100px; height: 60px; margin-left: 15px;">
+                <div style="text-align: center;">
+                  <a href="https://hakikatransport.com/" target="_blank" class="client-block">
+                    <div class="client-logo">
+                      <span class="cl-sep"></span>
+                      <img src="images/Hakika TS logo.png" alt="Hakika TS Logo" style="width: 160px; height: 60px;">
+                    </div>
+                    <p class="client-link">Hakika Transport Services</p>
+                  </a>
                 </div>
-                <p class="client-link">MAERSK</p>
-              </a>
-            </div>
-   
-            <div style="text-align: center;">
-              <a href="https://www.msc.com/" target="_blank" class="client-block">
-                <div class="client-logo">
-                  <span class="cl-sep"></span>
-                  <img src="images/msc.png" alt="MSC Logo" style="width: 78px; height: 50px; margin-left: 25px;">
+                <div style="text-align: center;">
+                  <a href="https://www.consolbase.co.ke/" target="_blank" class="client-block">
+                    <div class="client-logo">
+                      <span class="cl-sep"></span>
+                      <img src="images/consolbase.png" alt="Consolbase Logo" style="width: 100px; height: 40px; margin-left: 0px;">
+                    </div>
+                    <p class="client-link"> Consolbase Limited</p>
+                  </a>
                 </div>
-                <p class="client-link" >Mediterenian Shipping Company</p>
-              </a>
-            </div>
-        
-          <div style="text-align: center;">
-            <a  href="https://hakikatransport.com//" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/Hakika TS logo.png" alt="Hakika TS Logo" style="width: 160px; height: 60px;">
-              </div>
-              <p class="client-link">Hakika Transport Services</p>
-            </a>
-          </div>
-
-          <div style="text-align: center;">
-            <a href="https://www.consolbase.co.ke/" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/consolbase.png" alt="Consolbase Logo" style="width: 100px; height: 40px; margin-left: 0px;">
-              </div>
-              <p class="client-link"> Consolbase Limited</p>
-            </a>
-          </div>
-
-          <div style="text-align: center;">
-            <a  href="https://jastarlogisticslimited.co.ke/" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/Jastar logo.png" alt="Jastar Logo" style="width: 70px; height: 60px; margin-left: 0px;">
-              </div>
-              <p class="client-link">Jastar Logistics</p>
-            </a>
-          </div>
-
-
-          <!--Additional duplicates for continuous scroll-->
-          <div style="text-align: center;">
-            <a  href="https://www.kpa.co.ke/" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/KPA Logo.png" alt="KPA Logo" style="width: 90px; height: 80px; margin-left: 6px;">
-              </div>
-              <p class="client-link">Kenya Ports Authority</p>
-            </a>
-          </div>
-
-          <div style="text-align: center;">
-            <a  href="https://www.kra.go.ke/" target="_blank">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/KRA.png" alt="KRA Logo" style="width: 140px; height: 50px; margin-left: 0px;">
-              </div>
-              <p class="client-link"> Kenya Revenue Authority</p>
-            </a>
-          </div>
-   
-            <div style="text-align: center;">
-              <a href="https://www.maersk.com/" target="_blank" class="client-block">
-                <div class="client-logo">
-                  <span class="cl-sep"></span>
-                  <img src="images/MAERSK.png" alt="MAERSK Logo" style="width: 100px; height: 60px; margin-left: 15px;">
+                <div style="text-align: center;">
+                  <a href="https://jastarlogisticslimited.co.ke/" target="_blank" class="client-block">
+                    <div class="client-logo">
+                      <span class="cl-sep"></span>
+                      <img src="images/Jastar logo.png" alt="Jastar Logo" style="width: 70px; height: 60px; margin-left: 0px;">
+                    </div>
+                    <p class="client-link">Jastar Logistics</p>
+                  </a>
                 </div>
-                <p class="client-link">MAERSK</p>
-              </a>
+              </div>
             </div>
-   
-            <div style="text-align: center;">
-              <a href="https://www.msc.com/" target="_blank" class="client-block">
-                <div class="client-logo">
-                  <span class="cl-sep"></span>
-                  <img src="images/msc.png" alt="MSC Logo" style="width: 78px; height: 50px; margin-left: 25px;">
-                </div>
-                <p class="client-link" >Mediterenian Shipping Company</p>
-              </a>
-            </div>
-        
-          <div style="text-align: center;">
-            <a  href="https://hakikatransport.com//" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/Hakika TS logo.png" alt="Hakika TS Logo" style="width: 160px; height: 60px;">
-              </div>
-              <p class="client-link">Hakika Transport Services</p>
-            </a>
-          </div>
-
-          <div style="text-align: center;">
-            <a href="https://www.consolbase.co.ke/" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/consolbase.png" alt="Consolbase Logo" style="width: 100px; height: 40px; margin-left: 0px;">
-              </div>
-              <p class="client-link"> Consolbase Limited</p>
-            </a>
-          </div>
-
-          <div style="text-align: center;">
-            <a  href="https://jastarlogisticslimited.co.ke/" target="_blank" class="client-block">
-              <div class="client-logo">
-                <span class="cl-sep"></span>
-                <img src="images/Jastar logo.png" alt="Jastar Logo" style="width: 70px; height: 60px; margin-left: 0px;">
-              </div>
-              <p class="client-link">Jastar Logistics</p>
-            </a>
-          </div>
-
-  </div>
-</div>
-</section>
-
-
-
+          </section>
           <div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-bottom:56px;">
-            ${[
-              { name:'Kenya Ports Authority (KPA)', type:'Regulatory & Operational', desc:'As a KPA-licensed depot operator, Gargo Haven works directly with the port authority on container gate management, documentation, and compliance across all movements at Kilindini Harbour.' },
-              { name:'APM Terminals Mombasa', type:'Port Terminal Partner', desc:'A formal container handling agreement with APM Terminals enables Gargo Haven to provide seamless pickup and delivery services directly from the terminal, reducing dwell time for our clients.' },
-              { name:'Maersk', type:'Shipping Line Partner', desc:'Gargo Haven is an approved empty container depot for Maersk in Mombasa, providing storage, repair, and repositioning services for Maersk-owned containers.' },
-              { name:'MSC', type:'Shipping Line Partner', desc:'Mediterranean Shipping Company vessels discharge containers at Mombasa that are repositioned, stored, and managed through Gargo Haven\'s depot network.' },
-              { name:'Consolebase ICD', type:'ICD Alliance Partner', desc:'A depot alliance agreement with Consolebase ICD enables container shuttle and transfer services between the two facilities, expanding coverage for clients using the Mombasa Road corridor.' },
-              { name:'Hakika Container Depot', type:'Depot Alliance Partner', desc:'The Hakika partnership provides additional TEU capacity during peak periods and enables cross-depot container repositioning services for clients managing large volumes.' },
-              { name:'Kenya Revenue Authority (KRA)', type:'Customs Compliance', desc:'Full KRA compliance for bonded transport and customs documentation, with a dedicated compliance desk staffed by former KRA officers.' },
-              { name:'Fortune Container Depot', type:'Alliance Partner', desc:'Fortune Container Depot provides additional yard capacity and specialised storage for out-of-gauge containers at the Mombasa Industrial Area location.' },
-            ].map(p => `
-              <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:10px;padding:28px;">
-                <div class="section-tag" style="margin-bottom:10px;">${p.type}</div>
-                <h4 style="font-family:var(--font-main);font-size:18px;color:var(--white);margin-bottom:12px;">${p.name}</h4>
-                <p style="color:var(--gray-light);font-size:13px;line-height:1.7;">${p.desc}</p>
-              </div>`).join('')}
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-bottom:56px;">
+              ${[
+                { name:'Kenya Ports Authority (KPA)', type:'Regulatory & Operational', desc:'As a KPA-licensed depot operator, Gargo Haven works directly with the port authority on container gate management, documentation, and compliance across all movements at Kilindini Harbour.' },
+                { name:'APM Terminals Mombasa', type:'Port Terminal Partner', desc:'A formal container handling agreement with APM Terminals enables Gargo Haven to provide seamless pickup and delivery services directly from the terminal, reducing dwell time for our clients.' },
+                { name:'Maersk', type:'Shipping Line Partner', desc:'Gargo Haven is an approved empty container depot for Maersk in Mombasa, providing storage, repair, and repositioning services for Maersk-owned containers.' },
+                { name:'MSC', type:'Shipping Line Partner', desc:'Mediterranean Shipping Company vessels discharge containers at Mombasa that are repositioned, stored, and managed through Gargo Haven\'s depot network.' },
+                { name:'Consolebase ICD', type:'ICD Alliance Partner', desc:'A depot alliance agreement with Consolebase ICD enables container shuttle and transfer services between the two facilities, expanding coverage for clients using the Mombasa Road corridor.' },
+                { name:'Hakika Container Depot', type:'Depot Alliance Partner', desc:'The Hakika partnership provides additional TEU capacity during peak periods and enables cross-depot container repositioning services for clients managing large volumes.' },
+                { name:'Kenya Revenue Authority (KRA)', type:'Customs Compliance', desc:'Full KRA compliance for bonded transport and customs documentation, with a dedicated compliance desk staffed by former KRA officers.' },
+                { name:'Fortune Container Depot', type:'Alliance Partner', desc:'Fortune Container Depot provides additional yard capacity and specialised storage for out-of-gauge containers at the Mombasa Industrial Area location.' },
+              ].map(p => `
+                <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:10px;padding:28px;">
+                  <div class="section-tag" style="margin-bottom:10px;">${p.type}</div>
+                  <h4 style="font-family:var(--font-main);font-size:18px;color:var(--white);margin-bottom:12px;">${p.name}</h4>
+                  <p style="color:var(--gray-light);font-size:13px;line-height:1.7;">${p.desc}</p>
+                </div>`).join('')}
+            </div>
           </div>
-          </div>
-
-          
           <div style="background:var(--dark-card);border:1px solid var(--gold);border-radius:12px;padding:40px;text-align:center;">
             <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin-bottom:12px;">Interested in a Partnership?</h3>
             <p style="color:var(--gray-light);margin-bottom:24px;">We work with depots, ICDs, shipping agents, and transport companies across the East Africa corridor. Contact our partnerships team to explore how we can work together.</p>
             <button class="btn-primary" onclick="navigateToPage('contact')">Discuss Partnership →</button>
-          </div>         
+          </div>
         </div>
       </section>`,
   },
-
-  /* ══ SERVICES ════════════════════════════════════════════════════ */
-
   'container-storage': {
     parent: 'services',
     title: 'Container Storage',
     hero: 'images/gargo4.png',
     tag: ' ✦ Container Storage — 01',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Secure Empty Container Storage</h2>
-              <p>Gargo Haven's main Changamwe depot offers over 5,000 TEU of secure storage capacity for 20ft, 40ft, and 40ft High Cube dry containers, as well as reefer units, flat-racks, open-tops, and out-of-gauge cargo.</p>
-              <p>Our yard uses a digital slot management system that assigns every container a specific position on arrival, enabling instant location retrieval and fast gate-out. All containers are scanned with our gate camera system on entry, with condition photos recorded in our EIR system.</p>
-              <p>The yard operates 24/7, with CCTV coverage across all zones, armed perimeter security, and biometric gate access for all staff. Average gate-in turnaround is under 30 minutes for standard containers.</p>
-              <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">What's Included in Storage</h3>
-              <ul class="rate-features" style="list-style:none;padding:0;">
-                <li>Gate-in, stacking, and gate-out operations</li>
-                <li>Digital EIR issuance and storage (accessible online)</li>
-                <li>Condition photography on arrival</li>
-                <li>Position tracking in our client portal</li>
-                <li>Basic security and insurance coverage</li>
-                <li>24/7 CCTV and security patrol</li>
-              </ul>
-              <div style="display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;">
-                <button class="btn-primary" onclick="navigateToPage('booking')">Book Storage →</button>
-                <button class="btn-secondary" onclick="navigateToPage('contact')">Get a Quote →</button>
-              </div>
-            </div>
-            <div class="sidebar-box">
-              <h4>Storage Specifications</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Total Capacity</div><p>5,000+ TEU across all zones</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Container Types</div><p>20ft · 40ft · 40HC · Reefer · Flat-rack · Open-top · OOG</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Gate Hours</div><p>Mon–Sat: 6AM–10PM<br>Sun: 8AM–4PM<br>Emergency: 24/7</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Gate Turnaround</div><p>Under 30 minutes standard · Priority lanes available</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Security</div><p>24/7 CCTV · Armed guards · Biometric access</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Documentation</div><p>Digital EIR · Condition report · Gate pass</p></div>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="section-dark">
-        <div class="section-inner">
-          <div class="section-header"><div class="section-tag">✦ Yard Zones</div>
-          <h2 class="section-title">Storage <span>Zones</span></h2></div>
-          <div class="depot-zones-grid">
-            <div class="zone-card"><div class="zone-label">Zone A — General Dry Storage</div><div class="zone-desc">Standard 20ft and 40ft dry containers. Double-stacked racking. Capacity: 3,000 TEU. Covered staging area for priority containers.</div></div>
-            <div class="zone-card"><div class="zone-label">Zone B — Reefer Yard</div><div class="zone-desc">200+ plug-in points. 24/7 temperature monitoring. Pre-trip inspection pits. Capacity: 800 TEU.</div></div>
-            <div class="zone-card"><div class="zone-label">Zone C — M&R Holding</div><div class="zone-desc">Containers awaiting or undergoing repair. Separate from general stock for damage containment. Capacity: 500 TEU.</div></div>
-            <div class="zone-card"><div class="zone-label">Zone E — OOG & Specials</div><div class="zone-desc">Flat-racks, open-tops, tank containers, and oversized cargo. Ground-level laydown area with heavy vehicle access.</div></div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Secure Empty Container Storage</h2> <p>Gargo Haven's main Changamwe depot offers over 5,000 TEU of secure storage capacity for 20ft, 40ft, and 40ft High Cube dry containers, as well as reefer units, flat-racks, open-tops, and out-of-gauge cargo.</p> <p>Our yard uses a digital slot management system that assigns every container a specific position on arrival, enabling instant location retrieval and fast gate-out. All containers are scanned with our gate camera system on entry, with condition photos recorded in our EIR system.</p> <p>The yard operates 24/7, with CCTV coverage across all zones, armed perimeter security, and biometric gate access for all staff. Average gate-in turnaround is under 30 minutes for standard containers.</p> <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">What's Included in Storage</h3> <ul class="rate-features" style="list-style:none;padding:0;"> <li>Gate-in, stacking, and gate-out operations</li> <li>Digital EIR issuance and storage (accessible online)</li> <li>Condition photography on arrival</li> <li>Position tracking in our client portal</li> <li>Basic security and insurance coverage</li> <li>24/7 CCTV and security patrol</li> </ul> <div style="display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;"> <button class="btn-primary" onclick="navigateToPage('booking')">Book Storage →</button> <button class="btn-secondary" onclick="navigateToPage('contact')">Get a Quote →</button> </div> </div> <div class="sidebar-box"> <h4>Storage Specifications</h4> <div class="sidebar-item"><div class="sidebar-label">Total Capacity</div><p>5,000+ TEU across all zones</p></div> <div class="sidebar-item"><div class="sidebar-label">Container Types</div><p>20ft · 40ft · 40HC · Reefer · Flat-rack · Open-top · OOG</p></div> <div class="sidebar-item"><div class="sidebar-label">Gate Hours</div><p>Mon–Sat: 6AM–10PM<br>Sun: 8AM–4PM<br>Emergency: 24/7</p></div> <div class="sidebar-item"><div class="sidebar-label">Gate Turnaround</div><p>Under 30 minutes standard · Priority lanes available</p></div> <div class="sidebar-item"><div class="sidebar-label">Security</div><p>24/7 CCTV · Armed guards · Biometric access</p></div> <div class="sidebar-item"><div class="sidebar-label">Documentation</div><p>Digital EIR · Condition report · Gate pass</p></div> </div> </div> </div> </section> <section class="section-dark"> <div class="section-inner"> <div class="section-header"><div class="section-tag">✦ Yard Zones</div> <h2 class="section-title">Storage <span>Zones</span></h2></div> <div class="depot-zones-grid"> <div class="zone-card"><div class="zone-label">Zone A — General Dry Storage</div><div class="zone-desc">Standard 20ft and 40ft dry containers. Double-stacked racking. Capacity: 3,000 TEU. Covered staging area for priority containers.</div></div> <div class="zone-card"><div class="zone-label">Zone B — Reefer Yard</div><div class="zone-desc">200+ plug-in points. 24/7 temperature monitoring. Pre-trip inspection pits. Capacity: 800 TEU.</div></div> <div class="zone-card"><div class="zone-label">Zone C — M&R Holding</div><div class="zone-desc">Containers awaiting or undergoing repair. Separate from general stock for damage containment. Capacity: 500 TEU.</div></div> <div class="zone-card"><div class="zone-label">Zone E — OOG & Specials</div><div class="zone-desc">Flat-racks, open-tops, tank containers, and oversized cargo. Ground-level laydown area with heavy vehicle access.</div></div> </div> </div> </section>`,
   },
-
   'port-haulage': {
     parent: 'services',
     title: 'Port Haulage',
     hero: 'images/gargo4.png',
     tag: '✦ Port Haulage — 02',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">GPS-Tracked Container Transport</h2>
-              <p>Gargo Haven operates Mombasa's most connected container haulage network — linking Mombasa Port (KPA), APM Terminals, and all major ICDs and depots along the Mombasa container corridor. Our 120+ truck fleet is available for same-day movements across all routes.</p>
-              <p>Every truck in our fleet is fitted with a live GPS unit. Clients can track their container's truck in real-time through our tracking portal, including driver contact details and ETA. Dispatch confirmation is sent by SMS and email within 30 minutes of booking.</p>
-              <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">Routes We Cover</h3>
-              <ul class="rate-features" style="list-style:none;padding:0;">
-                <li>Mombasa Port (KPA) ↔ Gargo Haven Depot</li>
-                <li>APM Terminals ↔ All ICD locations</li>
-                <li>Depot-to-depot transfers</li>
-                <li>Port to client yard / factory gate</li>
-                <li>Cross-depot repositioning</li>
-                <li>SGR Inland Container Depot connections</li>
-              </ul>
-              <div style="display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;">
-                <button class="btn-primary" onclick="navigateToPage('booking')">Book Transport →</button>
-                <button class="btn-secondary" onclick="navigateToPage('track')">Track a Truck →</button>
-              </div>
-            </div>
-            <div class="sidebar-box">
-              <h4>Fleet & Service Details</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Fleet Size</div><p>120+ container tractor units</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Container Capacity</div><p>20ft · 40ft · 40HC · Reefer · Flat-rack</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">GPS Tracking</div><p>100% of fleet · Live client portal access</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Service Hours</div><p>6AM–10PM standard · Emergency 24/7</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Dispatch Time</div><p>Confirmation within 30 minutes of booking</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Documentation</div><p>Gate pass · EIR · Delivery receipt · GPS log</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">GPS-Tracked Container Transport</h2> <p>Gargo Haven operates Mombasa's most connected container haulage network — linking Mombasa Port (KPA), APM Terminals, and all major ICDs and depots along the Mombasa container corridor. Our 120+ truck fleet is available for same-day movements across all routes.</p> <p>Every truck in our fleet is fitted with a live GPS unit. Clients can track their container's truck in real-time through our tracking portal, including driver contact details and ETA. Dispatch confirmation is sent by SMS and email within 30 minutes of booking.</p> <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">Routes We Cover</h3> <ul class="rate-features" style="list-style:none;padding:0;"> <li>Mombasa Port (KPA) ↔ Gargo Haven Depot</li> <li>APM Terminals ↔ All ICD locations</li> <li>Depot-to-depot transfers</li> <li>Port to client yard / factory gate</li> <li>Cross-depot repositioning</li> <li>SGR Inland Container Depot connections</li> </ul> <div style="display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;"> <button class="btn-primary" onclick="navigateToPage('booking')">Book Transport →</button> <button class="btn-secondary" onclick="navigateToPage('track')">Track a Truck →</button> </div> </div> <div class="sidebar-box"> <h4>Fleet & Service Details</h4> <div class="sidebar-item"><div class="sidebar-label">Fleet Size</div><p>120+ container tractor units</p></div> <div class="sidebar-item"><div class="sidebar-label">Container Capacity</div><p>20ft · 40ft · 40HC · Reefer · Flat-rack</p></div> <div class="sidebar-item"><div class="sidebar-label">GPS Tracking</div><p>100% of fleet · Live client portal access</p></div> <div class="sidebar-item"><div class="sidebar-label">Service Hours</div><p>6AM–10PM standard · Emergency 24/7</p></div> <div class="sidebar-item"><div class="sidebar-label">Dispatch Time</div><p>Confirmation within 30 minutes of booking</p></div> <div class="sidebar-item"><div class="sidebar-label">Documentation</div><p>Gate pass · EIR · Delivery receipt · GPS log</p></div> </div> </div> </div> </section>`,
   },
-
   'reefer-monitoring': {
     parent: 'services',
     title: 'Reefer Monitoring',
     hero: 'images/gargo2.png',
     tag: ' ✦ Reefer Monitoring — 03',
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">24/7 Refrigerated Container Management</h2> <p>Gargo Haven's dedicated reefer yard features 200+ plug-in points with 24/7 automated temperature monitoring. Our reefer team is certified for pre-trip inspections (PTI), temperature setting, defrost cycles, and first-line reefer unit repairs.</p> <p>All reefer containers are monitored continuously with alarm alerts sent to our operations team and the client's designated contact if temperature deviates from the set point. A full log of temperature readings is available for every reefer unit on request.</p> <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;"> <li>200+ plug-in points (380V/440V/460V)</li> <li>Continuous automated temperature monitoring</li> <li>Pre-trip inspections (PTI) to IICL standard</li> <li>Reefer unit repairs: Carrier, Thermo King, Daikin</li> <li>Temperature log export for client records</li> <li>Genset hire for off-power transport</li> </ul> <div style="display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;"> <button class="btn-primary" onclick="navigateToPage('booking')">Book Reefer Slot →</button> <button class="btn-secondary" onclick="navigateToPage('contact')">Enquire →</button> </div> </div> <div class="sidebar-box"> <h4>Reefer Specs</h4> <div class="sidebar-item"><div class="sidebar-label">Plug-in Points</div><p>200+ (380V / 440V / 460V)</p></div> <div class="sidebar-item"><div class="sidebar-label">Temperature Range</div><p>-25°C to +25°C</p></div> <div class="sidebar-item"><div class="sidebar-label">Monitoring</div><p>24/7 automated · Alarm alerts to ops team & client</p></div> <div class="sidebar-item"><div class="sidebar-label">Supported Brands</div><p>Carrier · Thermo King · Daikin · StarCool</p></div> <div class="sidebar-item"><div class="sidebar-label">Genset Hire</div><p>Available for road transport · All sizes</p></div> <div class="sidebar-item"><div class="sidebar-label">Capacity</div><p>800 TEU reefer capacity</p></div> </div> </div> </div> </section>`,
+  },
+  'container-selling': {
+    parent: 'services',
+    title: 'Container Selling',
+    hero: 'images/gargo1.png',
+    tag: ' ✦ Container Selling — 06',
     render: () => `
       <section class="section-light">
         <div class="section-inner">
           <div class="intro-grid">
             <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">24/7 Refrigerated Container Management</h2>
-              <p>Gargo Haven's dedicated reefer yard features 200+ plug-in points with 24/7 automated temperature monitoring. Our reefer team is certified for pre-trip inspections (PTI), temperature setting, defrost cycles, and first-line reefer unit repairs.</p>
-              <p>All reefer containers are monitored continuously with alarm alerts sent to our operations team and the client's designated contact if temperature deviates from the set point. A full log of temperature readings is available for every reefer unit on request.</p>
-              <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;">
-                <li>200+ plug-in points (380V/440V/460V)</li>
-                <li>Continuous automated temperature monitoring</li>
-                <li>Pre-trip inspections (PTI) to IICL standard</li>
-                <li>Reefer unit repairs: Carrier, Thermo King, Daikin</li>
-                <li>Temperature log export for client records</li>
-                <li>Genset hire for off-power transport</li>
+              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Buy IICL-Graded Containers Direct From Our Yard</h2>
+              <p>Gargo Haven sells new and used shipping containers directly from our Changamwe depot — dry, high cube, and reefer units available for outright purchase. Every unit passes through our IICL-certified inspection process before it's offered for sale, so buyers know exactly what condition they're getting.</p>
+              <p>Whether you need a container for cargo shipping, site storage, conversion into office or retail space, or cold-chain use, our yard stock is refreshed regularly as units cycle through depot operations. We can also source specific sizes or grades on request for bulk buyers.</p>
+              <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">What We Offer</h3>
+              <ul class="rate-features" style="list-style:none;padding:0;">
+                <li>New (one-trip) and used containers in stock</li>
+                <li>20ft, 40ft, and 40ft High Cube dry units</li>
+                <li>Reefer containers for cold storage or transport conversion</li>
+                <li>Flat-rack and open-top units on request</li>
+                <li>IICL condition grading on every unit sold</li>
+                <li>Delivery to your site available across Mombasa</li>
+                <li>Bulk purchase pricing for fleet or project buyers</li>
               </ul>
               <div style="display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;">
-                <button class="btn-primary" onclick="navigateToPage('booking')">Book Reefer Slot →</button>
-                <button class="btn-secondary" onclick="navigateToPage('contact')">Enquire →</button>
+                <button class="btn-primary" onclick="navigateToPage('booking')">Enquire About Stock →</button>
+                <button class="btn-secondary" onclick="navigateToPage('contact')">Request a Quote →</button>
               </div>
             </div>
             <div class="sidebar-box">
-              <h4>Reefer Specs</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Plug-in Points</div><p>200+ (380V / 440V / 460V)</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Temperature Range</div><p>-25°C to +25°C</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Monitoring</div><p>24/7 automated · Alarm alerts to ops team & client</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Supported Brands</div><p>Carrier · Thermo King · Daikin · StarCool</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Genset Hire</div><p>Available for road transport · All sizes</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Capacity</div><p>800 TEU reefer capacity</p></div>
+              <h4>Container Sales Details</h4>
+              <div class="sidebar-item"><div class="sidebar-label">Condition Grades</div><p>New (one-trip) · IICL Grade A · IICL Grade B</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">Sizes Available</div><p>20ft · 40ft · 40ft High Cube · Reefer · Flat-rack · Open-top</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">Inspection</div><p>IICL-certified condition report supplied with every sale</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">Delivery</div><p>Available to any site in Mombasa · Nationwide on request</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">Payment</div><p>Bank transfer · Corporate invoicing for bulk orders</p></div>
+              <div class="sidebar-item"><div class="sidebar-label">Stock Updates</div><p>Refreshed regularly — call to confirm current availability</p></div>
             </div>
+          </div>
+        </div>
+      </section>
+      <section class="container-selling-section">
+        <div class="section-inner">
+          <div class="container-header">
+            <div>
+              <div class="section-eyebrow reveal">
+                <div class="section-eyebrow-line"></div>
+                <div class="section-tag" style="color: black;">Available Containers</div>
+              </div>
+              <h2 class="section-title reveal">Container<em> Inventory</em></h2>
+            </div>
+            <div class="container-header-right reveal">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="new">New</button>
+              <button class="filter-btn" data-filter="used">Used</button>
+              <button class="filter-btn" data-filter="20ft">20ft</button>
+              <button class="filter-btn" data-filter="40ft">40ft</button>
+              <button class="filter-btn" data-filter="40HC">40HC</button>
+              <button class="filter-btn" data-filter="reefer">Reefer</button>
+              <button class="filter-btn" data-filter="flat-rack">Flat-Rack</button>
+              <button class="filter-btn" data-filter="open-top">Open-Top</button>
+            </div>
+          </div>
+          <div class="inv-meta reveal">
+            <span id="invPageLabel" class="inv-page-label">Showing 1–25 of <span id="invTotal">0</span> containers</span>
+          </div>
+          <div class="inv-grid" id="invGrid"></div>
+          <div class="inv-pagination" id="invPagination"></div>
+        </div>
+      </section>
+      <section class="section-dark">
+        <div class="section-inner">
+          <div class="section-header"><div class="section-tag">✦ Common Uses</div>
+          <h2 class="section-title">What Clients Use Our <span>Containers For</span></h2></div>
+          <div class="depot-zones-grid">
+            <div class="zone-card"><div class="zone-label">Cargo Shipping</div><div class="zone-desc">Standard dry units ready for immediate loading and export or import shipments.</div></div>
+            <div class="zone-card"><div class="zone-label">Site Storage</div><div class="zone-desc">Secure on-site storage for construction sites, warehouses, and industrial yards.</div></div>
+            <div class="zone-card"><div class="zone-label">Cold Chain & Conversion</div><div class="zone-desc">Reefer units for cold storage, or dry units converted into offices, kiosks, and pop-up retail space.</div></div>
+            <div class="zone-card"><div class="zone-label">Fleet & Project Buyers</div><div class="zone-desc">Bulk purchasing for logistics companies, contractors, and organisations needing multiple units.</div></div>
+          </div>
+        </div>
+      </section>
+      <section class="cta-band-img" style="background-image:url('images/depot8.png')">
+        <div class="cta-band-overlay"></div>
+        <div class="cta-band-content">
+          <h2>Looking to Buy a Container?</h2>
+          <p>Check current stock and pricing at our Changamwe yard.</p>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
+            <button class="btn-primary" onclick="navigateToPage('booking')">Enquire Now →</button>
+            <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
           </div>
         </div>
       </section>`,
   },
-
-  'container-selling': {
-  parent: 'services',
-  title: 'Container Selling',
-  hero: 'images/gargo1.png',
-  tag: ' ✦ Container Selling — 06',
-  render: () => `
-    <section class="section-light">
-      <div class="section-inner">
-        <div class="intro-grid">
-          <div class="intro-body">
-            <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Buy IICL-Graded Containers Direct From Our Yard</h2>
-            <p>Gargo Haven sells new and used shipping containers directly from our Changamwe depot — dry, high cube, and reefer units available for outright purchase. Every unit passes through our IICL-certified inspection process before it's offered for sale, so buyers know exactly what condition they're getting.</p>
-            <p>Whether you need a container for cargo shipping, site storage, conversion into office or retail space, or cold-chain use, our yard stock is refreshed regularly as units cycle through depot operations. We can also source specific sizes or grades on request for bulk buyers.</p>
-            <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">What We Offer</h3>
-            <ul class="rate-features" style="list-style:none;padding:0;">
-              <li>New (one-trip) and used containers in stock</li>
-              <li>20ft, 40ft, and 40ft High Cube dry units</li>
-              <li>Reefer containers for cold storage or transport conversion</li>
-              <li>Flat-rack and open-top units on request</li>
-              <li>IICL condition grading on every unit sold</li>
-              <li>Delivery to your site available across Mombasa</li>
-              <li>Bulk purchase pricing for fleet or project buyers</li>
-            </ul>
-            <div style="display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;">
-              <button class="btn-primary" onclick="navigateToPage('booking')">Enquire About Stock →</button>
-              <button class="btn-secondary" onclick="navigateToPage('contact')">Request a Quote →</button>
-            </div>
-          </div>
-          <div class="sidebar-box">
-            <h4>Container Sales Details</h4>
-            <div class="sidebar-item"><div class="sidebar-label">Condition Grades</div><p>New (one-trip) · IICL Grade A · IICL Grade B</p></div>
-            <div class="sidebar-item"><div class="sidebar-label">Sizes Available</div><p>20ft · 40ft · 40ft High Cube · Reefer · Flat-rack · Open-top</p></div>
-            <div class="sidebar-item"><div class="sidebar-label">Inspection</div><p>IICL-certified condition report supplied with every sale</p></div>
-            <div class="sidebar-item"><div class="sidebar-label">Delivery</div><p>Available to any site in Mombasa · Nationwide on request</p></div>
-            <div class="sidebar-item"><div class="sidebar-label">Payment</div><p>Bank transfer · Corporate invoicing for bulk orders</p></div>
-            <div class="sidebar-item"><div class="sidebar-label">Stock Updates</div><p>Refreshed regularly — call to confirm current availability</p></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- INVENTORY with PAGINATION -->
-    <section class="container-selling-section">
-      <div class="section-inner">
-        <div class="container-header">
-         <div>
-          <div class="section-eyebrow reveal">
-            <div class="section-eyebrow-line"></div>
-            <div class="section-tag" style="color: black;">Available Containers</div>
-          </div>
-          <h2 class="section-title reveal">Container<em> Inventory</em></h2>
-        </div>
-        <div class="container-header-right reveal">
-          <button class="filter-btn active" data-filter="all">All</button>
-          <button class="filter-btn" data-filter="new">New</button>
-          <button class="filter-btn" data-filter="used">Used</button>
-          <button class="filter-btn" data-filter="20ft">20ft</button>
-          <button class="filter-btn" data-filter="40ft">40ft</button>
-          <button class="filter-btn" data-filter="40HC">40HC</button>
-          <button class="filter-btn" data-filter="reefer">Reefer</button>
-          <button class="filter-btn" data-filter="flat-rack">Flat-Rack</button>
-          <button class="filter-btn" data-filter="open-top">Open-Top</button>
-        </div>
-      </div>
- 
-      <!-- Page counter -->
-      <div class="inv-meta reveal">
-        <span id="invPageLabel" class="inv-page-label">Showing 1–25 of <span id="invTotal">0</span> containers</span>
-      </div>
- 
-      <!-- Car grid (5 × 5) — rendered by JS -->
-      <div class="inv-grid" id="invGrid"></div>
- 
-      <!-- Pagination controls -->
-      <div class="inv-pagination" id="invPagination"></div>
- 
-    </div>
-  </section>
- 
-
-
-
-    <section class="section-dark">
-      <div class="section-inner">
-        <div class="section-header"><div class="section-tag">✦ Common Uses</div>
-        <h2 class="section-title">What Clients Use Our <span>Containers For</span></h2></div>
-        <div class="depot-zones-grid">
-          <div class="zone-card"><div class="zone-label">Cargo Shipping</div><div class="zone-desc">Standard dry units ready for immediate loading and export or import shipments.</div></div>
-          <div class="zone-card"><div class="zone-label">Site Storage</div><div class="zone-desc">Secure on-site storage for construction sites, warehouses, and industrial yards.</div></div>
-          <div class="zone-card"><div class="zone-label">Cold Chain & Conversion</div><div class="zone-desc">Reefer units for cold storage, or dry units converted into offices, kiosks, and pop-up retail space.</div></div>
-          <div class="zone-card"><div class="zone-label">Fleet & Project Buyers</div><div class="zone-desc">Bulk purchasing for logistics companies, contractors, and organisations needing multiple units.</div></div>
-        </div>
-      </div>
-    </section>
-    <section class="cta-band-img" style="background-image:url('images/depot8.png')">
-      <div class="cta-band-overlay"></div>
-      <div class="cta-band-content">
-        <h2>Looking to Buy a Container?</h2>
-        <p>Check current stock and pricing at our Changamwe yard.</p>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:24px;">
-          <button class="btn-primary" onclick="navigateToPage('booking')">Enquire Now →</button>
-          <a href="tel:+254116307751" class="cta-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">CALL NOW →</a>
-        </div>
-      </div>
-    </section>`,
-},
-
   'container-repairs': {
     parent: 'services',
     title: 'Container Repairs',
     hero: 'images/gargo4.png',
     tag: ' ✦ Container Repairs — 04',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">IICL-Certified Container Repair</h2>
-              <p>Our 10-bay M&R workshop at the Changamwe depot handles everything from minor panel dents to full structural repairs and floor replacements. All inspections follow IICL methodology and all repair work is documented with before-and-after photography.</p>
-              <p>We provide full repair estimates (M&R surveys) for shipping lines, including labour, materials, and time estimates. Completed repairs are signed off by our IICL-certified inspector and documented in the container's EIR record.</p>
-              <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">Repair Capabilities</h3>
-              <ul class="rate-features" style="list-style:none;padding:0;">
-                <li>IICL damage surveys and repair estimates</li>
-                <li>Structural repairs: corner castings, rails, crossmembers</li>
-                <li>Panel repairs: walls, roof, floor panels</li>
-                <li>Wooden floor replacement (hardwood and bamboo)</li>
-                <li>Door seals, hinges, locking rods</li>
-                <li>Exterior painting and rust treatment</li>
-                <li>Reefer unit first-line repair and PTI</li>
-                <li>Sandblasting and protective coatings</li>
-              </ul>
-              <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('booking')">Book a Repair →</button>
-            </div>
-            <div class="sidebar-box">
-              <h4>Workshop Specs</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Repair Bays</div><p>10 bays · 20ft and 40ft capable</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Certification</div><p>IICL Certified Inspector on site</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Turnaround</div><p>Minor repairs: same day<br>Major structural: 2–5 days</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Documentation</div><p>Repair estimate · Before/after photos · Completion certificate</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">IICL-Certified Container Repair</h2> <p>Our 10-bay M&R workshop at the Changamwe depot handles everything from minor panel dents to full structural repairs and floor replacements. All inspections follow IICL methodology and all repair work is documented with before-and-after photography.</p> <p>We provide full repair estimates (M&R surveys) for shipping lines, including labour, materials, and time estimates. Completed repairs are signed off by our IICL-certified inspector and documented in the container's EIR record.</p> <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">Repair Capabilities</h3> <ul class="rate-features" style="list-style:none;padding:0;"> <li>IICL damage surveys and repair estimates</li> <li>Structural repairs: corner castings, rails, crossmembers</li> <li>Panel repairs: walls, roof, floor panels</li> <li>Wooden floor replacement (hardwood and bamboo)</li> <li>Door seals, hinges, locking rods</li> <li>Exterior painting and rust treatment</li> <li>Reefer unit first-line repair and PTI</li> <li>Sandblasting and protective coatings</li> </ul> <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('booking')">Book a Repair →</button> </div> <div class="sidebar-box"> <h4>Workshop Specs</h4> <div class="sidebar-item"><div class="sidebar-label">Repair Bays</div><p>10 bays · 20ft and 40ft capable</p></div> <div class="sidebar-item"><div class="sidebar-label">Certification</div><p>IICL Certified Inspector on site</p></div> <div class="sidebar-item"><div class="sidebar-label">Turnaround</div><p>Minor repairs: same day<br>Major structural: 2–5 days</p></div> <div class="sidebar-item"><div class="sidebar-label">Documentation</div><p>Repair estimate · Before/after photos · Completion certificate</p></div> </div> </div> </div> </section>`,
   },
-
   'container-washing': {
     parent: 'services',
     title: 'Container Washing',
     hero: 'images/gargo4.png',
     tag: ' ✦ Container Washing — 05',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Industrial Container Washing & Fumigation</h2>
-              <p>Gargo Haven's 6-lane washing bay provides high-pressure interior and exterior washing for all container types. Our fumigation chamber issues KEBS-compliant fumigation certificates for agricultural and food-grade cargo.</p>
-              <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;">
-                <li>High-pressure exterior washing</li>
-                <li>Interior steam cleaning</li>
-                <li>Food-grade sanitisation</li>
-                <li>Fumigation (methyl bromide / phosphine)</li>
-                <li>Fumigation certificates issued (KEBS compliant)</li>
-                <li>Odour treatment for contaminated units</li>
-              </ul>
-              <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('booking')">Book Washing →</button>
-            </div>
-            <div class="sidebar-box">
-              <h4>Washing Specs</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Washing Lanes</div><p>6 lanes · 20ft and 40ft</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Fumigation</div><p>Methyl bromide · Phosphine<br>KEBS certificates issued</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Turnaround</div><p>Washing: 2–4 hours<br>Fumigation: 24–48 hours</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Industrial Container Washing & Fumigation</h2> <p>Gargo Haven's 6-lane washing bay provides high-pressure interior and exterior washing for all container types. Our fumigation chamber issues KEBS-compliant fumigation certificates for agricultural and food-grade cargo.</p> <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;"> <li>High-pressure exterior washing</li> <li>Interior steam cleaning</li> <li>Food-grade sanitisation</li> <li>Fumigation (methyl bromide / phosphine)</li> <li>Fumigation certificates issued (KEBS compliant)</li> <li>Odour treatment for contaminated units</li> </ul> <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('booking')">Book Washing →</button> </div> <div class="sidebar-box"> <h4>Washing Specs</h4> <div class="sidebar-item"><div class="sidebar-label">Washing Lanes</div><p>6 lanes · 20ft and 40ft</p></div> <div class="sidebar-item"><div class="sidebar-label">Fumigation</div><p>Methyl bromide · Phosphine<br>KEBS certificates issued</p></div> <div class="sidebar-item"><div class="sidebar-label">Turnaround</div><p>Washing: 2–4 hours<br>Fumigation: 24–48 hours</p></div> </div> </div> </div> </section>`,
   },
-
   'iicl-inspection': {
     parent: 'services',
     title: 'IICL Inspection',
     hero: 'images/gargo4.png',
     tag: ' ✦ IICL Inspection — 01',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">IICL Container Condition Surveys</h2>
-              <p>All container inspections at Gargo Haven follow the IICL (Institute of International Container Lessors) standard — the globally accepted methodology for assessing container condition and estimating repair costs. Our IICL-certified inspector conducts surveys for gate-in, gate-out, pre-lease, and damage claim purposes.</p>
-              <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">Survey Types</h3>
-              <ul class="rate-features" style="list-style:none;padding:0;">
-                <li><strong>Gate-In Survey</strong> — Condition recorded on arrival at the depot</li>
-                <li><strong>Gate-Out Survey</strong> — Condition confirmed on departure</li>
-                <li><strong>Pre-Lease Survey</strong> — Condition assessment before container is leased to a shipper</li>
-                <li><strong>Damage Survey</strong> — Assessment of damage for insurance or liability claims</li>
-                <li><strong>M&R Estimate</strong> — Full repair cost estimate following IICL methodology</li>
-                <li><strong>Annual Survey</strong> — Periodic condition reporting for shipping lines</li>
-              </ul>
-              <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('booking')">Request Survey →</button>
-            </div>
-            <div class="sidebar-box">
-              <h4>Inspection Details</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Standard</div><p>IICL 6th Edition</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Deliverables</div><p>Photo report · Damage codes · Repair estimate</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Turnaround</div><p>Report issued within 4 hours of survey</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Digital Access</div><p>Reports accessible via client portal</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">IICL Container Condition Surveys</h2> <p>All container inspections at Gargo Haven follow the IICL (Institute of International Container Lessors) standard — the globally accepted methodology for assessing container condition and estimating repair costs. Our IICL-certified inspector conducts surveys for gate-in, gate-out, pre-lease, and damage claim purposes.</p> <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin:28px 0 16px;">Survey Types</h3> <ul class="rate-features" style="list-style:none;padding:0;"> <li><strong>Gate-In Survey</strong> — Condition recorded on arrival at the depot</li> <li><strong>Gate-Out Survey</strong> — Condition confirmed on departure</li> <li><strong>Pre-Lease Survey</strong> — Condition assessment before container is leased to a shipper</li> <li><strong>Damage Survey</strong> — Assessment of damage for insurance or liability claims</li> <li><strong>M&R Estimate</strong> — Full repair cost estimate following IICL methodology</li> <li><strong>Annual Survey</strong> — Periodic condition reporting for shipping lines</li> </ul> <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('booking')">Request Survey →</button> </div> <div class="sidebar-box"> <h4>Inspection Details</h4> <div class="sidebar-item"><div class="sidebar-label">Standard</div><p>IICL 6th Edition</p></div> <div class="sidebar-item"><div class="sidebar-label">Deliverables</div><p>Photo report · Damage codes · Repair estimate</p></div> <div class="sidebar-item"><div class="sidebar-label">Turnaround</div><p>Report issued within 4 hours of survey</p></div> <div class="sidebar-item"><div class="sidebar-label">Digital Access</div><p>Reports accessible via client portal</p></div> </div> </div> </div> </section>`,
   },
-
   'eir-processing': {
     parent: 'services',
     title: 'EIR Processing',
     hero: 'images/gargo2.png',
     tag: ' ✦ EIR Processing — 02',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Digital Equipment Interchange Receipts</h2>
-              <p>Gargo Haven's EIR system is fully digital. Every container gate-in and gate-out at our depots generates an Equipment Interchange Receipt (EIR) that is stored in our system and accessible to clients instantly via the online portal. No more paper EIRs, no lost documents.</p>
-              <p>EIRs include container number, ISO type, condition status, damage codes, condition photos, gate time, truck registration, and driver details. All EIRs are timestamped and tamper-proof.</p>
-              <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;">
-                <li>Digital EIR issued on gate-in and gate-out</li>
-                <li>Condition photos embedded in EIR</li>
-                <li>Accessible via client portal 24/7</li>
-                <li>PDF download and email delivery</li>
-                <li>Full damage code record (IICL format)</li>
-                <li>Historical EIR archive — searchable by container</li>
-              </ul>
-              <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('track')">Access EIR Portal →</button>
-            </div>
-            <div class="sidebar-box">
-              <h4>EIR System Details</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Format</div><p>Digital · PDF · Email</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Issuance Time</div><p>Within 15 minutes of gate-in/out</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Access</div><p>Client portal · Email · API (on request)</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Archive</div><p>Full history since 2018 · Searchable</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Digital Equipment Interchange Receipts</h2> <p>Gargo Haven's EIR system is fully digital. Every container gate-in and gate-out at our depots generates an Equipment Interchange Receipt (EIR) that is stored in our system and accessible to clients instantly via the online portal. No more paper EIRs, no lost documents.</p> <p>EIRs include container number, ISO type, condition status, damage codes, condition photos, gate time, truck registration, and driver details. All EIRs are timestamped and tamper-proof.</p> <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;"> <li>Digital EIR issued on gate-in and gate-out</li> <li>Condition photos embedded in EIR</li> <li>Accessible via client portal 24/7</li> <li>PDF download and email delivery</li> <li>Full damage code record (IICL format)</li> <li>Historical EIR archive — searchable by container</li> </ul> <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('track')">Access EIR Portal →</button> </div> <div class="sidebar-box"> <h4>EIR System Details</h4> <div class="sidebar-item"><div class="sidebar-label">Format</div><p>Digital · PDF · Email</p></div> <div class="sidebar-item"><div class="sidebar-label">Issuance Time</div><p>Within 15 minutes of gate-in/out</p></div> <div class="sidebar-item"><div class="sidebar-label">Access</div><p>Client portal · Email · API (on request)</p></div> <div class="sidebar-item"><div class="sidebar-label">Archive</div><p>Full history since 2018 · Searchable</p></div> </div> </div> </div> </section>`,
   },
-
   'customs-documentation': {
     parent: 'services',
     title: 'Customs Documentation',
     hero: 'images/gargo2.png',
     tag: ' ✦ Value Added — 03',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Full Customs & KRA Documentation</h2>
-              <p>Our compliance team manages all KRA customs documentation for bonded container movements, customs-cleared releases, and fumigation certification. Led by a former KRA Customs Officer, our team ensures every document is correct, complete, and compliant.</p>
-              <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;">
-                <li>KRA customs declarations</li>
-                <li>Bonded transport documentation</li>
-                <li>Container release authorisation</li>
-                <li>Fumigation certificates (KEBS compliant)</li>
-                <li>Phytosanitary certification assistance</li>
-                <li>Delivery orders and gate passes</li>
-                <li>Container handover certificates</li>
-              </ul>
-              <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Talk to Our Compliance Team →</button>
-            </div>
-            <div class="sidebar-box">
-              <h4>Compliance Details</h4>
-              <div class="sidebar-item"><div class="sidebar-label">KRA Compliance</div><p>Full — bonded transport & customs releases</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Fumigation</div><p>KEBS-compliant certificates issued</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Team</div><p>Former KRA officer on staff</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Full Customs & KRA Documentation</h2> <p>Our compliance team manages all KRA customs documentation for bonded container movements, customs-cleared releases, and fumigation certification. Led by a former KRA Customs Officer, our team ensures every document is correct, complete, and compliant.</p> <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;"> <li>KRA customs declarations</li> <li>Bonded transport documentation</li> <li>Container release authorisation</li> <li>Fumigation certificates (KEBS compliant)</li> <li>Phytosanitary certification assistance</li> <li>Delivery orders and gate passes</li> <li>Container handover certificates</li> </ul> <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Talk to Our Compliance Team →</button> </div> <div class="sidebar-box"> <h4>Compliance Details</h4> <div class="sidebar-item"><div class="sidebar-label">KRA Compliance</div><p>Full — bonded transport & customs releases</p></div> <div class="sidebar-item"><div class="sidebar-label">Fumigation</div><p>KEBS-compliant certificates issued</p></div> <div class="sidebar-item"><div class="sidebar-label">Team</div><p>Former KRA officer on staff</p></div> </div> </div> </div> </section>`,
   },
-
   'container-leasing': {
     parent: 'services',
     title: 'Container Leasing',
     hero: 'images/gargo2.png',
     tag: ' ✦ Container Leasing — 04',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Container Leasing & Hire</h2>
-              <p>Gargo Haven facilitates container leasing arrangements for clients who need containers for storage, office use, site facilities, or export loading — both short-term hire and long-term lease agreements are available.</p>
-              <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;">
-                <li>20ft and 40ft dry containers for hire</li>
-                <li>Short-term (weekly) and long-term (annual) lease</li>
-                <li>Container delivery to client site included</li>
-                <li>IICL-inspected units — condition guaranteed</li>
-                <li>Modification available: doors, vents, shelving</li>
-                <li>Reefer containers for cold storage hire</li>
-              </ul>
-              <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Enquire About Leasing →</button>
-            </div>
-            <div class="sidebar-box">
-              <h4>Leasing Details</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Types Available</div><p>20ft · 40ft · 40HC · Reefer</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Lease Terms</div><p>Weekly · Monthly · Annual</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Delivery</div><p>To client site — all Mombasa locations</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Container Leasing & Hire</h2> <p>Gargo Haven facilitates container leasing arrangements for clients who need containers for storage, office use, site facilities, or export loading — both short-term hire and long-term lease agreements are available.</p> <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;"> <li>20ft and 40ft dry containers for hire</li> <li>Short-term (weekly) and long-term (annual) lease</li> <li>Container delivery to client site included</li> <li>IICL-inspected units — condition guaranteed</li> <li>Modification available: doors, vents, shelving</li> <li>Reefer containers for cold storage hire</li> </ul> <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Enquire About Leasing →</button> </div> <div class="sidebar-box"> <h4>Leasing Details</h4> <div class="sidebar-item"><div class="sidebar-label">Types Available</div><p>20ft · 40ft · 40HC · Reefer</p></div> <div class="sidebar-item"><div class="sidebar-label">Lease Terms</div><p>Weekly · Monthly · Annual</p></div> <div class="sidebar-item"><div class="sidebar-label">Delivery</div><p>To client site — all Mombasa locations</p></div> </div> </div> </div> </section>`,
   },
-
   'corporate-logistics': {
     parent: 'services',
     title: 'Corporate Logistics',
     hero: 'images/gargo1.png',
     tag: ' ✦ Corporate Logistics — 05',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">End-to-End Corporate Container Logistics</h2>
-              <p>For businesses with regular, high-volume container movements, Gargo Haven offers dedicated corporate logistics packages — combining storage, transport, repairs, documentation, and a dedicated account manager under a single monthly agreement.</p>
-              <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;">
-                <li>Dedicated account manager</li>
-                <li>Priority gate access at all depots</li>
-                <li>Guaranteed truck availability</li>
-                <li>Monthly volume pricing</li>
-                <li>Consolidated invoicing and reporting</li>
-                <li>24/7 operations support line</li>
-                <li>Custom SLA agreements</li>
-              </ul>
-              <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Request Corporate Proposal →</button>
-            </div>
-            <div class="sidebar-box">
-              <h4>Corporate Package Highlights</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Minimum Volume</div><p>50+ TEUs per month</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Account Manager</div><p>Dedicated single point of contact</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Reporting</div><p>Weekly and monthly volume reports</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Billing</div><p>Consolidated monthly invoice</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">End-to-End Corporate Container Logistics</h2> <p>For businesses with regular, high-volume container movements, Gargo Haven offers dedicated corporate logistics packages — combining storage, transport, repairs, documentation, and a dedicated account manager under a single monthly agreement.</p> <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;"> <li>Dedicated account manager</li> <li>Priority gate access at all depots</li> <li>Guaranteed truck availability</li> <li>Monthly volume pricing</li> <li>Consolidated invoicing and reporting</li> <li>24/7 operations support line</li> <li>Custom SLA agreements</li> </ul> <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Request Corporate Proposal →</button> </div> <div class="sidebar-box"> <h4>Corporate Package Highlights</h4> <div class="sidebar-item"><div class="sidebar-label">Minimum Volume</div><p>50+ TEUs per month</p></div> <div class="sidebar-item"><div class="sidebar-label">Account Manager</div><p>Dedicated single point of contact</p></div> <div class="sidebar-item"><div class="sidebar-label">Reporting</div><p>Weekly and monthly volume reports</p></div> <div class="sidebar-item"><div class="sidebar-label">Billing</div><p>Consolidated monthly invoice</p></div> </div> </div> </div> </section>`,
   },
-
-  /* ══ DEPOT ════════════════════════════════════════════════════════ */
-
   'changamwe-depot': {
     parent: 'depot',
     title: 'Changamwe Main Depot',
     hero: 'images/gargo4.png',
     tag: '✦ Main Facility',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Gargo Haven Changamwe — Main Depot</h2>
-              <p>Our Changamwe facility is the operational heart of Gargo Haven — the largest and most fully equipped depot in our network. Located directly off the Mombasa–Nairobi Highway with direct access to Mombasa Port and APM Terminals, the depot offers the fastest container turnaround in the region.</p>
-              <p>The facility spans over 10 acres and includes a general storage yard, dedicated reefer zone with 200+ plug-in points, a 10-bay M&R repair workshop, a 6-lane washing bay, a fumigation chamber, and a full client services centre.</p>
-              <div class="depot-stats-mega" style="margin:32px 0;">
-                <div class="dsm"><strong>5,000+</strong><span>TEU Capacity</span></div>
-                <div class="dsm"><strong>200+</strong><span>Reefer Plugs</span></div>
-                <div class="dsm"><strong>10</strong><span>Repair Bays</span></div>
-                <div class="dsm"><strong>24/7</strong><span>Operations</span></div>
-                <div class="dsm"><strong>4</strong><span>Gate Lanes</span></div>
-                <div class="dsm"><strong>30min</strong><span>Gate Turnaround</span></div>
-              </div>
-            </div>
-            <div class="sidebar-box">
-              <h4>Changamwe Depot Details</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Address</div><p>Off Mombasa–Nairobi Highway<br>Changamwe, Mombasa 80100</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">GPS Coordinates</div><p>-4.0435° S, 39.6682° E</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Gate Hours</div><p>Mon–Sat: 6AM–10PM<br>Sun: 8AM–4PM<br>Emergency: 24/7</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Phone</div><p>+254 700 000 000</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Email</div><p>depot@gargohaven.co.ke</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Gate-In Requirements</div><p>Container number · EIR · Driver ID · Booking reference</p></div>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="section-dark">
-        <div class="section-inner">
-          <div class="section-header">
-          <div class="section-tag"> ✦ Yard Layout</div><h2 class="section-title">Depot <span>Zones</span></h2></div>
-          <div class="depot-zones-grid">
-            <div class="zone-card"><div class="zone-label">Zone A — General Storage</div><div class="zone-desc">20ft and 40ft dry containers. Double-stacked racking. Capacity: 3,000 TEU.</div></div>
-            <div class="zone-card"><div class="zone-label">Zone B — Reefer Yard</div><div class="zone-desc">200+ plug-in points. 24/7 temp monitoring. PTI pits. Capacity: 800 TEU.</div></div>
-            <div class="zone-card"><div class="zone-label">Zone C — M&R Workshop</div><div class="zone-desc">10-bay IICL-certified repair workshop. Structural, floor, and panel repairs.</div></div>
-            <div class="zone-card"><div class="zone-label">Zone D — Washing Bay</div><div class="zone-desc">6-lane high-pressure washing. Fumigation chamber. KEBS certificates.</div></div>
-            <div class="zone-card"><div class="zone-label">Zone E — OOG & Specials</div><div class="zone-desc">Flat-racks, open-tops, tank containers, out-of-gauge cargo laydown.</div></div>
-            <div class="zone-card"><div class="zone-label">Client Services Centre</div><div class="zone-desc">Documentation desk, self-service kiosk, relationship manager workspace.</div></div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Gargo Haven Changamwe — Main Depot</h2> <p>Our Changamwe facility is the operational heart of Gargo Haven — the largest and most fully equipped depot in our network. Located directly off the Mombasa–Nairobi Highway with direct access to Mombasa Port and APM Terminals, the depot offers the fastest container turnaround in the region.</p> <p>The facility spans over 10 acres and includes a general storage yard, dedicated reefer zone with 200+ plug-in points, a 10-bay M&R repair workshop, a 6-lane washing bay, a fumigation chamber, and a full client services centre.</p> <div class="depot-stats-mega" style="margin:32px 0;"> <div class="dsm"><strong>5,000+</strong><span>TEU Capacity</span></div> <div class="dsm"><strong>200+</strong><span>Reefer Plugs</span></div> <div class="dsm"><strong>10</strong><span>Repair Bays</span></div> <div class="dsm"><strong>24/7</strong><span>Operations</span></div> <div class="dsm"><strong>4</strong><span>Gate Lanes</span></div> <div class="dsm"><strong>30min</strong><span>Gate Turnaround</span></div> </div> </div> <div class="sidebar-box"> <h4>Changamwe Depot Details</h4> <div class="sidebar-item"><div class="sidebar-label">Address</div><p>Off Mombasa–Nairobi Highway<br>Changamwe, Mombasa 80100</p></div> <div class="sidebar-item"><div class="sidebar-label">GPS Coordinates</div><p>-4.0435° S, 39.6682° E</p></div> <div class="sidebar-item"><div class="sidebar-label">Gate Hours</div><p>Mon–Sat: 6AM–10PM<br>Sun: 8AM–4PM<br>Emergency: 24/7</p></div> <div class="sidebar-item"><div class="sidebar-label">Phone</div><p>+254 700 000 000</p></div> <div class="sidebar-item"><div class="sidebar-label">Email</div><p>depot@gargohaven.co.ke</p></div> <div class="sidebar-item"><div class="sidebar-label">Gate-In Requirements</div><p>Container number · EIR · Driver ID · Booking reference</p></div> </div> </div> </div> </section> <section class="section-dark"> <div class="section-inner"> <div class="section-header"> <div class="section-tag"> ✦ Yard Layout</div><h2 class="section-title">Depot <span>Zones</span></h2></div> <div class="depot-zones-grid"> <div class="zone-card"><div class="zone-label">Zone A — General Storage</div><div class="zone-desc">20ft and 40ft dry containers. Double-stacked racking. Capacity: 3,000 TEU.</div></div> <div class="zone-card"><div class="zone-label">Zone B — Reefer Yard</div><div class="zone-desc">200+ plug-in points. 24/7 temp monitoring. PTI pits. Capacity: 800 TEU.</div></div> <div class="zone-card"><div class="zone-label">Zone C — M&R Workshop</div><div class="zone-desc">10-bay IICL-certified repair workshop. Structural, floor, and panel repairs.</div></div> <div class="zone-card"><div class="zone-label">Zone D — Washing Bay</div><div class="zone-desc">6-lane high-pressure washing. Fumigation chamber. KEBS certificates.</div></div> <div class="zone-card"><div class="zone-label">Zone E — OOG & Specials</div><div class="zone-desc">Flat-racks, open-tops, tank containers, out-of-gauge cargo laydown.</div></div> <div class="zone-card"><div class="zone-label">Client Services Centre</div><div class="zone-desc">Documentation desk, self-service kiosk, relationship manager workspace.</div></div> </div> </div> </section>`,
   },
-
   'consolebase-icd': {
     parent: 'depot',
     title: 'Consolebase ICD',
     hero: 'images/gargo4.png',
     tag: ' ✦ Alliance Depot',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Consolebase ICD — Alliance Depot</h2>
-              <p>Gargo Haven maintains a formal depot alliance agreement with Consolebase Inland Container Depot, strategically located on the Mombasa Road corridor. The alliance enables seamless container shuttle and transfer services between Consolebase and Gargo Haven's Changamwe main depot.</p>
-              <p>Clients with containers at Consolebase can utilise Gargo Haven's truck fleet for repositioning, haulage, and transport services. Our operations team liaises directly with Consolebase gate management to coordinate movements.</p>
-              <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;">
-                <li>Container shuttle: Consolebase ↔ Changamwe Depot</li>
-                <li>Container pickup from Consolebase for client delivery</li>
-                <li>Transfer to Mombasa Port (KPA) or APM Terminals</li>
-                <li>Direct booking through Gargo Haven — no separate Consolebase account needed</li>
-              </ul>
-              <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('booking')">Book a Consolebase Movement →</button>
-            </div>
-            <div class="sidebar-box">
-              <h4>Consolebase ICD Details</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Location</div><p>Mombasa Road, Mombasa</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Gargo Haven Service</div><p>Shuttle · Transfer · Port haulage</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Booking</div><p>Via Gargo Haven — single point of contact</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Consolebase ICD — Alliance Depot</h2> <p>Gargo Haven maintains a formal depot alliance agreement with Consolebase Inland Container Depot, strategically located on the Mombasa Road corridor. The alliance enables seamless container shuttle and transfer services between Consolebase and Gargo Haven's Changamwe main depot.</p> <p>Clients with containers at Consolebase can utilise Gargo Haven's truck fleet for repositioning, haulage, and transport services. Our operations team liaises directly with Consolebase gate management to coordinate movements.</p> <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;"> <li>Container shuttle: Consolebase ↔ Changamwe Depot</li> <li>Container pickup from Consolebase for client delivery</li> <li>Transfer to Mombasa Port (KPA) or APM Terminals</li> <li>Direct booking through Gargo Haven — no separate Consolebase account needed</li> </ul> <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('booking')">Book a Consolebase Movement →</button> </div> <div class="sidebar-box"> <h4>Consolebase ICD Details</h4> <div class="sidebar-item"><div class="sidebar-label">Location</div><p>Mombasa Road, Mombasa</p></div> <div class="sidebar-item"><div class="sidebar-label">Gargo Haven Service</div><p>Shuttle · Transfer · Port haulage</p></div> <div class="sidebar-item"><div class="sidebar-label">Booking</div><p>Via Gargo Haven — single point of contact</p></div> </div> </div> </div> </section>`,
   },
-
   'hakika-depot': {
     parent: 'depot',
     title: 'Hakika Depot',
     hero: 'images/gargo4.png',
     tag: ' ✦ Alliance Depot',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Hakika Container Depot — Alliance Partner</h2>
-              <p>Located in Changamwe, Hakika Container Depot is a key alliance partner in the Gargo Haven network. The partnership provides additional storage capacity during peak periods and enables overflow management for large-volume clients.</p>
-              <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;">
-                <li>Overflow capacity during peak periods</li>
-                <li>Container repositioning: Hakika ↔ Changamwe</li>
-                <li>Port haulage from Hakika via Gargo Haven fleet</li>
-                <li>Cross-depot EIR management</li>
-              </ul>
-              <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Enquire About Hakika Movements →</button>
-            </div>
-            <div class="sidebar-box">
-              <h4>Hakika Depot Details</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Location</div><p>Jomvu Miknjuni, Mombasa</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Gargo Haven Role</div><p>Overflow storage · Transport partner</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Access</div><p>Booked via Gargo Haven</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Hakika Container Depot — Alliance Partner</h2> <p>Located in Changamwe, Hakika Container Depot is a key alliance partner in the Gargo Haven network. The partnership provides additional storage capacity during peak periods and enables overflow management for large-volume clients.</p> <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;"> <li>Overflow capacity during peak periods</li> <li>Container repositioning: Hakika ↔ Changamwe</li> <li>Port haulage from Hakika via Gargo Haven fleet</li> <li>Cross-depot EIR management</li> </ul> <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Enquire About Hakika Movements →</button> </div> <div class="sidebar-box"> <h4>Hakika Depot Details</h4> <div class="sidebar-item"><div class="sidebar-label">Location</div><p>Jomvu Miknjuni, Mombasa</p></div> <div class="sidebar-item"><div class="sidebar-label">Gargo Haven Role</div><p>Overflow storage · Transport partner</p></div> <div class="sidebar-item"><div class="sidebar-label">Access</div><p>Booked via Gargo Haven</p></div> </div> </div> </div> </section>`,
   },
-
   'kibarani-depot': {
     parent: 'depot',
     title: 'Kibarani Depot',
     hero: 'images/gargo4.png',
     tag: ' ✦ Alliance Depot',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Kibarani Depot — Repair & Overflow Partner</h2>
-              <p>Kibarani Depot serves as an overflow and specialised repair partner in the Gargo Haven network, located in the Kibarani area of Mombasa. The facility handles containers requiring extended repair work and provides additional yard space for large-volume movements.</p>
-              <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;">
-                <li>Extended repair and refurbishment work</li>
-                <li>Overflow yard capacity for large shipments</li>
-                <li>Container repositioning via Gargo Haven fleet</li>
-              </ul>
-              <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Enquire →</button>
-            </div>
-            <div class="sidebar-box">
-              <h4>Kibarani Details</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Location</div><p>Kibarani, Mombasa</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Speciality</div><p>Overflow storage · Extended M&R</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Kibarani Depot — Repair & Overflow Partner</h2> <p>Kibarani Depot serves as an overflow and specialised repair partner in the Gargo Haven network, located in the Kibarani area of Mombasa. The facility handles containers requiring extended repair work and provides additional yard space for large-volume movements.</p> <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;"> <li>Extended repair and refurbishment work</li> <li>Overflow yard capacity for large shipments</li> <li>Container repositioning via Gargo Haven fleet</li> </ul> <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Enquire →</button> </div> <div class="sidebar-box"> <h4>Kibarani Details</h4> <div class="sidebar-item"><div class="sidebar-label">Location</div><p>Kibarani, Mombasa</p></div> <div class="sidebar-item"><div class="sidebar-label">Speciality</div><p>Overflow storage · Extended M&R</p></div> </div> </div> </div> </section>`,
   },
-
   'fortune-depot': {
     parent: 'depot',
     title: 'Fortune Depot',
     hero: 'images/gargo4.png',
     tag: ' ✦ Alliance Depot',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Fortune Container Depot — Alliance Partner</h2>
-              <p>Fortune Container Depot is located in the Mombasa Industrial Area and provides specialised storage and overflow capacity as a Gargo Haven alliance partner. The facility is particularly well-suited for OOG and heavy industrial containers.</p>
-              <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;">
-                <li>OOG container laydown and storage</li>
-                <li>Industrial area proximity — ideal for factory deliveries</li>
-                <li>Overflow container storage</li>
-                <li>Repositioning via Gargo Haven fleet</li>
-              </ul>
-              <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Enquire About Fortune Movements →</button>
-            </div>
-            <div class="sidebar-box">
-              <h4>Fortune Depot Details</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Location</div><p>Mombasa Industrial Area</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Speciality</div><p>OOG · Industrial overflow</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Fortune Container Depot — Alliance Partner</h2> <p>Fortune Container Depot is located in the Mombasa Industrial Area and provides specialised storage and overflow capacity as a Gargo Haven alliance partner. The facility is particularly well-suited for OOG and heavy industrial containers.</p> <ul class="rate-features" style="list-style:none;padding:0;margin-top:24px;"> <li>OOG container laydown and storage</li> <li>Industrial area proximity — ideal for factory deliveries</li> <li>Overflow container storage</li> <li>Repositioning via Gargo Haven fleet</li> </ul> <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Enquire About Fortune Movements →</button> </div> <div class="sidebar-box"> <h4>Fortune Depot Details</h4> <div class="sidebar-item"><div class="sidebar-label">Location</div><p>Mombasa Industrial Area</p></div> <div class="sidebar-item"><div class="sidebar-label">Speciality</div><p>OOG · Industrial overflow</p></div> </div> </div> </div> </section>`,
   },
-
   'capacity-dashboard': {
     parent: 'depot',
     title: 'Capacity Dashboard',
     hero: 'images/gargo4.png',
     tag: ' ✦ Live Operations',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="section-header">
-            <div class="section-tag"> ✦ Live Capacity</div>
-            <h2 class="section-title">Depot <span>Capacity Dashboard</span></h2>
-            <p class="section-sub">Real-time capacity and occupancy across the Gargo Haven depot network.</p>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-bottom:40px;">
-            ${[
-              { zone:'Changamwe — Zone A (Dry)', cap:3000, used:2140, label:'General Storage' },
-              { zone:'Changamwe — Zone B (Reefer)', cap:800, used:312, label:'Reefer Yard' },
-              { zone:'Changamwe — Zone C (M&R)', cap:500, used:88, label:'Repair Holding' },
-              { zone:'Changamwe — Zone E (OOG)', cap:200, used:44, label:'Out-of-Gauge' },
-            ].map(z => {
-              const pct = Math.round((z.used/z.cap)*100);
-              const color = pct > 80 ? '#ef4444' : pct > 60 ? '#f59e0b' : '#22c55e';
-              return `<div style="background:var(--dark-card);border:1px solid var(--border);border-radius:10px;padding:24px;">
-                <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:8px;">${z.label}</div>
-                <div style="font-family:var(--font-main);font-size:18px;color:var(--white);margin-bottom:4px;">${z.zone}</div>
-                <div style="display:flex;align-items:center;gap:12px;margin:16px 0 8px;">
-                  <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
-                    <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width 1s ease;"></div>
-                  </div>
-                  <span style="font-size:14px;color:${color};font-weight:600;">${pct}%</span>
-                </div>
-                <div style="font-size:12px;color:var(--gray-light);">${z.used.toLocaleString()} / ${z.cap.toLocaleString()} TEU occupied</div>
-              </div>`;
-            }).join('')}
-          </div>
-          <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:center;">
-            <div style="font-size:12px;color:var(--gray);letter-spacing:1px;margin-bottom:8px;">LAST UPDATED</div>
-            <div style="font-family:var(--font-main);font-size:20px;color:var(--gold);" id="dashboardTime">—</div>
-            <p style="color:var(--gray-light);font-size:13px;margin-top:8px;">Dashboard updates every 15 minutes from our yard management system. For real-time availability, call our depot team on +254 108 613 789.</p>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="section-header"> <div class="section-tag"> ✦ Live Capacity</div> <h2 class="section-title">Depot <span>Capacity Dashboard</span></h2> <p class="section-sub">Real-time capacity and occupancy across the Gargo Haven depot network.</p> </div> <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-bottom:40px;"> ${[ { zone:'Changamwe — Zone A (Dry)', cap:3000, used:2140, label:'General Storage' }, { zone:'Changamwe — Zone B (Reefer)', cap:800, used:312, label:'Reefer Yard' }, { zone:'Changamwe — Zone C (M&R)', cap:500, used:88, label:'Repair Holding' }, { zone:'Changamwe — Zone E (OOG)', cap:200, used:44, label:'Out-of-Gauge' }, ].map(z => { const pct = Math.round((z.used/z.cap)*100); const color = pct > 80 ? '#ef4444' : pct > 60 ? '#f59e0b' : '#22c55e'; return ` <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:10px;padding:24px;"> <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-bottom:8px;">${z.label}</div> <div style="font-family:var(--font-main);font-size:18px;color:var(--white);margin-bottom:4px;">${z.zone}</div> <div style="display:flex;align-items:center;gap:12px;margin:16px 0 8px;"> <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;"> <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width 1s ease;"></div> </div> <span style="font-size:14px;color:${color};font-weight:600;">${pct}%</span> </div> <div style="font-size:12px;color:var(--gray-light);">${z.used.toLocaleString()} / ${z.cap.toLocaleString()} TEU occupied</div> </div> `; }).join('')} </div> <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:center;"> <div style="font-size:12px;color:var(--gray);letter-spacing:1px;margin-bottom:8px;">LAST UPDATED</div> <div style="font-family:var(--font-main);font-size:20px;color:var(--gold);" id="dashboardTime">—</div> <p style="color:var(--gray-light);font-size:13px;margin-top:8px;">Dashboard updates every 15 minutes from our yard management system. For real-time availability, call our depot team on +254 108 613 789.</p> </div> </div> </section>`,
     afterRender: () => {
       const el = document.getElementById('dashboardTime');
       if (el) el.textContent = new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi', dateStyle: 'medium', timeStyle: 'short' }) + ' EAT';
     }
   },
-
   'gate-in-requirements': {
     parent: 'depot',
     title: 'Gate-In Requirements',
     hero: 'images/gargo4.png',
     tag: ' ✦ Gate-In Process',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="section-header">
-            <div class="section-tag"> ✦ Gate-In Process</div>
-            <h2 class="section-title">Gate-In <span>Requirements</span></h2>
-            <p class="section-sub">What you need to bring and what to expect when depositing a container at Gargo Haven.</p>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:40px;">
-            <div>
-              <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin-bottom:20px;">Required Documents</h3>
-              ${['Booking reference number (from Gargo Haven)','Original Release Order / Delivery Order','Valid container EIR from originating depot','Driver national ID or passport','Truck registration documents','Container seal number (if applicable)','Shipping line authority letter (for third-party deposits)'].map(item => `<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);"><span style="color:var(--gold);margin-top:2px;">✓</span><span style="color:var(--gray-light);font-size:14px;">${item}</span></div>`).join('')}
-            </div>
-            <div>
-              <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin-bottom:20px;">Gate-In Process Steps</h3>
-              ${['Driver presents at Gate 1 with documents','Gate officer verifies booking reference and documents','Container scanned and photographed (all four sides + floor)','IICL condition check — damage noted and photographed','Container weighed at gate axle scale','Driver receives digital EIR confirmation via SMS','Container assigned to yard slot by digital yard management system','Full digital EIR available in client portal within 15 minutes'].map((step, i) => `<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);"><span style="color:var(--gold);font-weight:700;font-size:13px;min-width:24px;">0${i+1}</span><span style="color:var(--gray-light);font-size:14px;">${step}</span></div>`).join('')}
-            </div>
-          </div>
-          <div style="background:var(--dark-card);border:1px solid var(--gold);border-radius:10px;padding:28px;">
-            <h4 style="font-family:var(--font-main);color:var(--gold);margin-bottom:12px;">Important Notes</h4>
-            <ul style="list-style:none;padding:0;margin:0;">
-              <li style="color:var(--gray-light);font-size:13px;padding:6px 0;">• Pre-booking is mandatory — walk-in gate-ins are subject to space availability and may be refused during peak hours.</li>
-              <li style="color:var(--gray-light);font-size:13px;padding:6px 0;">• Container must arrive within the booking window. Late arrivals (>2 hours) require re-confirmation.</li>
-              <li style="color:var(--gray-light);font-size:13px;padding:6px 0;">• Reefer containers must be pre-booked on the reefer booking channel to ensure plug-in availability.</li>
-              <li style="color:var(--gray-light);font-size:13px;padding:6px 0;">• Damaged containers beyond standard IICL acceptance may be held pending M&R authorisation from the shipping line.</li>
-            </ul>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="section-header"> <div class="section-tag"> ✦ Gate-In Process</div> <h2 class="section-title">Gate-In <span>Requirements</span></h2> <p class="section-sub">What you need to bring and what to expect when depositing a container at Gargo Haven.</p> </div> <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:40px;"> <div> <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin-bottom:20px;">Required Documents</h3> ${['Booking reference number (from Gargo Haven)','Original Release Order / Delivery Order','Valid container EIR from originating depot','Driver national ID or passport','Truck registration documents','Container seal number (if applicable)','Shipping line authority letter (for third-party deposits)'].map(item => ` <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);"> <span style="color:var(--gold);margin-top:2px;">✓</span> <span style="color:var(--gray-light);font-size:14px;">${item}</span> </div> `).join('')} </div> <div> <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin-bottom:20px;">Gate-In Process Steps</h3> ${['Driver presents at Gate 1 with documents','Gate officer verifies booking reference and documents','Container scanned and photographed (all four sides + floor)','IICL condition check — damage noted and photographed','Container weighed at gate axle scale','Driver receives digital EIR confirmation via SMS','Container assigned to yard slot by digital yard management system','Full digital EIR available in client portal within 15 minutes'].map((step, i) => ` <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);"> <span style="color:var(--gold);font-weight:700;font-size:13px;min-width:24px;">0${i+1}</span> <span style="color:var(--gray-light);font-size:14px;">${step}</span> </div> `).join('')} </div> </div> <div style="background:var(--dark-card);border:1px solid var(--gold);border-radius:10px;padding:28px;"> <h4 style="font-family:var(--font-main);color:var(--gold);margin-bottom:12px;">Important Notes</h4> <ul style="list-style:none;padding:0;margin:0;"> <li style="color:var(--gray-light);font-size:13px;padding:6px 0;">• Pre-booking is mandatory — walk-in gate-ins are subject to space availability and may be refused during peak hours.</li> <li style="color:var(--gray-light);font-size:13px;padding:6px 0;">• Container must arrive within the booking window. Late arrivals (>2 hours) require re-confirmation.</li> <li style="color:var(--gray-light);font-size:13px;padding:6px 0;">• Reefer containers must be pre-booked on the reefer booking channel to ensure plug-in availability.</li> <li style="color:var(--gray-light);font-size:13px;padding:6px 0;">• Damaged containers beyond standard IICL acceptance may be held pending M&R authorisation from the shipping line.</li> </ul> </div> </div> </section>`,
   },
-
   'gate-out-requirements': {
     parent: 'depot',
     title: 'Gate-Out Requirements',
     hero: 'images/gargo4.png',
     tag: ' ✦ Gate-Out Process',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="section-header">
-            <div class="section-tag"> ✦ Gate-Out Process</div>
-            <h2 class="section-title">Gate-Out <span>Requirements</span></h2>
-            <p class="section-sub">What you need to collect a container from Gargo Haven depot.</p>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:40px;">
-            <div>
-              <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin-bottom:20px;">Required Documents</h3>
-              ${['Gate-out booking reference (pre-booked via Gargo Haven)','Original Release Order or Delivery Order','Shipping line release authorisation (stamped)','Driver national ID or passport','Truck registration documents','Any outstanding storage fee settlement','Container number and size confirmation'].map(item => `<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);"><span style="color:var(--gold);margin-top:2px;">✓</span><span style="color:var(--gray-light);font-size:14px;">${item}</span></div>`).join('')}
-            </div>
-            <div>
-              <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin-bottom:20px;">Gate-Out Process Steps</h3>
-              ${['Pre-book gate-out slot (minimum 2 hours in advance)','Driver presents at Gate 1 with all documents','Gate officer verifies release authorisation and identity','Container located and extracted from yard by reach stacker','Final condition check and photos taken at gate','EIR gate-out issued — shows condition on departure','Seal applied (if required by shipping line)','Driver receives gate pass and departs'].map((step, i) => `<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);"><span style="color:var(--gold);font-weight:700;font-size:13px;min-width:24px;">0${i+1}</span><span style="color:var(--gray-light);font-size:14px;">${step}</span></div>`).join('')}
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="section-header"> <div class="section-tag"> ✦ Gate-Out Process</div> <h2 class="section-title">Gate-Out <span>Requirements</span></h2> <p class="section-sub">What you need to collect a container from Gargo Haven depot.</p> </div> <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:40px;"> <div> <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin-bottom:20px;">Required Documents</h3> ${['Gate-out booking reference (pre-booked via Gargo Haven)','Original Release Order or Delivery Order','Shipping line release authorisation (stamped)','Driver national ID or passport','Truck registration documents','Any outstanding storage fee settlement','Container number and size confirmation'].map(item => ` <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);"> <span style="color:var(--gold);margin-top:2px;">✓</span> <span style="color:var(--gray-light);font-size:14px;">${item}</span> </div> `).join('')} </div> <div> <h3 style="font-family:var(--font-main);font-size:20px;color:var(--white);margin-bottom:20px;">Gate-Out Process Steps</h3> ${['Pre-book gate-out slot (minimum 2 hours in advance)','Driver presents at Gate 1 with all documents','Gate officer verifies release authorisation and identity','Container located and extracted from yard by reach stacker','Final condition check and photos taken at gate','EIR gate-out issued — shows condition on departure','Seal applied (if required by shipping line)','Driver receives gate pass and departs'].map((step, i) => ` <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);"> <span style="color:var(--gold);font-weight:700;font-size:13px;min-width:24px;">0${i+1}</span> <span style="color:var(--gray-light);font-size:14px;">${step}</span> </div> `).join('')} </div> </div> </div> </section>`,
   },
-
-  /* ══ BOOKING ══════════════════════════════════════════════════════ */
-
   'bulk-bookings': {
     parent: 'booking',
     title: 'Bulk Bookings',
     hero: 'images/gargo1.png',
     tag: ' ✦ Bulk Container Bookings',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Bulk Container Bookings</h2>
-              <p>For shipping lines, freight forwarders, and logistics companies moving 10 or more containers in a single operation, Gargo Haven's bulk booking process streamlines scheduling, documentation, and billing into a single coordinated service.</p>
-              <p>Bulk bookings receive priority scheduling, guaranteed truck allocation, and a dedicated operations coordinator for the duration of the movement. Volume discounts apply from 10+ TEUs.</p>
-              <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;">
-                <li>Priority truck scheduling — guaranteed availability</li>
-                <li>Dedicated ops coordinator for the movement</li>
-                <li>Consolidated documentation package</li>
-                <li>Volume pricing from 10+ TEUs</li>
-                <li>Real-time tracking for all trucks in the movement</li>
-                <li>Single invoice for the entire operation</li>
-              </ul>
-              <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Request Bulk Booking →</button>
-            </div>
-            <div class="sidebar-box">
-              <h4>Bulk Booking Details</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Minimum Volume</div><p>10+ containers per movement</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Lead Time</div><p>24 hours for standard bulk · 48 hours for large operations</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Coordinator</div><p>Dedicated point of contact for the movement</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Billing</div><p>Single consolidated invoice post-movement</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Bulk Container Bookings</h2> <p>For shipping lines, freight forwarders, and logistics companies moving 10 or more containers in a single operation, Gargo Haven's bulk booking process streamlines scheduling, documentation, and billing into a single coordinated service.</p> <p>Bulk bookings receive priority scheduling, guaranteed truck allocation, and a dedicated operations coordinator for the duration of the movement. Volume discounts apply from 10+ TEUs.</p> <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;"> <li>Priority truck scheduling — guaranteed availability</li> <li>Dedicated ops coordinator for the movement</li> <li>Consolidated documentation package</li> <li>Volume pricing from 10+ TEUs</li> <li>Real-time tracking for all trucks in the movement</li> <li>Single invoice for the entire operation</li> </ul> <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Request Bulk Booking →</button> </div> <div class="sidebar-box"> <h4>Bulk Booking Details</h4> <div class="sidebar-item"><div class="sidebar-label">Minimum Volume</div><p>10+ containers per movement</p></div> <div class="sidebar-item"><div class="sidebar-label">Lead Time</div><p>24 hours for standard bulk · 48 hours for large operations</p></div> <div class="sidebar-item"><div class="sidebar-label">Coordinator</div><p>Dedicated point of contact for the movement</p></div> <div class="sidebar-item"><div class="sidebar-label">Billing</div><p>Single consolidated invoice post-movement</p></div> </div> </div> </div> </section>`,
   },
-
   'request-quotation': {
     parent: 'booking',
     title: 'Request Quotation',
     hero: 'images/gargo1.png',
     tag: ' ✦ Quotation Request',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="booking-layout">
-            <div class="booking-form-container">
-              <div class="form-header">
-                <div class="form-header-title">Quotation Request</div>
-                <div class="form-header-id">GH-QUOTE-PENDING</div>
-              </div>
-              <div class="form-body">
-                <div class="form-section-title">01 — SERVICE REQUIRED</div>
-                <div class="cargo-types">
-                  <button class="cargo-type-btn selected" onclick="selectCargoType(this)">Depot Storage</button>
-                  <button class="cargo-type-btn" onclick="selectCargoType(this)">Port Haulage</button>
-                  <button class="cargo-type-btn" onclick="selectCargoType(this)">Container Repair</button>
-                  <button class="cargo-type-btn" onclick="selectCargoType(this)">Reefer Management</button>
-                  <button class="cargo-type-btn" onclick="selectCargoType(this)">Full Package</button>
-                </div>
-                <div class="form-section-title">02 — MOVEMENT DETAILS</div>
-                <div class="form-grid">
-                  <div class="form-group"><label class="form-label">Origin</label><select class="form-select"><option>Mombasa Port (KPA)</option><option>APM Terminals</option><option>Consolebase ICD</option><option>Hakika Depot</option><option>Client Yard</option></select></div>
-                  <div class="form-group"><label class="form-label">Destination</label><select class="form-select"><option>Gargo Haven Depot</option><option>Mombasa Port (KPA)</option><option>APM Terminals</option><option>Client Yard</option></select></div>
-                  <div class="form-group"><label class="form-label">Container Type</label><select class="form-select"><option>20ft Standard</option><option>40ft Standard</option><option>40ft High Cube</option><option>20ft Reefer</option><option>40ft Reefer</option></select></div>
-                  <div class="form-group"><label class="form-label">Number of Containers</label><input type="number" class="form-input" value="1" min="1"></div>
-                  <div class="form-group"><label class="form-label">Required Date</label><input type="date" class="form-input"></div>
-                  <div class="form-group"><label class="form-label">Storage Duration (days)</label><input type="number" class="form-input" value="0" min="0"></div>
-                  <div class="form-group full"><label class="form-label">Additional Requirements</label><textarea class="form-textarea" placeholder="Special cargo, reefer temperature settings, repair type, etc."></textarea></div>
-                </div>
-                <div class="form-section-title">03 — YOUR DETAILS</div>
-                <div class="form-grid">
-                  <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" placeholder="Your name"></div>
-                  <div class="form-group"><label class="form-label">Company</label><input type="text" class="form-input" placeholder="Company name"></div>
-                  <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" placeholder="you@company.com"></div>
-                  <div class="form-group"><label class="form-label">Phone / WhatsApp</label><input type="tel" class="form-input" placeholder="+254 700 000 000"></div>
-                </div>
-                <button class="form-submit" onclick="showNotification('Quote Requested','Our team will respond within 2 hours during business hours.')">REQUEST QUOTATION →</button>
-              </div>
-            </div>
-            <div class="booking-info">
-              <div class="info-feature-box">
-                <div class="info-feature"><div class="info-icon"></div><div><div class="info-title">2-Hour Response</div><div class="info-text">All quotation requests receive a response within 2 business hours.</div></div></div>
-                <div class="info-feature"><div class="info-icon"></div><div><div class="info-title">Transparent Pricing</div><div class="info-text">No hidden fees. All-inclusive quotes with full cost breakdown.</div></div></div>
-                <div class="info-feature"><div class="info-icon"></div><div><div class="info-title">Volume Discounts</div><div class="info-text">Discounts available for 10+ container movements and monthly contracts.</div></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="booking-layout"> <div class="booking-form-container"> <div class="form-header"> <div class="form-header-title">Quotation Request</div> <div class="form-header-id">GH-QUOTE-PENDING</div> </div> <div class="form-body"> <div class="form-section-title">01 — SERVICE REQUIRED</div> <div class="cargo-types"> <button class="cargo-type-btn selected" onclick="selectCargoType(this)">Depot Storage</button> <button class="cargo-type-btn" onclick="selectCargoType(this)">Port Haulage</button> <button class="cargo-type-btn" onclick="selectCargoType(this)">Container Repair</button> <button class="cargo-type-btn" onclick="selectCargoType(this)">Reefer Management</button> <button class="cargo-type-btn" onclick="selectCargoType(this)">Full Package</button> </div> <div class="form-section-title">02 — MOVEMENT DETAILS</div> <div class="form-grid"> <div class="form-group"><label class="form-label">Origin</label><select class="form-select"><option>Mombasa Port (KPA)</option><option>APM Terminals</option><option>Consolebase ICD</option><option>Hakika Depot</option><option>Client Yard</option></select></div> <div class="form-group"><label class="form-label">Destination</label><select class="form-select"><option>Gargo Haven Depot</option><option>Mombasa Port (KPA)</option><option>APM Terminals</option><option>Client Yard</option></select></div> <div class="form-group"><label class="form-label">Container Type</label><select class="form-select"><option>20ft Standard</option><option>40ft Standard</option><option>40ft High Cube</option><option>20ft Reefer</option><option>40ft Reefer</option></select></div> <div class="form-group"><label class="form-label">Number of Containers</label><input type="number" class="form-input" value="1" min="1"></div> <div class="form-group"><label class="form-label">Required Date</label><input type="date" class="form-input"></div> <div class="form-group"><label class="form-label">Storage Duration (days)</label><input type="number" class="form-input" value="0" min="0"></div> <div class="form-group full"><label class="form-label">Additional Requirements</label><textarea class="form-textarea" placeholder="Special cargo, reefer temperature settings, repair type, etc."></textarea></div> </div> <div class="form-section-title">03 — YOUR DETAILS</div> <div class="form-grid"> <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" placeholder="Your name"></div> <div class="form-group"><label class="form-label">Company</label><input type="text" class="form-input" placeholder="Company name"></div> <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" placeholder="you@company.com"></div> <div class="form-group"><label class="form-label">Phone / WhatsApp</label><input type="tel" class="form-input" placeholder="+254 700 000 000"></div> </div> <button class="form-submit" onclick="showNotification('Quote Requested','Our team will respond within 2 hours during business hours.')">REQUEST QUOTATION →</button> </div> </div> <div class="booking-info"> <div class="info-feature-box"> <div class="info-feature"><div class="info-icon"></div><div><div class="info-title">2-Hour Response</div><div class="info-text">All quotation requests receive a response within 2 business hours.</div></div></div> <div class="info-feature"><div class="info-icon"></div><div><div class="info-title">Transparent Pricing</div><div class="info-text">No hidden fees. All-inclusive quotes with full cost breakdown.</div></div></div> <div class="info-feature"><div class="info-icon"></div><div><div class="info-title">Volume Discounts</div><div class="info-text">Discounts available for 10+ container movements and monthly contracts.</div></div></div> </div> </div> </div> </div> </section>`,
   },
-
   'dedicated-contracts': {
     parent: 'booking',
     title: 'Dedicated Contracts',
     hero: 'images/gargo1.png',
     tag: ' ✦ Dedicated Contract Services',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Dedicated Service Contracts</h2>
-              <p>For shipping lines, freight forwarders, and corporate logistics teams with regular, recurring container movements, Gargo Haven offers dedicated service contracts that lock in truck availability, storage capacity, and pricing for 3, 6, or 12-month periods.</p>
-              <p>Contract clients receive guaranteed truck allocation, priority gate access, a dedicated account manager, monthly reporting, and consolidated billing — eliminating the need to book each movement individually.</p>
-              <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;">
-                <li>Guaranteed truck availability — no last-minute shortages</li>
-                <li>Locked-in pricing for the contract period</li>
-                <li>Priority gate access at all Gargo Haven depots</li>
-                <li>Dedicated account manager — single point of contact</li>
-                <li>Monthly movement reporting and analysis</li>
-                <li>Consolidated monthly invoicing</li>
-                <li>24/7 dedicated operations support line</li>
-              </ul>
-              <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Discuss a Contract →</button>
-            </div>
-            <div class="sidebar-box">
-              <h4>Contract Details</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Contract Terms</div><p>3 months · 6 months · 12 months</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Minimum Volume</div><p>50+ TEUs per month</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Pricing</div><p>Fixed rate for contract duration</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Billing</div><p>Monthly consolidated invoice</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Dedicated Service Contracts</h2> <p>For shipping lines, freight forwarders, and corporate logistics teams with regular, recurring container movements, Gargo Haven offers dedicated service contracts that lock in truck availability, storage capacity, and pricing for 3, 6, or 12-month periods.</p> <p>Contract clients receive guaranteed truck allocation, priority gate access, a dedicated account manager, monthly reporting, and consolidated billing — eliminating the need to book each movement individually.</p> <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;"> <li>Guaranteed truck availability — no last-minute shortages</li> <li>Locked-in pricing for the contract period</li> <li>Priority gate access at all Gargo Haven depots</li> <li>Dedicated account manager — single point of contact</li> <li>Monthly movement reporting and analysis</li> <li>Consolidated monthly invoicing</li> <li>24/7 dedicated operations support line</li> </ul> <button class="btn-primary" style="margin-top:28px;" onclick="navigateToPage('contact')">Discuss a Contract →</button> </div> <div class="sidebar-box"> <h4>Contract Details</h4> <div class="sidebar-item"><div class="sidebar-label">Contract Terms</div><p>3 months · 6 months · 12 months</p></div> <div class="sidebar-item"><div class="sidebar-label">Minimum Volume</div><p>50+ TEUs per month</p></div> <div class="sidebar-item"><div class="sidebar-label">Pricing</div><p>Fixed rate for contract duration</p></div> <div class="sidebar-item"><div class="sidebar-label">Billing</div><p>Monthly consolidated invoice</p></div> </div> </div> </div> </section>`,
   },
-
-  /* ══ FLEET ════════════════════════════════════════════════════════ */
-
   'fleet-overview': {
     parent: 'fleet',
     title: 'Fleet Overview',
     hero: 'images/gargo4.png',
     tag: '✦ Our Assets',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="section-header">
-            <div class="section-tag"> ✦ Fleet Overview</div>
-            <h2 class="section-title">120+ Assets, <span>Zero Blind Spots</span></h2>
-            <p class="section-sub">Every unit in the Gargo Haven fleet carries a live GPS tracker. Our client portal gives you real-time position, speed, and ETA for any truck carrying your container.</p>
-          </div>
-          <div class="depot-stats-mega" style="margin-bottom:48px;">
-            <div class="dsm"><strong>120+</strong><span>Trucks</span></div>
-            <div class="dsm"><strong>6</strong><span>Reach Stackers</span></div>
-            <div class="dsm"><strong>20</strong><span>Forklifts</span></div>
-            <div class="dsm"><strong>100%</strong><span>GPS Coverage</span></div>
-            <div class="dsm"><strong>40T</strong><span>Max Payload</span></div>
-            <div class="dsm"><strong>24/7</strong><span>Availability</span></div>
-          </div>
-          <div class="fleet-grid">
-            <div class="fleet-card"><div class="fleet-visual"></div><div class="fleet-info"><div class="fleet-type">ROAD · HEAVY HAULAGE</div><div class="fleet-name">Container Tractor Units</div><div class="fleet-specs"><div class="spec-item"><div class="spec-label">Units</div><div class="spec-val">80</div></div><div class="spec-item"><div class="spec-label">Capacity</div><div class="spec-val">40 TON</div></div><div class="spec-item"><div class="spec-label">GPS</div><div class="spec-val">LIVE</div></div><div class="spec-item"><div class="spec-label">Coverage</div><div class="spec-val">ALL MOMBASA</div></div></div></div></div>
-            <div class="fleet-card"><div class="fleet-visual"></div><div class="fleet-info"><div class="fleet-type">REEFER TRANSPORT</div><div class="fleet-name">Genset-Equipped Trucks</div><div class="fleet-specs"><div class="spec-item"><div class="spec-label">Units</div><div class="spec-val">20</div></div><div class="spec-item"><div class="spec-label">Temp</div><div class="spec-val">-25°C</div></div><div class="spec-item"><div class="spec-label">Monitoring</div><div class="spec-val">LIVE</div></div><div class="spec-item"><div class="spec-label">Genset</div><div class="spec-val">ON-BOARD</div></div></div></div></div>
-            <div class="fleet-card"><div class="fleet-visual"></div><div class="fleet-info"><div class="fleet-type">YARD · LIFTING EQUIPMENT</div><div class="fleet-name">Reach Stackers</div><div class="fleet-specs"><div class="spec-item"><div class="spec-label">Units</div><div class="spec-val">6</div></div><div class="spec-item"><div class="spec-label">Capacity</div><div class="spec-val">45 TON</div></div><div class="spec-item"><div class="spec-label">Stack Height</div><div class="spec-val">5 HIGH</div></div><div class="spec-item"><div class="spec-label">Telematics</div><div class="spec-val">LIVE</div></div></div></div></div>
-            <div class="fleet-card"><div class="fleet-visual"></div><div class="fleet-info"><div class="fleet-type">YARD · LIGHT EQUIPMENT</div><div class="fleet-name">Forklifts & Yard Tractors</div><div class="fleet-specs"><div class="spec-item"><div class="spec-label">Units</div><div class="spec-val">20</div></div><div class="spec-item"><div class="spec-label">Cap.</div><div class="spec-val">16 TON</div></div><div class="spec-item"><div class="spec-label">Type</div><div class="spec-val">DIESEL/ELEC</div></div><div class="spec-item"><div class="spec-label">Hours</div><div class="spec-val">24/7</div></div></div></div></div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="section-header"> <div class="section-tag"> ✦ Fleet Overview</div> <h2 class="section-title">120+ Assets, <span>Zero Blind Spots</span></h2> <p class="section-sub">Every unit in the Gargo Haven fleet carries a live GPS tracker. Our client portal gives you real-time position, speed, and ETA for any truck carrying your container.</p> </div> <div class="depot-stats-mega" style="margin-bottom:48px;"> <div class="dsm"><strong>120+</strong><span>Trucks</span></div> <div class="dsm"><strong>6</strong><span>Reach Stackers</span></div> <div class="dsm"><strong>20</strong><span>Forklifts</span></div> <div class="dsm"><strong>100%</strong><span>GPS Coverage</span></div> <div class="dsm"><strong>40T</strong><span>Max Payload</span></div> <div class="dsm"><strong>24/7</strong><span>Availability</span></div> </div> <div class="fleet-grid"> <div class="fleet-card"><div class="fleet-visual"></div><div class="fleet-info"><div class="fleet-type">ROAD · HEAVY HAULAGE</div><div class="fleet-name">Container Tractor Units</div><div class="fleet-specs"><div class="spec-item"><div class="spec-label">Units</div><div class="spec-val">80</div></div><div class="spec-item"><div class="spec-label">Capacity</div><div class="spec-val">40 TON</div></div><div class="spec-item"><div class="spec-label">GPS</div><div class="spec-val">LIVE</div></div><div class="spec-item"><div class="spec-label">Coverage</div><div class="spec-val">ALL MOMBASA</div></div></div></div></div> <div class="fleet-card"><div class="fleet-visual"></div><div class="fleet-info"><div class="fleet-type">REEFER TRANSPORT</div><div class="fleet-name">Genset-Equipped Trucks</div><div class="fleet-specs"><div class="spec-item"><div class="spec-label">Units</div><div class="spec-val">20</div></div><div class="spec-item"><div class="spec-label">Temp</div><div class="spec-val">-25°C</div></div><div class="spec-item"><div class="spec-label">Monitoring</div><div class="spec-val">LIVE</div></div><div class="spec-item"><div class="spec-label">Genset</div><div class="spec-val">ON-BOARD</div></div></div></div></div> <div class="fleet-card"><div class="fleet-visual"></div><div class="fleet-info"><div class="fleet-type">YARD · LIFTING EQUIPMENT</div><div class="fleet-name">Reach Stackers</div><div class="fleet-specs"><div class="spec-item"><div class="spec-label">Units</div><div class="spec-val">6</div></div><div class="spec-item"><div class="spec-label">Capacity</div><div class="spec-val">45 TON</div></div><div class="spec-item"><div class="spec-label">Stack Height</div><div class="spec-val">5 HIGH</div></div><div class="spec-item"><div class="spec-label">Telematics</div><div class="spec-val">LIVE</div></div></div></div></div> <div class="fleet-card"><div class="fleet-visual"></div><div class="fleet-info"><div class="fleet-type">YARD · LIGHT EQUIPMENT</div><div class="fleet-name">Forklifts & Yard Tractors</div><div class="fleet-specs"><div class="spec-item"><div class="spec-label">Units</div><div class="spec-val">20</div></div><div class="spec-item"><div class="spec-label">Cap.</div><div class="spec-val">16 TON</div></div><div class="spec-item"><div class="spec-label">Type</div><div class="spec-val">DIESEL/ELEC</div></div><div class="spec-item"><div class="spec-label">Hours</div><div class="spec-val">24/7</div></div></div></div></div> </div> </div> </section>`,
   },
-
   'gps-monitoring': {
     parent: 'fleet',
     title: 'GPS Monitoring',
     hero: 'images/gargo4.png',
     tag: ' ✦ GPS Technology',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Real-Time Fleet GPS Monitoring</h2>
-              <p>Launched in 2018, Gargo Haven's proprietary GPS platform was the first of its kind in Mombasa — giving clients live visibility of their container's truck, updated every 60 seconds. Since then, we have expanded the platform to cover container yard positions, driver details, ETA calculations, and full trip history.</p>
-              <h3 style="font-family:var(--font-main);font-size:20px;color:var(--gold);margin:28px 0 16px;">What You Can Track</h3>
-              <ul class="rate-features" style="list-style:none;padding:0;">
-                <li>Live truck location on map (updates every 60 seconds)</li>
-                <li>Current speed and direction</li>
-                <li>Driver name and phone number</li>
-                <li>ETA to destination (calculated in real-time)</li>
-                <li>Full trip history and route replay</li>
-                <li>Geofence alerts — notified when truck enters/exits zones</li>
-                <li>Container yard position at our depots</li>
-              </ul>
-              <div style="display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;">
-                <button class="btn-primary" onclick="navigateToPage('track')">Open Tracking Portal →</button>
-                <button class="btn-secondary" onclick="navigateToPage('contact')">Request API Access →</button>
-              </div>
-            </div>
-            <div class="sidebar-box">
-              <h4>GPS System Details</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Update Frequency</div><p>Every 60 seconds (live)</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Coverage</div><p>100% of fleet (120+ units)</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Client Access</div><p>Web portal · SMS alerts · API (enterprise)</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">History</div><p>Full trip replay — 90-day archive</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Alerts</div><p>SMS + Email: geofence · delay · breakdown</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">Real-Time Fleet GPS Monitoring</h2> <p>Launched in 2018, Gargo Haven's proprietary GPS platform was the first of its kind in Mombasa — giving clients live visibility of their container's truck, updated every 60 seconds. Since then, we have expanded the platform to cover container yard positions, driver details, ETA calculations, and full trip history.</p> <h3 style="font-family:var(--font-main);font-size:20px;color:var(--gold);margin:28px 0 16px;">What You Can Track</h3> <ul class="rate-features" style="list-style:none;padding:0;"> <li>Live truck location on map (updates every 60 seconds)</li> <li>Current speed and direction</li> <li>Driver name and phone number</li> <li>ETA to destination (calculated in real-time)</li> <li>Full trip history and route replay</li> <li>Geofence alerts — notified when truck enters/exits zones</li> <li>Container yard position at our depots</li> </ul> <div style="display:flex;gap:16px;margin-top:28px;flex-wrap:wrap;"> <button class="btn-primary" onclick="navigateToPage('track')">Open Tracking Portal →</button> <button class="btn-secondary" onclick="navigateToPage('contact')">Request API Access →</button> </div> </div> <div class="sidebar-box"> <h4>GPS System Details</h4> <div class="sidebar-item"><div class="sidebar-label">Update Frequency</div><p>Every 60 seconds (live)</p></div> <div class="sidebar-item"><div class="sidebar-label">Coverage</div><p>100% of fleet (120+ units)</p></div> <div class="sidebar-item"><div class="sidebar-label">Client Access</div><p>Web portal · SMS alerts · API (enterprise)</p></div> <div class="sidebar-item"><div class="sidebar-label">History</div><p>Full trip replay — 90-day archive</p></div> <div class="sidebar-item"><div class="sidebar-label">Alerts</div><p>SMS + Email: geofence · delay · breakdown</p></div> </div> </div> </div> </section>`,
   },
-
   'maintenance-center': {
     parent: 'fleet',
     title: 'Maintenance Center',
     hero: 'images/gargo4.png',
     tag: ' ✦ Fleet Operations',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="intro-grid">
-            <div class="intro-body">
-              <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">In-House Fleet Maintenance</h2>
-              <p>Gargo Haven operates its own vehicle maintenance workshop at the Changamwe depot, ensuring our 120+ truck fleet is always in peak operational condition. In-house maintenance means faster turnaround, lower downtime, and full control over maintenance quality.</p>
-              <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;">
-                <li>Scheduled preventive maintenance programme</li>
-                <li>Engine, transmission, and hydraulics servicing</li>
-                <li>Tyre management and replacement</li>
-                <li>Brake and suspension inspection</li>
-                <li>Electrical and GPS system maintenance</li>
-                <li>Reach stacker and forklift servicing</li>
-                <li>24/7 breakdown response for on-road units</li>
-              </ul>
-            </div>
-            <div class="sidebar-box">
-              <h4>Workshop Details</h4>
-              <div class="sidebar-item"><div class="sidebar-label">Location</div><p>Changamwe Main Depot</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Service Bays</div><p>8 heavy vehicle bays</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Hours</div><p>6AM–10PM daily<br>24/7 emergency breakdown</p></div>
-              <div class="sidebar-item"><div class="sidebar-label">Fleet Uptime</div><p>Target 96%+ monthly fleet availability</p></div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="intro-grid"> <div class="intro-body"> <h2 style="font-family:var(--font-main);font-size:28px;color:var(--gold);margin-bottom:20px;">In-House Fleet Maintenance</h2> <p>Gargo Haven operates its own vehicle maintenance workshop at the Changamwe depot, ensuring our 120+ truck fleet is always in peak operational condition. In-house maintenance means faster turnaround, lower downtime, and full control over maintenance quality.</p> <ul class="rate-features" style="list-style:none;padding:0;margin-top:20px;"> <li>Scheduled preventive maintenance programme</li> <li>Engine, transmission, and hydraulics servicing</li> <li>Tyre management and replacement</li> <li>Brake and suspension inspection</li> <li>Electrical and GPS system maintenance</li> <li>Reach stacker and forklift servicing</li> <li>24/7 breakdown response for on-road units</li> </ul> </div> <div class="sidebar-box"> <h4>Workshop Details</h4> <div class="sidebar-item"><div class="sidebar-label">Location</div><p>Changamwe Main Depot</p></div> <div class="sidebar-item"><div class="sidebar-label">Service Bays</div><p>8 heavy vehicle bays</p></div> <div class="sidebar-item"><div class="sidebar-label">Hours</div><p>6AM–10PM daily<br>24/7 emergency breakdown</p></div> <div class="sidebar-item"><div class="sidebar-label">Fleet Uptime</div><p>Target 96%+ monthly fleet availability</p></div> </div> </div> </div> </section>`,
   },
-
-  /* ══ TRACK ════════════════════════════════════════════════════════ */
-
   'container-tracking': {
     parent: 'track',
     title: 'Container Tracking',
     hero: 'images/gargo2.png',
     tag: ' ✦ Track Assets',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="tracking-container">
-            <div class="section-header">
-              <div class="section-tag"> ✦ Container Tracking</div>
-              <h2 class="section-title">Track Your <span>Container</span></h2>
-              <p class="section-sub">Enter a container number to see live status, yard position, truck location, and full movement history.</p>
-            </div>
-            <div class="tracking-tabs"><button class="track-tab active">By Container No.</button></div>
-            <div class="tracking-body">
-              <div class="tab-pane">
-                <div class="track-search">
-                  <input type="text" class="track-input" id="subTrackInput" placeholder="Enter container number (e.g. MSCU1234567)">
-                  <button class="track-btn" onclick="
-                    const v=document.getElementById('subTrackInput').value.trim();
-                    if(v){document.getElementById('fakeTrackInput').value=v;navigateToPage('track');setTimeout(()=>{if(document.querySelector('.track-btn')){document.getElementById('trackInput').value=v;}},300);}
-                  ">TRACK NOW →</button>
-                </div>
-                <div class="track-sample-hint">Try: MSCU1234567 · TCKU9876543 · GHTU0001234</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="tracking-container"> <div class="section-header"> <div class="section-tag"> ✦ Container Tracking</div> <h2 class="section-title">Track Your <span>Container</span></h2> <p class="section-sub">Enter a container number to see live status, yard position, truck location, and full movement history.</p> </div> <div class="tracking-tabs"><button class="track-tab active">By Container No.</button></div> <div class="tracking-body"> <div class="tab-pane"> <div class="track-search"> <input type="text" class="track-input" id="subTrackInput" placeholder="Enter container number (e.g. MSCU1234567)"> <button class="track-btn" onclick=" const v=document.getElementById('subTrackInput').value.trim(); if(v){document.getElementById('fakeTrackInput').value=v;navigateToPage('track');setTimeout(()=>{if(document.querySelector('.track-btn')){document.getElementById('trackInput').value=v;}},300);} ">TRACK NOW →</button> </div> <div class="track-sample-hint">Try: MSCU1234567 · TCKU9876543 · GHTU0001234</div> </div> </div> </div> </div> </section>`,
   },
-
   'truck-tracking': {
     parent: 'track',
     title: 'Truck Tracking',
     hero: 'images/gargo2.png',
     tag: ' ✦ Truck Tracking',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="tracking-container">
-            <div class="section-header">
-              <div class="section-tag"> ✦ Truck Tracking</div>
-              <h2 class="section-title">Track Your <span>Truck</span></h2>
-              <p class="section-sub">Find any Gargo Haven truck by registration number or driver name.</p>
-            </div>
-            <div class="tracking-tabs"><button class="track-tab active">By Truck Reg.</button></div>
-            <div class="tracking-body">
-              <div class="tab-pane">
-                <div class="track-search">
-                  <input type="text" class="track-input" placeholder="Enter truck reg or driver name (e.g. KCB 421G)">
-                  <button class="track-btn" onclick="navigateToPage('track');setTimeout(()=>{document.querySelectorAll('.track-tab')[1]&&document.querySelectorAll('.track-tab')[1].click();},400);">TRACK TRUCK →</button>
-                </div>
-                <div class="track-sample-hint">Try: KCB 421G · KDB 889T · Ali Hassan</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="tracking-container"> <div class="section-header"> <div class="section-tag"> ✦ Truck Tracking</div> <h2 class="section-title">Track Your <span>Truck</span></h2> <p class="section-sub">Find any Gargo Haven truck by registration number or driver name.</p> </div> <div class="tracking-tabs"><button class="track-tab active">By Truck Reg.</button></div> <div class="tracking-body"> <div class="tab-pane"> <div class="track-search"> <input type="text" class="track-input" placeholder="Enter truck reg or driver name (e.g. KCB 421G)"> <button class="track-btn" onclick="navigateToPage('track');setTimeout(()=>{document.querySelectorAll('.track-tab')[1]&&document.querySelectorAll('.track-tab')[1].click();},400);">TRACK TRUCK →</button> </div> <div class="track-sample-hint">Try: KCB 421G · KDB 889T · Ali Hassan</div> </div> </div> </div> </div> </section>`,
   },
-
   'driver-tracking': {
     parent: 'track',
     title: 'Driver Tracking',
     hero: 'images/gargo2.png',
     tag: ' ✦ Driver Tracking',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="tracking-container">
-            <div class="section-header">
-              <div class="section-tag"> ✦ Driver Tracking</div>
-              <h2 class="section-title">Find a <span>Driver</span></h2>
-              <p class="section-sub">Search by driver name or employee number to get their live truck location and contact details.</p>
-            </div>
-            <div class="tracking-tabs"><button class="track-tab active">By Driver Name/ID.</button></div>
-            <div class="tracking-body">
-              <div class="tab-pane">
-                <div class="track-search">
-                  <input type="text" class="track-input" placeholder="Enter driver name or ID (e.g. Ali Hassan)">
-                  <button class="track-btn" onclick="navigateToPage('track');">FIND DRIVER →</button>
-                </div>
-                <div class="track-sample-hint">Try: Ali Hassan · James Mwangi · GH-DRV-044</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="tracking-container"> <div class="section-header"> <div class="section-tag"> ✦ Driver Tracking</div> <h2 class="section-title">Find a <span>Driver</span></h2> <p class="section-sub">Search by driver name or employee number to get their live truck location and contact details.</p> </div> <div class="tracking-tabs"><button class="track-tab active">By Driver Name/ID.</button></div> <div class="tracking-body"> <div class="tab-pane"> <div class="track-search"> <input type="text" class="track-input" placeholder="Enter driver name or ID (e.g. Ali Hassan)"> <button class="track-btn" onclick="navigateToPage('track');">FIND DRIVER →</button> </div> <div class="track-sample-hint">Try: Ali Hassan · James Mwangi · GH-DRV-044</div> </div> </div> </div> </div> </section>`,
   },
-
   'booking-status': {
     parent: 'track',
     title: 'Booking Status',
     hero: 'images/gargo2.png',
     tag: ' ✦ Track Documents',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="tracking-container">
-            <div class="section-header">
-              <div class="section-tag"> ✦ Track Documents</div>
-              <h2 class="section-title">Track Your <span>Booking</span></h2>
-              <p class="section-sub">Enter your booking reference to see current status, truck assignment, and estimated completion.</p>
-            </div>
-            <div class="tracking-tabs"><button class="track-tab active">By Booking Ref</button></div>
-            <div class="tracking-body">
-              <div class="tab-pane">
-                <div class="track-search">
-                  <input type="text" class="track-input" id="bkStatusInput" placeholder="Enter booking reference (e.g. GH-2024-1234)">
-                  <button class="track-btn" onclick="navigateToPage('track');setTimeout(()=>{document.querySelectorAll('.track-tab')[2]&&document.querySelectorAll('.track-tab')[2].click();},400);">CHECK STATUS →</button>
-                </div>
-                <div class="track-sample-hint">Reference format: GH-YYYY-XXXX</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="tracking-container"> <div class="section-header"> <div class="section-tag"> ✦ Track Documents</div> <h2 class="section-title">Track Your <span>Booking</span></h2> <p class="section-sub">Enter your booking reference to see current status, truck assignment, and estimated completion.</p> </div> <div class="tracking-tabs"><button class="track-tab active">By Booking Ref</button></div> <div class="tracking-body"> <div class="tab-pane"> <div class="track-search"> <input type="text" class="track-input" id="bkStatusInput" placeholder="Enter booking reference (e.g. GH-2024-1234)"> <button class="track-btn" onclick="navigateToPage('track');setTimeout(()=>{document.querySelectorAll('.track-tab')[2]&&document.querySelectorAll('.track-tab')[2].click();},400);">CHECK STATUS →</button> </div> <div class="track-sample-hint">Reference format: GH-YYYY-XXXX</div> </div> </div> </div> </div> </section>`,
   },
-
   'eir-status': {
     parent: 'track',
     title: 'EIR Status',
     hero: 'images/gargo2.png',
     tag: ' ✦ EIR Status',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="tracking-container">
-            <div class="section-header">
-              <div class="section-tag"> ✦ EIR Status</div>
-              <h2 class="section-title">Find Your <span>EIR</span></h2>
-              <p class="section-sub">Search for an Equipment Interchange Receipt by EIR number or container number.</p>
-            </div>
-            <div class="tracking-tabs"><button class="track-tab active">By EIR Number/Container Number.</button></div>
-            <div class="tracking-body">
-              <div class="tab-pane">
-                <div class="track-search">
-                  <input type="text" class="track-input" placeholder="Enter EIR number or container number">
-                  <button class="track-btn" onclick="navigateToPage('track');setTimeout(()=>{document.querySelectorAll('.track-tab')[3]&&document.querySelectorAll('.track-tab')[3].click();},400);">FIND EIR →</button>
-                </div>
-                <div class="track-sample-hint">EIR format: GH-EIR-XXXXXXX</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="tracking-container"> <div class="section-header"> <div class="section-tag"> ✦ EIR Status</div> <h2 class="section-title">Find Your <span>EIR</span></h2> <p class="section-sub">Search for an Equipment Interchange Receipt by EIR number or container number.</p> </div> <div class="tracking-tabs"><button class="track-tab active">By EIR Number/Container Number.</button></div> <div class="tracking-body"> <div class="tab-pane"> <div class="track-search"> <input type="text" class="track-input" placeholder="Enter EIR number or container number"> <button class="track-btn" onclick="navigateToPage('track');setTimeout(()=>{document.querySelectorAll('.track-tab')[3]&&document.querySelectorAll('.track-tab')[3].click();},400);">FIND EIR →</button> </div> <div class="track-sample-hint">EIR format: GH-EIR-XXXXXXX</div> </div> </div> </div> </div> </section>`,
   },
-
   'gps-dashboard': {
     parent: 'track',
     title: 'GPS Dashboard',
     hero: 'images/gargo2.png',
     tag: ' ✦ Live Intelligence',
-    render: () => `
-      <section class="section-light">
-        <div class="section-inner">
-          <div class="section-header">
-            <div class="section-tag"> ✦ Live Intelligence</div>
-            <h2 class="section-title">Live GPS <span>Dashboard</span></h2>
-            <p class="section-sub">An overview of Gargo Haven's fleet activity right now. For full live map access, log in to the client portal.</p>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:40px;" id="gpsDashStats"></div>
-          <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
-            <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;">
-              <div style="width:8px;height:8px;background:#22c55e;border-radius:50%;animation:pulse 2s infinite;"></div>
-              <span style="font-size:12px;letter-spacing:1px;color:var(--gold);">LIVE TRUCK ACTIVITY — MOMBASA CORRIDOR</span>
-            </div>
-            <div style="padding:16px 24px;" id="gpsTruckList"></div>
-          </div>
-        </div>
-      </section>`,
+    render: () => `<section class="section-light"> <div class="section-inner"> <div class="section-header"> <div class="section-tag"> ✦ Live Intelligence</div> <h2 class="section-title">Live GPS <span>Dashboard</span></h2> <p class="section-sub">An overview of Gargo Haven's fleet activity right now. For full live map access, log in to the client portal.</p> </div> <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:40px;" id="gpsDashStats"></div> <div style="background:var(--dark-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;"> <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;"> <div style="width:8px;height:8px;background:#22c55e;border-radius:50%;animation:pulse 2s infinite;"></div> <span style="font-size:12px;letter-spacing:1px;color:var(--gold);">LIVE TRUCK ACTIVITY — MOMBASA CORRIDOR</span> </div> <div style="padding:16px 24px;" id="gpsTruckList"></div> </div> </div> </section>`,
     afterRender: () => {
       const trucks = [
         { reg:'KCB 421G', driver:'Ali Hassan Mwangi', loc:'Makupa Causeway', container:'MSCU1234567', status:'transit', route:'APM Terminals → Changamwe' },
         { reg:'KDA 882T', driver:'James Kariuki', loc:'Changamwe Roundabout', container:'TCKU9876543', status:'transit', route:'KPA Port → Gargo Haven Depot' },
         { reg:'KDB 301K', driver:'Hassan Salim', loc:'Gargo Haven Depot', container:'GHTU0001234', status:'yard', route:'Gate-in processing' },
-        { reg:'KCA 774M', driver:'Peter Odhiambo', loc:'Port Reitz Road', container:'MAEU3456789', status:'transit', route:'Consolebase ICD → APM Terminals' },
+        { reg:'KCA 774M', driver:'Peter Odhiambo', loc:'Port Reitz Road', container:'MAEU 3456789', status:'transit', route:'Consolebase ICD → APM Terminals' },
         { reg:'KDD 556P', driver:'Fatuma Bakari', loc:'Kibarani', container:'EMCU7654321', status:'transit', route:'Kibarani Depot → KPA Port' },
         { reg:'KBZ 112R', driver:'David Njoroge', loc:'Gargo Haven Depot', container:'—', status:'idle', route:'Awaiting dispatch' },
       ];
@@ -3496,44 +1989,27 @@ const SUBPAGES = {
           { label:'In Yard', val:trucks.filter(t=>t.status==='yard').length, color:'#f59e0b' },
           { label:'Idle / Available', val:trucks.filter(t=>t.status==='idle').length, color:'var(--gray-light)' },
           { label:'Total Fleet', val:'120+', color:'var(--white)' },
-        ].map(s => `<div style="background:var(--dark-card);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:center;">
-          <div style="font-size:32px;font-family:var(--font-main);color:${s.color};font-weight:700;">${s.val}</div>
-          <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-top:6px;">${s.label}</div>
-        </div>`).join('');
+        ].map(s => `<div style="background:var(--dark-card);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:center;"> <div style="font-size:32px;font-family:var(--font-main);color:${s.color};font-weight:700;">${s.val}</div> <div style="font-size:11px;color:var(--gray);letter-spacing:1px;margin-top:6px;">${s.label}</div> </div>`).join('');
       }
       const list = document.getElementById('gpsTruckList');
       if (list) {
         const statusColor = { transit:'#22c55e', yard:'#f59e0b', idle:'var(--gray)' };
         const statusLabel = { transit:'En Route', yard:'In Yard', idle:'Idle' };
-        list.innerHTML = trucks.map(t => `
-          <div style="display:flex;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--border);">
-            <div style="width:8px;height:8px;background:${statusColor[t.status]};border-radius:50%;flex-shrink:0;"></div>
-            <div style="min-width:100px;"><span style="font-size:13px;color:var(--white);font-weight:600;">${t.reg}</span></div>
-            <div style="flex:1;"><div style="font-size:12px;color:var(--gray-light);">${t.driver}</div><div style="font-size:11px;color:var(--gray);margin-top:2px;">${t.route}</div></div>
-            <div style="text-align:right;"><div style="font-size:12px;color:var(--gold);">${t.container}</div><div style="font-size:11px;color:${statusColor[t.status]};margin-top:2px;">${statusLabel[t.status]} · ${t.loc}</div></div>
-          </div>`).join('');
+        list.innerHTML = trucks.map(t => `<div style="display:flex;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--border);"> <div style="width:8px;height:8px;background:${statusColor[t.status]};border-radius:50%;flex-shrink:0;"></div> <div style="min-width:100px;"><span style="font-size:13px;color:var(--white);font-weight:600;">${t.reg}</span></div> <div style="flex:1;"><div style="font-size:12px;color:var(--gray-light);">${t.driver}</div><div style="font-size:11px;color:var(--gray);margin-top:2px;">${t.route}</div></div> <div style="text-align:right;"><div style="font-size:12px;color:var(--gold);">${t.container}</div><div style="font-size:11px;color:${statusColor[t.status]};margin-top:2px;">${statusLabel[t.status]} · ${t.loc}</div></div> </div>`).join('');
       }
     }
   },
 };
-
-
 window.navigateToSubpage = function(key) {
   const sp = SUBPAGES[key];
   if (!sp) return;
-
- 
   const parentPage = document.getElementById(sp.parent + '-page');
   if (!parentPage) return;
-
- 
   let container = document.getElementById('subpage-' + key);
-
   if (!container) {
     container = document.createElement('div');
     container.id = 'subpage-' + key;
     container.className = 'page subpage-panel';
-
     container.innerHTML = `
       <section class="page-hero" style="background-image:url('${sp.hero || 'images/gargo1.png'}');min-height:240px;">
         <div class="hero-overlay-dark"></div>
@@ -3546,34 +2022,22 @@ window.navigateToSubpage = function(key) {
         </div>
       </section>
       ${sp.render()}`;
-
     const footer = document.querySelector('footer');
     document.body.insertBefore(container, footer);
   }
-
-
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-
-
   container.classList.add('active-page');
   window.scrollTo({ top: 0, behavior: 'smooth' });
-
- 
   if (sp.afterRender) setTimeout(sp.afterRender, 100);
 };
-
-
 function wireNavLinks() {
   const linkMap = {
-    // ABOUT
     'Company Overview':     'company-overview',
     'Mission & Vision':     'mission-vision',
     'Team':                 'team',
     'About Gargo':          'about-gargo',
     'Certifications':       'certifications',
     'Partners & Alliances': 'partners',
-
-    // SERVICES
     'Container Storage':    'container-storage',
     'Port Haulage':         'port-haulage',
     'Reefer Monitoring':    'reefer-monitoring',
@@ -3585,8 +2049,6 @@ function wireNavLinks() {
     'Customs Documentation':'customs-documentation',
     'Container Leasing':    'container-leasing',
     'Corporate Logistics':  'corporate-logistics',
-
-    // DEPOT
     'Changamwe Main Depot': 'changamwe-depot',
     'Consolebase ICD':      'consolebase-icd',
     'Hakika Depot':         'hakika-depot',
@@ -3595,14 +2057,10 @@ function wireNavLinks() {
     'Capacity Dashboard':   'capacity-dashboard',
     'Gate-In Requirements': 'gate-in-requirements',
     'Gate-Out Requirements':'gate-out-requirements',
-
-    // BOOKING
     'Bulk Bookings':        'bulk-bookings',
     'Request Quotation':    'request-quotation',
     'Dedicated Contracts':  'dedicated-contracts',
     'Service Agreements':   'dedicated-contracts',
-
-    // TRACK
     'Container Tracking':   'container-tracking',
     'Truck Tracking':       'truck-tracking',
     'Driver Tracking':      'driver-tracking',
@@ -3610,8 +2068,6 @@ function wireNavLinks() {
     'EIR Status':           'eir-status',
     'Delivery Reports':     'eir-status',
     'GPS Dashboard':        'gps-dashboard',
-
-    // FLEET
     'Fleet Overview':       'fleet-overview',
     'Flatbed Trucks':       'fleet-overview',
     'Reefer Trucks':        'reefer-monitoring',
@@ -3620,7 +2076,6 @@ function wireNavLinks() {
     'GPS Monitoring':       'gps-monitoring',
     'Maintenance Center':   'maintenance-center',
   };
-
   document.querySelectorAll('.mega-menu a, .mega-menu.small-menu a').forEach(a => {
     const text = a.textContent.trim().replace(/^[^\w]+/, '').trim();
     const match = Object.keys(linkMap).find(k => text.includes(k) || k.includes(text));
@@ -3630,39 +2085,26 @@ function wireNavLinks() {
     }
   });
 }
-
-
 const _origNavigate = window.navigateToPage;
 window.navigateToPage = function(page) {
- 
   document.querySelectorAll('.subpage-panel').forEach(sp => sp.classList.remove('active-page'));
   if (_origNavigate) _origNavigate(page);
 };
-
-
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', wireNavLinks);
 } else {
   wireNavLinks();
 }
-
 function makeAllDropdownsWorkLikeBooking() {
   const dropdownLinks = document.querySelectorAll('.mega-menu a, .small-menu a');
-  
   dropdownLinks.forEach(link => {
     link.addEventListener('click', function(e) {
       const text = this.textContent.trim();
-      
-     
       const dropdown = this.closest('.nav-dropdown');
       if (dropdown) dropdown.classList.remove('hover');
-      
-   
       if (this.onclick && this.onclick.toString().includes('navigateToSubpage')) {
         return;
       }
-      
-     
       if (text.includes('Company Overview') || text.includes('About Gargo')) {
         navigateToSubpage('company-overview');
       } else if (text.includes('Storage') || text.includes('Depot')) {
@@ -3672,16 +2114,12 @@ function makeAllDropdownsWorkLikeBooking() {
       } else if (text.includes('Repair') || text.includes('Washing')) {
         navigateToPage('services');
       } else {
-      
         navigateToPage(this.closest('.nav-dropdown').querySelector('a').textContent.toLowerCase().trim());
       }
     });
   });
 }
-
-
 document.addEventListener('DOMContentLoaded', makeAllDropdownsWorkLikeBooking);
-
 function switchTrackTab(type, btn) {
   document.querySelectorAll('.track-tab').forEach(function(t){ t.classList.remove('active'); });
   btn.classList.add('active');
@@ -3698,16 +2136,12 @@ function switchTrackTab(type, btn) {
   closeTrackResult();
 }
 window.switchTrackTab = switchTrackTab;
-
-/* ─── DEMO TRACK ─── */
 function demoTrack(num) {
   const input = document.getElementById('trackInput');
   if (input) input.value = num;
   doTrack();
 }
 window.demoTrack = demoTrack;
-
-
 (function() {
   function initReveal() {
     const imgs = document.querySelectorAll('.reveal-img');
@@ -3728,14 +2162,8 @@ window.demoTrack = demoTrack;
     initReveal();
   }
 })();
-
-
-
-
 (function () {
   'use strict';
-
-
   function getCurrentUser() {
     try { return JSON.parse(sessionStorage.getItem('gh_session') || 'null'); } catch (e) { return null; }
   }
@@ -3745,12 +2173,9 @@ window.demoTrack = demoTrack;
   function clearCurrentUser() {
     sessionStorage.removeItem('gh_session');
   }
-  // Splits the backend's single `name` field into a first name for greetings/nav
   function firstNameOf(user) {
     return user && user.name ? user.name.split(' ')[0] : 'there';
   }
-
-
   const style = document.createElement('style');
   style.textContent = `
     /* AUTH OVERLAY */
@@ -3766,8 +2191,6 @@ window.demoTrack = demoTrack;
     #gh-auth-overlay.open {
       opacity: 1; pointer-events: all;
     }
-
-    /* AUTH PANEL */
     .gh-auth-panel {
       background: #111;
       border: 1px solid rgba(201,162,39,0.35);
@@ -3786,8 +2209,6 @@ window.demoTrack = demoTrack;
     #gh-auth-overlay.open .gh-auth-panel {
       transform: translateY(0) scale(1);
     }
-
-    /* PANEL HEADER */
     .gh-auth-header {
       background: linear-gradient(135deg, #0d0d0d 0%, #1a1400 100%);
       border-bottom: 1px solid rgba(201,162,39,0.2);
@@ -3795,14 +2216,14 @@ window.demoTrack = demoTrack;
       position: relative;
     }
     .gh-auth-logo {
-      display: flex; 
-      align-items: center; 
+      display: flex;
+      align-items: center;
       justify-content: center;
       gap: 12px;
       margin-bottom: 20px;
     }
     .gh-auth-logo-img {
-      justify-content: center; 
+      justify-content: center;
       align-items: center;
       text-align: center;
     }
@@ -3825,8 +2246,6 @@ window.demoTrack = demoTrack;
       transition: all 0.2s;
     }
     .gh-auth-close:hover { background: rgba(201,162,39,0.12); color: #c9a227; border-color: rgba(201,162,39,0.3); }
-
-    /* TABS */
     .gh-auth-tabs {
       display: flex; gap: 0;
     }
@@ -3848,17 +2267,11 @@ window.demoTrack = demoTrack;
       background: rgba(201,162,39,0.04);
     }
     .gh-auth-tab:hover:not(.active) { color: #aaa; }
-
-    /* PANEL BODY */
     .gh-auth-body {
       padding: 28px 32px 32px;
     }
-
-    /* VIEW (login / register / forgot) */
     .gh-auth-view { display: none; }
     .gh-auth-view.active { display: block; }
-
-    /* FORM FIELDS */
     .gh-field {
       margin-bottom: 16px;
     }
@@ -3893,8 +2306,6 @@ window.demoTrack = demoTrack;
       margin-top: 4px; display: none;
     }
     .gh-field .gh-error-msg.show { display: block; }
-
-    /* PASSWORD WRAPPER */
     .gh-pw-wrap { position: relative; }
     .gh-pw-wrap input { padding-right: 42px; }
     .gh-pw-toggle {
@@ -3904,13 +2315,9 @@ window.demoTrack = demoTrack;
       transition: color 0.2s;
     }
     .gh-pw-toggle:hover { color: #c9a227; }
-
-    /* TWO-COLUMN GRID */
     .gh-field-row {
       display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
     }
-
-    /* SUBMIT BUTTON */
     .gh-auth-submit {
       width: 100%;
       background: #c9a227;
@@ -3941,8 +2348,6 @@ window.demoTrack = demoTrack;
     .gh-auth-submit.loading .gh-btn-text { display: none; }
     .gh-auth-submit.loading .gh-btn-spinner { display: block; }
     @keyframes ghSpin { to { transform: rotate(360deg); } }
-
-    /* DIVIDER */
     .gh-divider {
       display: flex; align-items: center; gap: 12px;
       margin: 20px 0;
@@ -3955,8 +2360,6 @@ window.demoTrack = demoTrack;
       font-family: 'DM Mono', monospace; letter-spacing: 0.8px;
       white-space: nowrap;
     }
-
-    /* SWITCH LINK */
     .gh-switch-link {
       text-align: center;
       font-size: 12px; color: #666;
@@ -3971,8 +2374,6 @@ window.demoTrack = demoTrack;
       transition: color 0.2s;
     }
     .gh-switch-link button:hover { color: #e8c44a; }
-
-    /* FORGOT LINK */
     .gh-forgot-link {
       background: none; border: none;
       color: #888; font-size: 11px;
@@ -3982,8 +2383,6 @@ window.demoTrack = demoTrack;
       transition: color 0.2s;
     }
     .gh-forgot-link:hover { color: #c9a227; }
-
-    /* PASSWORD STRENGTH */
     .gh-pw-strength {
       margin-top: 8px;
     }
@@ -3999,8 +2398,6 @@ window.demoTrack = demoTrack;
       font-size: 10px; color: #555; font-family: 'DM Mono', monospace;
       letter-spacing: 0.8px;
     }
-
-    /* TERMS CHECKBOX */
     .gh-checkbox-row {
       display: flex; align-items: flex-start; gap: 10px;
       margin: 16px 0;
@@ -4020,8 +2417,6 @@ window.demoTrack = demoTrack;
       color: #c9a227; text-decoration: none;
     }
     .gh-checkbox-row label a:hover { text-decoration: underline; }
-
-    /* SUCCESS STATE */
     .gh-success-state {
       text-align: center; padding: 20px 0 8px;
     }
@@ -4041,15 +2436,11 @@ window.demoTrack = demoTrack;
     .gh-success-state p {
       font-size: 12px; color: #888; line-height: 1.7; margin-bottom: 24px;
     }
-
-    /* LOGGED-IN STATE — NAV BUTTON */
     .nav-login.logged-in {
       background: rgba(201,162,39,0.12) !important;
       border: 1px solid rgba(201,162,39,0.3) !important;
       color: #c9a227 !important;
     }
-
-    /* USER BADGE (nav area) */
     #gh-user-badge {
       display: none;
       align-items: center; gap: 10px;
@@ -4079,8 +2470,6 @@ window.demoTrack = demoTrack;
       white-space: nowrap;
     }
     .gh-user-logout:hover { border-color: #ef4444; color: #ef4444; }
-
-    /* DASHBOARD PANEL */
     #gh-dashboard-overlay {
       position: fixed; inset: 0;
       background: rgba(0,0,0,0.9);
@@ -4145,8 +2534,6 @@ window.demoTrack = demoTrack;
       text-align: center;
     }
     .gh-dash-empty p { font-size: 12px; color: #555; line-height: 1.7; }
-
-    /* MY BOOKINGS LIST */
     .gh-booking-row {
       background: rgba(255,255,255,0.03);
       border: 1px solid #2a2a2a;
@@ -4200,7 +2587,18 @@ window.demoTrack = demoTrack;
     .gh-ai-item { }
     .gh-ai-label { font-size: 10px; color: #666; font-family: 'DM Mono', monospace; letter-spacing: 0.8px; margin-bottom: 3px; }
     .gh-ai-value { font-size: 12px; color: #fff; font-weight: 500; }
-
+    /* Hide the native file input — the styled label still triggers it via for= */
+    .gh-file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
     @media(max-width:560px) {
       .gh-auth-panel { margin: 0 12px; }
       .gh-auth-body { padding: 20px; }
@@ -4210,261 +2608,236 @@ window.demoTrack = demoTrack;
     }
   `;
   document.head.appendChild(style);
-
-  /* ── Inject HTML ── */
   const authHTML = `
-  <!-- AUTH MODAL -->
-  <div id="gh-auth-overlay" role="dialog" aria-modal="true" aria-label="Client Login">
-    <div class="gh-auth-panel">
-      <div class="gh-auth-header">
-        <div class="gh-auth-logo">
-          <div class="gh-auth-logo-img">
-            <img src="images/gargologo222.png" style="height: 120px; width: 150px;">
-          </div>
-        </div>
-        <div class="gh-auth-tabs">
-          <button class="gh-auth-tab active" data-tab="login" onclick="ghAuthTab('login')">CLIENT LOGIN</button>
-          <button class="gh-auth-tab" data-tab="register" onclick="ghAuthTab('register')">CREATE ACCOUNT</button>
-        </div>
-        <button class="gh-auth-close" onclick="ghAuthClose()" aria-label="Close">✕</button>
-      </div>
-
-      <div class="gh-auth-body">
-
-        <!-- LOGIN VIEW -->
-        <div class="gh-auth-view active" id="gh-view-login">
-          <div class="gh-field">
-            <label for="gh-login-email">Email Address</label>
-            <input type="email" id="gh-login-email" placeholder="you@company.com" autocomplete="email">
-            <div class="gh-error-msg" id="gh-login-email-err"></div>
-          </div>
-          <div class="gh-field">
-            <label for="gh-login-pw">Password</label>
-            <button class="gh-forgot-link" onclick="ghAuthView('forgot')" type="button">Forgot password?</button>
-            <div class="gh-pw-wrap">
-              <input type="password" id="gh-login-pw" placeholder="Your password" autocomplete="current-password">
-              <button class="gh-pw-toggle" type="button" onclick="ghTogglePw('gh-login-pw', this)" aria-label="Show password">👁</button>
+    <div id="gh-auth-overlay" role="dialog" aria-modal="true" aria-label="Client Login">
+      <div class="gh-auth-panel">
+        <div class="gh-auth-header">
+          <div class="gh-auth-logo">
+            <div class="gh-auth-logo-img">
+              <img src="images/gargologo222.png" style="height: 120px; width: 150px;">
             </div>
-            <div class="gh-error-msg" id="gh-login-pw-err"></div>
           </div>
-          <div class="gh-error-msg" id="gh-login-general-err" style="margin-bottom:12px;font-size:12px;"></div>
-          <button class="gh-auth-submit" id="gh-login-btn" onclick="ghDoLogin()">
-            <span class="gh-btn-text">ACCESS CLIENT PORTAL →</span>
-            <div class="gh-btn-spinner"></div>
-          </button>
-          <div class="gh-switch-link">Don't have an account? <button onclick="ghAuthTab('register')">Create one free</button></div>
+          <div class="gh-auth-tabs">
+            <button class="gh-auth-tab active" data-tab="login" onclick="ghAuthTab('login')">CLIENT LOGIN</button>
+            <button class="gh-auth-tab" data-tab="register" onclick="ghAuthTab('register')">CREATE ACCOUNT</button>
+          </div>
+          <button class="gh-auth-close" onclick="ghAuthClose()" aria-label="Close">✕</button>
         </div>
-
-        <!-- REGISTER VIEW -->
-        <div class="gh-auth-view" id="gh-view-register">
-          <div class="gh-field-row">
+        <div class="gh-auth-body">
+          <div class="gh-auth-view active" id="gh-view-login">
             <div class="gh-field">
-              <label for="gh-reg-fname">First Name</label>
-              <input type="text" id="gh-reg-fname" placeholder="First name" autocomplete="given-name">
-              <div class="gh-error-msg" id="gh-reg-fname-err"></div>
+              <label for="gh-login-email">Email Address</label>
+              <input type="email" id="gh-login-email" placeholder="you@company.com" autocomplete="email">
+              <div class="gh-error-msg" id="gh-login-email-err"></div>
             </div>
             <div class="gh-field">
-              <label for="gh-reg-lname">Last Name</label>
-              <input type="text" id="gh-reg-lname" placeholder="Last name" autocomplete="family-name">
-              <div class="gh-error-msg" id="gh-reg-lname-err"></div>
+              <label for="gh-login-pw">Password</label>
+              <button class="gh-forgot-link" onclick="ghAuthView('forgot')" type="button">Forgot password?</button>
+              <div class="gh-pw-wrap">
+                <input type="password" id="gh-login-pw" placeholder="Your password" autocomplete="current-password">
+                <button class="gh-pw-toggle" type="button" onclick="ghTogglePw('gh-login-pw', this)" aria-label="Show password">👁</button>
+              </div>
+              <div class="gh-error-msg" id="gh-login-pw-err"></div>
             </div>
+            <div class="gh-error-msg" id="gh-login-general-err" style="margin-bottom:12px;font-size:12px;"></div>
+            <button class="gh-auth-submit" id="gh-login-btn" onclick="ghDoLogin()">
+              <span class="gh-btn-text">ACCESS CLIENT PORTAL →</span>
+              <div class="gh-btn-spinner"></div>
+            </button>
+            <div class="gh-switch-link">Don't have an account? <button onclick="ghAuthTab('register')">Create one free</button></div>
           </div>
-          <div class="gh-field">
-            <label for="gh-reg-company">Company Name</label>
-            <input type="text" id="gh-reg-company" placeholder="Your company or shipping line" autocomplete="organization">
-            <div class="gh-error-msg" id="gh-reg-company-err"></div>
-          </div>
-          <div class="gh-field">
-            <label for="gh-reg-role">Your Role</label>
-            
-            <select class="form-select" id="gh-reg-role">
-              <option value="">Select role…</option>
-              <option>Freight Forwarder</option>
-              <option>Shipping Line Agent</option>
-              <option>Importer / Exporter</option>
-              <option>Customs Agent</option>
-              <option>Logistics Manager</option>
-              <option>Transport Operator</option>
-              <option>Other</option>
-            </select>
-            <div class="gh-error-msg" id="gh-reg-role-err"></div>
-          </div>
-          <div class="gh-field-row">
-            <div class="gh-field">
-              <label for="gh-reg-email">Email Address</label>
-              <input type="email" id="gh-reg-email" placeholder="you@company.com" autocomplete="email">
-              <div class="gh-error-msg" id="gh-reg-email-err"></div>
+          <div class="gh-auth-view" id="gh-view-register">
+            <div class="gh-field-row">
+              <div class="gh-field">
+                <label for="gh-reg-fname">First Name</label>
+                <input type="text" id="gh-reg-fname" placeholder="First name" autocomplete="given-name">
+                <div class="gh-error-msg" id="gh-reg-fname-err"></div>
+              </div>
+              <div class="gh-field">
+                <label for="gh-reg-lname">Last Name</label>
+                <input type="text" id="gh-reg-lname" placeholder="Last name" autocomplete="family-name">
+                <div class="gh-error-msg" id="gh-reg-lname-err"></div>
+              </div>
             </div>
             <div class="gh-field">
-              <label for="gh-reg-phone">Phone / WhatsApp</label>
-              <input type="tel" id="gh-reg-phone" placeholder="+254 7XX XXX XXX" autocomplete="tel">
-              <div class="gh-error-msg" id="gh-reg-phone-err"></div>
+              <label for="gh-reg-company">Company Name</label>
+              <input type="text" id="gh-reg-company" placeholder="Your company or shipping line" autocomplete="organization">
+              <div class="gh-error-msg" id="gh-reg-company-err"></div>
             </div>
-          </div>
-          <div class="gh-field">
-            <label for="gh-reg-pw">Password</label>
-            <div class="gh-pw-wrap">
-              <input type="password" id="gh-reg-pw" placeholder="Create a password" autocomplete="new-password" oninput="ghCheckStrength(this.value)">
-              <button class="gh-pw-toggle" type="button" onclick="ghTogglePw('gh-reg-pw', this)" aria-label="Show password">👁</button>
+            <div class="gh-field">
+              <label for="gh-reg-role">Your Role</label>
+              <select class="form-select" id="gh-reg-role">
+                <option value="">Select role…</option>
+                <option>Freight Forwarder</option>
+                <option>Shipping Line Agent</option>
+                <option>Importer / Exporter</option>
+                <option>Customs Agent</option>
+                <option>Logistics Manager</option>
+                <option>Transport Operator</option>
+                <option>Other</option>
+              </select>
+              <div class="gh-error-msg" id="gh-reg-role-err"></div>
             </div>
-            <div class="gh-pw-strength">
-              <div class="gh-pw-strength-bar"><div class="gh-pw-strength-fill" id="gh-strength-fill"></div></div>
-              <div class="gh-pw-strength-label" id="gh-strength-label">Enter a password</div>
+            <div class="gh-field-row">
+              <div class="gh-field">
+                <label for="gh-reg-email">Email Address</label>
+                <input type="email" id="gh-reg-email" placeholder="you@company.com" autocomplete="email">
+                <div class="gh-error-msg" id="gh-reg-email-err"></div>
+              </div>
+              <div class="gh-field">
+                <label for="gh-reg-phone">Phone / WhatsApp</label>
+                <input type="tel" id="gh-reg-phone" placeholder="+254 7XX XXX XXX" autocomplete="tel">
+                <div class="gh-error-msg" id="gh-reg-phone-err"></div>
+              </div>
             </div>
-            <div class="gh-error-msg" id="gh-reg-pw-err"></div>
-          </div>
-          <div class="gh-field">
-            <label for="gh-reg-pw2">Confirm Password</label>
-            <div class="gh-pw-wrap">
-              <input type="password" id="gh-reg-pw2" placeholder="Repeat your password" autocomplete="new-password">
-              <button class="gh-pw-toggle" type="button" onclick="ghTogglePw('gh-reg-pw2', this)" aria-label="Show password">👁</button>
+            <div class="gh-field">
+              <label for="gh-reg-pw">Password</label>
+              <div class="gh-pw-wrap">
+                <input type="password" id="gh-reg-pw" placeholder="Create a password" autocomplete="new-password" oninput="ghCheckStrength(this.value)">
+                <button class="gh-pw-toggle" type="button" onclick="ghTogglePw('gh-reg-pw', this)" aria-label="Show password">👁</button>
+              </div>
+              <div class="gh-pw-strength">
+                <div class="gh-pw-strength-bar"><div class="gh-pw-strength-fill" id="gh-strength-fill"></div></div>
+                <div class="gh-pw-strength-label" id="gh-strength-label">Enter a password</div>
+              </div>
+              <div class="gh-error-msg" id="gh-reg-pw-err"></div>
             </div>
-            <div class="gh-error-msg" id="gh-reg-pw2-err"></div>
+            <div class="gh-field">
+              <label for="gh-reg-pw2">Confirm Password</label>
+              <div class="gh-pw-wrap">
+                <input type="password" id="gh-reg-pw2" placeholder="Repeat your password" autocomplete="new-password">
+                <button class="gh-pw-toggle" type="button" onclick="ghTogglePw('gh-reg-pw2', this)" aria-label="Show password">👁</button>
+              </div>
+              <div class="gh-error-msg" id="gh-reg-pw2-err"></div>
+            </div>
+            <div class="gh-checkbox-row">
+              <input type="checkbox" id="gh-reg-terms">
+              <label for="gh-reg-terms">I agree to the <a href="#" onclick="return false;">Terms of Service</a> and <a href="#" onclick="return false;">Privacy Policy</a>. Gargo Haven may contact me about my account and bookings.</label>
+            </div>
+            <div class="gh-error-msg" id="gh-reg-general-err" style="margin-bottom:12px;font-size:12px;"></div>
+            <button class="gh-auth-submit" id="gh-reg-btn" onclick="ghDoRegister()">
+              <span class="gh-btn-text">CREATE MY ACCOUNT →</span>
+              <div class="gh-btn-spinner"></div>
+            </button>
+            <div class="gh-switch-link">Already have an account? <button onclick="ghAuthTab('login')">Sign in</button></div>
           </div>
-          <div class="gh-checkbox-row">
-            <input type="checkbox" id="gh-reg-terms">
-            <label for="gh-reg-terms">I agree to the <a href="#" onclick="return false;">Terms of Service</a> and <a href="#" onclick="return false;">Privacy Policy</a>. Gargo Haven may contact me about my account and bookings.</label>
-          </div>
-          <div class="gh-error-msg" id="gh-reg-general-err" style="margin-bottom:12px;font-size:12px;"></div>
-          <button class="gh-auth-submit" id="gh-reg-btn" onclick="ghDoRegister()">
-            <span class="gh-btn-text">CREATE MY ACCOUNT →</span>
-            <div class="gh-btn-spinner"></div>
-          </button>
-          <div class="gh-switch-link">Already have an account? <button onclick="ghAuthTab('login')">Sign in</button></div>
-        </div>
-
-        <!-- FORGOT PASSWORD VIEW -->
-        <div class="gh-auth-view" id="gh-view-forgot">
-          <div style="margin-bottom:20px;">
-            <button onclick="ghAuthView('login')" style="background:none;border:none;color:#888;font-size:11px;cursor:pointer;padding:0;font-family:'DM Mono',monospace;letter-spacing:0.8px;">← BACK TO LOGIN</button>
-          </div>
-          <p style="font-size:13px;color:#888;line-height:1.7;margin-bottom:20px;">Enter your registered email address and we'll send a password reset link to your inbox.</p>
-          <div class="gh-field">
-            <label for="gh-forgot-email">Registered Email</label>
-            <input type="email" id="gh-forgot-email" placeholder="you@company.com">
-            <div class="gh-error-msg" id="gh-forgot-err"></div>
-          </div>
-          <button class="gh-auth-submit" id="gh-forgot-btn" onclick="ghDoForgot()">
-            <span class="gh-btn-text">SEND RESET LINK →</span>
-            <div class="gh-btn-spinner"></div>
-          </button>
-        </div>
-
-        <!-- REGISTER SUCCESS VIEW -->
-        <div class="gh-auth-view" id="gh-view-success">
-          <div class="gh-success-state">
-            <div class="gh-success-icon">✅</div>
-            <h3>Account Created</h3>
-            <p id="gh-success-msg">Welcome to Gargo Haven's client portal. Your account is active and ready to use.</p>
-            <button class="gh-auth-submit" onclick="ghOpenDashboard()">
-              <span class="gh-btn-text">GO TO MY DASHBOARD →</span>
+          <div class="gh-auth-view" id="gh-view-forgot">
+            <div style="margin-bottom:20px;">
+              <button onclick="ghAuthView('login')" style="background:none;border:none;color:#888;font-size:11px;cursor:pointer;padding:0;font-family:'DM Mono',monospace;letter-spacing:0.8px;">← BACK TO LOGIN</button>
+            </div>
+            <p style="font-size:13px;color:#888;line-height:1.7;margin-bottom:20px;">Enter your registered email address and we'll send a password reset link to your inbox.</p>
+            <div class="gh-field">
+              <label for="gh-forgot-email">Registered Email</label>
+              <input type="email" id="gh-forgot-email" placeholder="you@company.com">
+              <div class="gh-error-msg" id="gh-forgot-err"></div>
+            </div>
+            <button class="gh-auth-submit" id="gh-forgot-btn" onclick="ghDoForgot()">
+              <span class="gh-btn-text">SEND RESET LINK →</span>
+              <div class="gh-btn-spinner"></div>
             </button>
           </div>
-        </div>
-
-        <!-- FORGOT SUCCESS VIEW -->
-        <div class="gh-auth-view" id="gh-view-forgot-sent">
-          <div class="gh-success-state">
-            <div class="gh-success-icon">📧</div>
-            <h3>Reset Link Sent</h3>
-            <p>Check your inbox for a password reset link. If you don't see it within 5 minutes, check your spam folder or contact our support team.</p>
-            <button class="gh-auth-submit" onclick="ghAuthView('login')">
-              <span class="gh-btn-text">BACK TO LOGIN →</span>
-            </button>
+          <div class="gh-auth-view" id="gh-view-success">
+            <div class="gh-success-state">
+              <div class="gh-success-icon">✅</div>
+              <h3>Account Created</h3>
+              <p id="gh-success-msg">Welcome to Gargo Haven's client portal. Your account is active and ready to use.</p>
+              <button class="gh-auth-submit" onclick="ghOpenDashboard()">
+                <span class="gh-btn-text">GO TO MY DASHBOARD →</span>
+              </button>
+            </div>
+          </div>
+          <div class="gh-auth-view" id="gh-view-forgot-sent">
+            <div class="gh-success-state">
+              <div class="gh-success-icon">📧</div>
+              <h3>Reset Link Sent</h3>
+              <p>Check your inbox for a password reset link. If you don't see it within 5 minutes, check your spam folder or contact our support team.</p>
+              <button class="gh-auth-submit" onclick="ghAuthView('login')">
+                <span class="gh-btn-text">BACK TO LOGIN →</span>
+              </button>
+            </div>
           </div>
         </div>
-
       </div>
     </div>
-  </div>
-
-  <!-- DASHBOARD MODAL -->
-  <div id="gh-dashboard-overlay" role="dialog" aria-modal="true" aria-label="Client Dashboard">
-    <div class="gh-dashboard-panel">
-      <div class="gh-dash-header">
-        <div>
-          <div class="gh-dash-greeting" id="gh-dash-greeting">Welcome, <span>Client</span></div>
-          <div style="font-size:11px;color:#666;margin-top:4px;font-family:'DM Mono',monospace;letter-spacing:0.8px;">CLIENT PORTAL · GARGO HAVEN</div>
-        </div>
-        <button class="gh-auth-close" onclick="ghDashClose()" aria-label="Close">✕</button>
-      </div>
-      <div class="gh-dash-body">
-        <div id="ghDashStaffBanner" style="display:none;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.35);border-radius:8px;padding:14px 16px;margin-bottom:22px;">
+    <div id="gh-dashboard-overlay" role="dialog" aria-modal="true" aria-label="Client Dashboard">
+      <div class="gh-dashboard-panel">
+        <div class="gh-dash-header">
           <div>
-            <div style="font-size:13px;font-weight:700;color:var(--gold);letter-spacing:0.3px;">STAFF ACCESS</div>
-            <div style="font-size:12px;color:#999;margin-top:3px;">Review uploaded documents and manage depot storage in the staff portal.</div>
+            <div class="gh-dash-greeting" id="gh-dash-greeting">Welcome, <span>Client</span></div>
+            <div style="font-size:11px;color:#666;margin-top:4px;font-family:'DM Mono',monospace;letter-spacing:0.8px;">CLIENT PORTAL · GARGO HAVEN</div>
           </div>
-          <button class="gh-auth-submit" style="max-width:190px;" onclick="window.open('staff-portal.html','_blank','noopener')">
-            <span class="gh-btn-text">OPEN STAFF PORTAL →</span>
-          </button>
+          <button class="gh-auth-close" onclick="ghDashClose()" aria-label="Close">✕</button>
         </div>
-        <div class="gh-dash-section-title" style="margin-bottom:16px;">QUICK ACTIONS</div>
-        <div class="gh-dash-quick">
-          <div class="gh-dash-tile" onclick="ghDashClose();navigateToPage('booking')">
-            <div class="gh-dash-tile-icon">📦</div>
-            <div class="gh-dash-tile-label">New Booking</div>
-            <div class="gh-dash-tile-sub">Storage or transport</div>
+        <div class="gh-dash-body">
+          <div id="ghDashStaffBanner" style="display:none;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.35);border-radius:8px;padding:14px 16px;margin-bottom:22px;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--gold);letter-spacing:0.3px;">STAFF ACCESS</div>
+              <div style="font-size:12px;color:#999;margin-top:3px;">Review uploaded documents and manage depot storage in the staff portal.</div>
+            </div>
+            <button class="gh-auth-submit" style="max-width:190px;" onclick="window.open('staff-portal.html','_blank','noopener')">
+              <span class="gh-btn-text">OPEN STAFF PORTAL →</span>
+            </button>
           </div>
-          <div class="gh-dash-tile" onclick="ghDashClose();navigateToPage('track')">
-            <div class="gh-dash-tile-icon">📍</div>
-            <div class="gh-dash-tile-label">Track Container</div>
-            <div class="gh-dash-tile-sub">Live GPS status</div>
+          <div class="gh-dash-section-title" style="margin-bottom:16px;">QUICK ACTIONS</div>
+          <div class="gh-dash-quick">
+            <div class="gh-dash-tile" onclick="ghDashClose();navigateToPage('booking')">
+              <div class="gh-dash-tile-icon"></div>
+              <div class="gh-dash-tile-label">New Booking</div>
+              <div class="gh-dash-tile-sub">Storage or transport</div>
+            </div>
+            <div class="gh-dash-tile" onclick="ghDashClose();navigateToPage('track')">
+              <div class="gh-dash-tile-icon"></div>
+              <div class="gh-dash-tile-label">Track Container</div>
+              <div class="gh-dash-tile-sub">Live GPS status</div>
+            </div>
+            <div class="gh-dash-tile" onclick="ghDashClose();navigateToPage('contact')">
+              <div class="gh-dash-tile-icon">💬</div>
+              <div class="gh-dash-tile-label">Support</div>
+              <div class="gh-dash-tile-sub">Talk to our team</div>
+            </div>
           </div>
-          <div class="gh-dash-tile" onclick="ghDashClose();navigateToPage('contact')">
-            <div class="gh-dash-tile-icon">💬</div>
-            <div class="gh-dash-tile-label">Support</div>
-            <div class="gh-dash-tile-sub">Talk to our team</div>
+          <div class="gh-dash-section-title">MY BOOKINGS</div>
+          <div id="gh-dash-bookings-list">
+            <div class="gh-dash-empty">
+              <p>Loading your bookings…</p>
+            </div>
+          </div>
+          <div class="gh-dash-account-info" id="gh-dash-account-info">
+            <div class="gh-ai-item">
+              <div class="gh-ai-label">Account Holder</div>
+              <div class="gh-ai-value" id="gh-dash-name">—</div>
+            </div>
+            <div class="gh-ai-item">
+              <div class="gh-ai-label">Company</div>
+              <div class="gh-ai-value" id="gh-dash-company">—</div>
+            </div>
+            <div class="gh-ai-item">
+              <div class="gh-ai-label">Email</div>
+              <div class="gh-ai-value" id="gh-dash-email">—</div>
+            </div>
+            <div class="gh-ai-item">
+              <div class="gh-ai-label">Role</div>
+              <div class="gh-ai-value" id="gh-dash-role">—</div>
+            </div>
+            <div class="gh-ai-item">
+              <div class="gh-ai-label">Member Since</div>
+              <div class="gh-ai-value" id="gh-dash-since">—</div>
+            </div>
+            <div class="gh-ai-item">
+              <div class="gh-ai-label">Account Status</div>
+              <div class="gh-ai-value" style="color:#22c55e;">● Active</div>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="gh-auth-submit" style="max-width:160px;background:transparent;color:#ef4444;border:1px solid #ef4444;" onclick="ghDoLogout()">
+              <span class="gh-btn-text">SIGN OUT</span>
+            </button>
           </div>
         </div>
-
-        <div class="gh-dash-section-title">MY BOOKINGS</div>
-        <div id="gh-dash-bookings-list">
-          <div class="gh-dash-empty">
-            <p>Loading your bookings…</p>
-          </div>
-        </div>
-
-        <div class="gh-dash-account-info" id="gh-dash-account-info">
-          <div class="gh-ai-item">
-            <div class="gh-ai-label">Account Holder</div>
-            <div class="gh-ai-value" id="gh-dash-name">—</div>
-          </div>
-          <div class="gh-ai-item">
-            <div class="gh-ai-label">Company</div>
-            <div class="gh-ai-value" id="gh-dash-company">—</div>
-          </div>
-          <div class="gh-ai-item">
-            <div class="gh-ai-label">Email</div>
-            <div class="gh-ai-value" id="gh-dash-email">—</div>
-          </div>
-          <div class="gh-ai-item">
-            <div class="gh-ai-label">Role</div>
-            <div class="gh-ai-value" id="gh-dash-role">—</div>
-          </div>
-          <div class="gh-ai-item">
-            <div class="gh-ai-label">Member Since</div>
-            <div class="gh-ai-value" id="gh-dash-since">—</div>
-          </div>
-          <div class="gh-ai-item">
-            <div class="gh-ai-label">Account Status</div>
-            <div class="gh-ai-value" style="color:#22c55e;">● Active</div>
-          </div>
-        </div>
-
-        <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="gh-auth-submit" style="max-width:160px;background:transparent;color:#ef4444;border:1px solid #ef4444;" onclick="ghDoLogout()">
-            <span class="gh-btn-text">SIGN OUT</span>
-          </button>
-        </div>
-
       </div>
     </div>
-  </div>
   `;
-
   document.body.insertAdjacentHTML('beforeend', authHTML);
-
- 
   document.getElementById('gh-auth-overlay').addEventListener('click', function(e) {
     if (e.target === this) ghAuthClose();
   });
@@ -4474,20 +2847,16 @@ window.demoTrack = demoTrack;
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') { ghAuthClose(); ghDashClose(); }
   });
-
- 
   window.ghAuthOpen = function(tab) {
     const overlay = document.getElementById('gh-auth-overlay');
     overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
     if (tab) ghAuthTab(tab);
   };
-
   window.ghAuthClose = function() {
     document.getElementById('gh-auth-overlay').classList.remove('open');
     document.body.style.overflow = '';
   };
-
   window.ghDashOpen = function() {
     const u = getCurrentUser();
     if (!u) { ghAuthOpen('login'); return; }
@@ -4495,24 +2864,20 @@ window.demoTrack = demoTrack;
     document.getElementById('gh-dashboard-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
   };
-
   window.ghDashClose = function() {
     document.getElementById('gh-dashboard-overlay').classList.remove('open');
     document.body.style.overflow = '';
   };
-
   window.ghOpenDashboard = function() {
     ghAuthClose();
     setTimeout(ghDashOpen, 200);
   };
-
   window.ghAuthTab = function(tab) {
     document.querySelectorAll('.gh-auth-tab').forEach(function(t) {
       t.classList.toggle('active', t.dataset.tab === tab);
     });
     ghAuthView(tab);
   };
-
   window.ghAuthView = function(view) {
     document.querySelectorAll('.gh-auth-view').forEach(function(v) {
       v.classList.remove('active');
@@ -4521,7 +2886,6 @@ window.demoTrack = demoTrack;
     if (el) el.classList.add('active');
     clearErrors();
   };
-
   window.ghTogglePw = function(inputId, btn) {
     var inp = document.getElementById(inputId);
     if (!inp) return;
@@ -4529,7 +2893,6 @@ window.demoTrack = demoTrack;
     inp.type = show ? 'text' : 'password';
     btn.textContent = show ? '🙈' : '👁';
   };
-
   window.ghCheckStrength = function(pw) {
     var fill = document.getElementById('gh-strength-fill');
     var label = document.getElementById('gh-strength-label');
@@ -4547,7 +2910,6 @@ window.demoTrack = demoTrack;
     label.textContent = score > 0 ? labels[score - 1] : 'Enter a password';
     label.style.color = score > 0 ? colors[score - 1] : '#555';
   };
-
   function clearErrors() {
     document.querySelectorAll('.gh-error-msg').forEach(function(el) {
       el.textContent = ''; el.classList.remove('show');
@@ -4556,22 +2918,18 @@ window.demoTrack = demoTrack;
       el.classList.remove('error');
     });
   }
-
   function showErr(fieldId, errId, msg) {
     var field = document.getElementById(fieldId);
     var err = document.getElementById(errId);
     if (field) field.classList.add('error');
     if (err) { err.textContent = msg; err.classList.add('show'); }
   }
-
   function setLoading(btnId, loading) {
     var btn = document.getElementById(btnId);
     if (!btn) return;
     btn.disabled = loading;
     btn.classList.toggle('loading', loading);
   }
-
-  
   window.ghDoLogin = function() {
     clearErrors();
     var email = (document.getElementById('gh-login-email').value || '').trim().toLowerCase();
@@ -4581,7 +2939,6 @@ window.demoTrack = demoTrack;
     else if (!/^\S+@\S+\.\S+$/.test(email)) { showErr('gh-login-email','gh-login-email-err','Enter a valid email.'); ok = false; }
     if (!pw) { showErr('gh-login-pw','gh-login-pw-err','Password is required.'); ok = false; }
     if (!ok) return;
-
     setLoading('gh-login-btn', true);
     window.bridge.authLogin({ email: email, password: pw })
       .then(function (result) {
@@ -4598,8 +2955,6 @@ window.demoTrack = demoTrack;
         setLoading('gh-login-btn', false);
       });
   };
-
-  
   window.ghDoRegister = function() {
     clearErrors();
     var fname = (document.getElementById('gh-reg-fname').value || '').trim();
@@ -4612,7 +2967,6 @@ window.demoTrack = demoTrack;
     var pw2 = (document.getElementById('gh-reg-pw2').value || '');
     var terms = document.getElementById('gh-reg-terms').checked;
     var ok = true;
-
     if (!fname) { showErr('gh-reg-fname','gh-reg-fname-err','First name is required.'); ok = false; }
     if (!lname) { showErr('gh-reg-lname','gh-reg-lname-err','Last name is required.'); ok = false; }
     if (!company) { showErr('gh-reg-company','gh-reg-company-err','Company name is required.'); ok = false; }
@@ -4628,7 +2982,6 @@ window.demoTrack = demoTrack;
       ok = false;
     }
     if (!ok) return;
-
     setLoading('gh-reg-btn', true);
     window.bridge.authRegister({
       name: fname + ' ' + lname,
@@ -4640,13 +2993,11 @@ window.demoTrack = demoTrack;
     })
       .then(function (result) {
         var msg = document.getElementById('gh-success-msg');
-
         if (result.needsEmailConfirmation) {
           if (msg) msg.textContent = 'Almost there, ' + fname + '. We\'ve sent a confirmation link to ' + email + ' — click it, then log in to reach your dashboard.';
           ghAuthView('success');
           return;
         }
-
         setCurrentUser(result.user);
         updateNavForUser(result.user);
         if (msg) msg.textContent = 'Welcome, ' + fname + '. Your Gargo Haven client account is ready. You can now book services, track containers, and manage your operations from your dashboard.';
@@ -4659,8 +3010,6 @@ window.demoTrack = demoTrack;
         setLoading('gh-reg-btn', false);
       });
   };
-
-  
   window.ghDoForgot = function() {
     clearErrors();
     var email = (document.getElementById('gh-forgot-email').value || '').trim().toLowerCase();
@@ -4671,12 +3020,9 @@ window.demoTrack = demoTrack;
     setLoading('gh-forgot-btn', true);
     setTimeout(function() {
       setLoading('gh-forgot-btn', false);
-      // Always show success (don't reveal account existence)
       ghAuthView('forgot-sent');
     }, 1000);
   };
-
-  
   window.ghDoLogout = function() {
     window.bridge.authLogout()
       .catch(function () { /* even if the network call fails, still clear the local session below */ })
@@ -4689,7 +3035,6 @@ window.demoTrack = demoTrack;
         }
       });
   };
-
   function updateNavForUser(user) {
     var loginBtn = document.querySelector('.nav-login');
     if (!loginBtn) return;
@@ -4697,7 +3042,6 @@ window.demoTrack = demoTrack;
     loginBtn.classList.add('logged-in');
     loginBtn.onclick = function() { ghDashOpen(); };
   }
-
   function resetNavForGuest() {
     var loginBtn = document.querySelector('.nav-login');
     if (!loginBtn) return;
@@ -4705,7 +3049,6 @@ window.demoTrack = demoTrack;
     loginBtn.classList.remove('logged-in');
     loginBtn.onclick = function() { ghAuthOpen('login'); };
   }
-
   function populateDashboard(user) {
     var el = function(id) { return document.getElementById(id); };
     var greeting = el('gh-dash-greeting');
@@ -4716,8 +3059,6 @@ window.demoTrack = demoTrack;
     if (el('gh-dash-role')) el('gh-dash-role').textContent = user.role || '—';
     if (el('gh-dash-since')) el('gh-dash-since').textContent = user.created || '—';
     loadMyBookings();
-
-
     var staffBanner = el('ghDashStaffBanner');
     if (staffBanner && window.bookingDocs && window.bookingDocs.isStaffMember) {
       window.bookingDocs.isStaffMember().then(function (isStaff) {
@@ -4725,20 +3066,17 @@ window.demoTrack = demoTrack;
       });
     }
   }
-
   function ghEscapeHtml(str) {
     var div = document.createElement('div');
     div.textContent = str == null ? '' : String(str);
     return div.innerHTML;
   }
-
   function ghFormatBookingDate(raw) {
     if (!raw) return '—';
     var d = new Date(raw);
     if (isNaN(d.getTime())) return String(raw);
     return d.toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
   }
-
   function ghStatusClass(status) {
     var s = (status || 'pending').toLowerCase();
     if (s.indexOf('confirm') !== -1) return 'confirmed';
@@ -4746,25 +3084,17 @@ window.demoTrack = demoTrack;
     if (s.indexOf('cancel') !== -1 || s.indexOf('reject') !== -1) return 'cancelled';
     return 'pending';
   }
-
   var DOC_TYPE_LABELS_SHORT = {
     guarantee_form: 'Guarantee Form',
     release_order: 'Release Order',
     delivery_order: 'Delivery Order',
   };
-
   function ghDocStatusClass(status) {
     var s = (status || 'pending_review').toLowerCase();
     if (s.indexOf('verif') !== -1) return 'confirmed';
     if (s.indexOf('reject') !== -1) return 'cancelled';
     return 'pending';
   }
-
-  
-  // Keeps only the most recent document per doc_type — a client who
-  // re-uploads after a rejection ends up with two rows for that type
-  // (the old rejected one + the new pending one); the dashboard should
-  // only ever show the latest status per type, not the stale rejected one.
   function latestDocsByType(docs) {
     var byType = {};
     (docs || []).forEach(function (d) {
@@ -4773,7 +3103,6 @@ window.demoTrack = demoTrack;
     });
     return byType;
   }
-
   function renderDocChips(docs, bookingId) {
     if (!docs || !docs.length) return '';
     var byType = latestDocsByType(docs);
@@ -4788,10 +3117,6 @@ window.demoTrack = demoTrack;
         '</span>'
       );
       if (d.status !== 'rejected') return chip;
-
-      // Rejected — show the reviewer's reason and a way to fix it
-      // straight from the dashboard, instead of making the client
-      // start a whole new booking over one bad document.
       var reason = d.review_notes ? '<div style="font-size:11px;color:var(--red,#e05252);margin:2px 0 4px;">Reason: ' + ghEscapeHtml(d.review_notes) + '</div>' : '';
       var reuploadId = 'reupload_' + docType + '_' + bookingId;
       var statusLineId = 'reuploadStatus_' + docType + '_' + bookingId;
@@ -4806,18 +3131,15 @@ window.demoTrack = demoTrack;
     }).join('');
     return '<div style="margin-top:6px;">' + rows + '</div>';
   }
-
   function jsStrArg(value) {
     return "'" + String(value).replace(/'/g, "\\'") + "'";
   }
-
   window.handleDocReupload = function (bookingId, docType) {
     var reuploadId = 'reupload_' + docType + '_' + bookingId;
     var statusLineId = 'reuploadStatus_' + docType + '_' + bookingId;
     var fileInput = document.getElementById(reuploadId);
     var statusEl = document.getElementById(statusLineId);
     var file = fileInput && fileInput.files[0];
-
     if (!file) {
       if (statusEl) { statusEl.textContent = 'Choose a file first.'; statusEl.style.color = '#e6a23c'; }
       return;
@@ -4826,37 +3148,27 @@ window.demoTrack = demoTrack;
       if (statusEl) { statusEl.textContent = 'Upload service unavailable — please refresh and try again.'; statusEl.style.color = '#e6a23c'; }
       return;
     }
-
     if (statusEl) { statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--gray-pale)'; }
     window.bookingDocs.uploadBookingDocument({ bookingId: bookingId, docType: docType, file: file })
       .then(function () {
         if (statusEl) { statusEl.textContent = '✓ Re-uploaded — pending review'; statusEl.style.color = '#4caf50'; }
         if (fileInput) fileInput.disabled = true;
-        // Refresh so the dashboard reflects the new pending status
-        // instead of the stale rejected chip.
         setTimeout(loadMyBookings, 900);
       })
       .catch(function (err) {
         if (statusEl) { statusEl.textContent = err.message || 'Upload failed — please try again'; statusEl.style.color = '#e05252'; }
       });
   };
-
   var STORAGE_STATUS_LABELS = { allocated: 'In Storage', in_storage: 'In Storage', released: 'Out of Storage — Dispatched', dispatched: 'Out of Storage — Dispatched' };
   function renderStorageLine(b) {
     if (!b.storage_status) return '';
     var label = STORAGE_STATUS_LABELS[b.storage_status] || String(b.storage_status).replace(/_/g, ' ');
     return '<div class="gh-booking-route" style="margin-top:4px;">Storage: ' + ghEscapeHtml(label) + '</div>';
   }
-
   function isBookingEditable(b) {
     var s = (b.status || 'pending').toLowerCase();
-    // Once staff have moved a booking past "pending" (confirmed, in
-    // progress, completed, cancelled...) the client shouldn't be able to
-    // change origin/destination/container details out from under them —
-    // only a fresh, unprocessed booking is safe to self-edit.
     return s.indexOf('pending') !== -1;
   }
-
   function renderBookingRow(b, docsByBooking) {
     var ref = b.id || b.booking_ref || '—';
     var service = b.service_type || b.cargo_type || 'Booking';
@@ -4868,7 +3180,6 @@ window.demoTrack = demoTrack;
     var dateLabel = ghFormatBookingDate(b.created_at || b.pickup_date);
     var docs = (docsByBooking && docsByBooking[ref]) || [];
     var editable = isBookingEditable(b);
-
     return (
       '<div class="gh-booking-row">' +
         '<div class="gh-booking-row-main">' +
@@ -4883,21 +3194,16 @@ window.demoTrack = demoTrack;
       '</div>'
     );
   }
-
   var _lastBookingsById = {};
-
   function loadMyBookings() {
     var container = document.getElementById('gh-dash-bookings-list');
     if (!container) return;
-
     container.innerHTML = '<div class="gh-dash-empty"><p>Loading your bookings…</p></div>';
-
     window.bridge.myBookings({ limit: 5, offset: 0 })
       .then(function (result) {
         var bookings = result.bookings || [];
         _lastBookingsById = {};
         bookings.forEach(function (b) { _lastBookingsById[b.id] = b; });
-
         if (!bookings.length) {
           container.innerHTML =
             '<div class="gh-dash-empty">' +
@@ -4908,15 +3214,11 @@ window.demoTrack = demoTrack;
             '</div>';
           return;
         }
-
         var html = bookings.map(function (b) { return renderBookingRow(b, {}); }).join('');
         if (result.total > bookings.length) {
           html += '<button class="gh-bookings-loadmore" onclick="navigateToPage(\'track\');ghDashClose();">VIEW ALL BOOKINGS →</button>';
         }
         container.innerHTML = html;
-
-        // Document statuses load separately and patch in once ready, so a
-        // slow/failed doc lookup never blocks the booking list itself.
         if (window.bookingDocs && window.bookingDocs.documentsForBookings) {
           var ids = bookings.map(function (b) { return b.id; });
           window.bookingDocs.documentsForBookings(ids)
@@ -4935,23 +3237,19 @@ window.demoTrack = demoTrack;
           '<div class="gh-dash-empty"><p>Could not load your bookings right now. Please try again shortly.</p></div>';
       });
   }
-
   var GH_LOCATION_OPTIONS = ['Mombasa Port (KPA)', 'APM Terminals', 'APM Terminals Mombasa', 'Gargo Haven Depot', 'Mombasa Gargo Haven Depot', 'Consolebase ICD', 'Hakika Container Depot', 'Kibarani Depot', 'Fortune Container Depot', 'Client Yard / Factory'];
-
   function ghLocationSelect(id, current) {
     var opts = GH_LOCATION_OPTIONS.map(function (loc) {
       return '<option' + (loc === current ? ' selected' : '') + '>' + ghEscapeHtml(loc) + '</option>';
     }).join('');
     return '<select class="form-select" id="' + id + '">' + opts + '</select>';
   }
-
   window.openBookingEditModal = function (bookingId) {
     var b = _lastBookingsById[bookingId];
     if (!b) {
       showNotification('Booking not found', 'Please refresh your dashboard and try again.', '⚠️');
       return;
     }
-
     var html = [
       '<p style="color:var(--gray-pale);font-size:12.5px;line-height:1.6;margin-bottom:14px;">',
       'Correct the details below. This is only available while your booking is still pending — once our team starts processing it, changes go through support instead.',
@@ -4975,14 +3273,11 @@ window.demoTrack = demoTrack;
       '<div id="editBookingMsg" style="font-size:12px;margin:10px 0;min-height:14px;"></div>',
       '<button class="btn-primary" style="width:100%;" onclick="saveBookingEdit(' + jsStrArg(bookingId) + ')">Save Changes</button>',
     ].join('');
-
     openModal('Edit Booking · ' + bookingId, html);
   };
-
   window.saveBookingEdit = function (bookingId) {
     var msgEl = document.getElementById('editBookingMsg');
     var get = function (id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
-
     var patch = {
       container: get('editContainerNo'),
       pickup_location: get('editOrigin'),
@@ -4991,9 +3286,7 @@ window.demoTrack = demoTrack;
       phone: get('editPhone'),
       notes: get('editNotes'),
     };
-
     if (msgEl) { msgEl.textContent = 'Saving…'; msgEl.style.color = 'var(--gray-pale)'; }
-
     window.bridge.updateBooking(bookingId, patch)
       .then(function () {
         if (msgEl) { msgEl.textContent = '✓ Booking updated'; msgEl.style.color = '#4caf50'; }
@@ -5003,18 +3296,13 @@ window.demoTrack = demoTrack;
         if (msgEl) { msgEl.textContent = err.message || 'Could not save changes — please try again.'; msgEl.style.color = '#e05252'; }
       });
   };
-
-  
   function wireLoginButton() {
     var loginBtn = document.querySelector('.nav-login');
     if (!loginBtn) return;
-
-   
     loginBtn.onclick = function(e) {
       e.preventDefault();
       ghAuthOpen('login');
     };
-
     window.bridge.authCurrentUser()
       .then(function (user) {
         if (user) {
@@ -5030,22 +3318,18 @@ window.demoTrack = demoTrack;
         resetNavForGuest();
       });
   }
-
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', wireLoginButton);
   } else {
     wireLoginButton();
   }
-
 })();
-
 (function () {
   function wireGalleryNav() {
     const strip = document.getElementById('galleryStrip');
     const prevBtn = document.getElementById('galleryPrevBtn');
     const nextBtn = document.getElementById('galleryNextBtn');
-    if (!strip || !prevBtn || !nextBtn) return; // not on this page, bail quietly
-
+    if (!strip || !prevBtn || !nextBtn) return;
     function scrollByOneItem(direction) {
       const item = strip.querySelector('.gallery-item');
       const itemWidth = item ? item.getBoundingClientRect().width : 260;
@@ -5057,11 +3341,8 @@ window.demoTrack = demoTrack;
         behavior: 'smooth'
       });
     }
-
     prevBtn.addEventListener('click', function () { scrollByOneItem('prev'); });
     nextBtn.addEventListener('click', function () { scrollByOneItem('next'); });
-
-    // Optional: disable arrows at the ends
     function updateArrowState() {
       const maxScroll = strip.scrollWidth - strip.clientWidth - 1;
       prevBtn.disabled = strip.scrollLeft <= 0;
@@ -5073,30 +3354,22 @@ window.demoTrack = demoTrack;
     window.addEventListener('resize', updateArrowState);
     updateArrowState();
   }
-
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', wireGalleryNav);
   } else {
     wireGalleryNav();
   }
 })();
-
 document.querySelectorAll(".mobile-dropdown-btn").forEach(btn => {
-
-    btn.addEventListener("click", function () {
-
-        this.classList.toggle("active");
-
-        const content = this.nextElementSibling;
-
-        if (content.style.maxHeight) {
-            content.style.maxHeight = null;
-            this.querySelector("span").textContent = "+";
-        } else {
-            content.style.maxHeight = content.scrollHeight + "px";
-            this.querySelector("span").textContent = "−";
-        }
-
-    });
-
+  btn.addEventListener("click", function () {
+    this.classList.toggle("active");
+    const content = this.nextElementSibling;
+    if (content.style.maxHeight) {
+      content.style.maxHeight = null;
+      this.querySelector("span").textContent = "+";
+    } else {
+      content.style.maxHeight = content.scrollHeight + "px";
+      this.querySelector("span").textContent = "−";
+    }
+  });
 });
