@@ -81,6 +81,7 @@
     el('whoamiName').textContent = user.email;
     loadReviewQueue();
     loadZones();
+    loadStorageOccupancy();
   }
 
   window.staffLogin = function () {
@@ -351,6 +352,76 @@
       });
   }
 
+  function loadStorageOccupancy() {
+    var wrap = el('storageOccupancyWrap');
+    if (!wrap) return;
+    wrap.innerHTML = '<div class="loading-row"><span class="spinner"></span> Loading…</div>';
+
+    window.bookingDocs.currentlyInStorage()
+      .then(function (rows) {
+        if (!rows.length) {
+          wrap.innerHTML = '<div class="empty">Nothing currently occupying yard space.</div>';
+          return;
+        }
+        wrap.innerHTML = rows.map(renderStorageOccupancyCard).join('');
+      })
+      .catch(function (err) {
+        wrap.innerHTML = '<div class="empty">' + esc(friendlyError(err, 'Could not load storage occupancy right now.')) + '</div>';
+      });
+  }
+  window.loadStorageOccupancy = loadStorageOccupancy;
+
+  function renderStorageOccupancyCard(b) {
+    var who = [b.full_name, b.company].filter(Boolean).join(' · ') || 'Unknown client';
+    var zone = (b.depot_storage_zones && b.depot_storage_zones.zone_name) || '—';
+    var teu = b.storage_teu != null ? b.storage_teu + ' TEU' : '—';
+    return (
+      '<div class="doc-card" id="stor-' + esc(b.id) + '">' +
+        '<div class="doc-card-top">' +
+          '<div>' +
+            '<div class="doc-ref">' + esc(b.container || b.id) + '</div>' +
+            '<div class="doc-meta">' + esc(who) + (b.service_type ? ' · ' + esc(b.service_type) : '') + '</div>' +
+            '<div class="doc-meta">Zone: ' + esc(zone) + ' · ' + esc(teu) + '</div>' +
+          '</div>' +
+          '<div class="doc-type-badge">IN STORAGE</div>' +
+        '</div>' +
+        '<div class="doc-actions">' +
+          '<button class="btn btn-reject" onclick="handleReleaseStorage(' + jsStr(b.id) + ')">Dispatch — Release Storage</button>' +
+        '</div>' +
+        '<div class="doc-status-line" id="storStatusLine-' + esc(b.id) + '"></div>' +
+      '</div>'
+    );
+  }
+
+  window.handleReleaseStorage = function (bookingId) {
+    var line = el('storStatusLine-' + bookingId);
+    var card = el('stor-' + bookingId);
+    if (line) { line.textContent = 'Releasing…'; line.style.color = '#888'; }
+    if (card) card.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+
+    window.bookingDocs.releaseStorage(bookingId)
+      .then(function (res) {
+        if (res && res.released === false) {
+          if (line) { line.textContent = res.reason === 'already_released' ? 'Already released.' : 'No active storage allocation found.'; line.style.color = '#f59e0b'; }
+          if (card) card.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+          return;
+        }
+        if (line) { line.textContent = '✓ Dispatched — storage released'; line.style.color = '#22c55e'; }
+        setTimeout(function () {
+          if (card) card.remove();
+          loadZones();
+          var wrap = el('storageOccupancyWrap');
+          if (wrap && !wrap.querySelector('.doc-card')) {
+            wrap.innerHTML = '<div class="empty">Nothing currently occupying yard space.</div>';
+          }
+        }, 700);
+      })
+      .catch(function (err) {
+        if (line) { line.textContent = friendlyError(err, 'Could not release storage. Please try again.'); line.style.color = '#ef4444'; }
+        if (card) card.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+      });
+  };
+
   window.submitAllocation = function () {
     const ref = (el('allocBookingRef').value || '').trim();
     const zoneId = el('allocZone').value;
@@ -369,6 +440,7 @@
         el('allocBookingRef').value = '';
         el('allocTeu').value = 1;
         loadZones();
+        loadStorageOccupancy();
       })
       .catch(function (err) {
         msg.textContent = friendlyError(err, 'Could not allocate storage. Please try again.'); msg.style.color = '#ef4444';

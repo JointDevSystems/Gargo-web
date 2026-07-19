@@ -1023,6 +1023,21 @@ function closeTrackResult() {
 window.closeTrackResult = closeTrackResult;
 
 
+/**
+ * A container can never be simultaneously "in transit" and "in storage".
+ * Once a trip is actively moving it (trip.status === 'active'), storage is
+ * by definition released — this is the single source of truth for that
+ * wording, used on-screen, in the PDF report, and in the text fallback so
+ * all three always agree.
+ */
+function getStorageStatusLabel(hasTrip, trip, storage) {
+  if (hasTrip && trip && trip.status === 'active') return 'Out of Storage — Dispatched';
+  const raw = pick(storage, ['status', 'storage_status']);
+  if (!raw) return '—';
+  const label = String(raw).replace(/_/g, ' ');
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 function pick(obj, keys) {
   if (!obj) return null;
   for (let i = 0; i < keys.length; i++) {
@@ -1051,9 +1066,14 @@ function renderTrackResult(details, query) {
   const statusEl = document.getElementById('res-status');
   const displayStatus = hasTrip ? trip.status : ((booking && booking.status) || (storage ? 'in_storage' : 'pending'));
   if (statusEl) {
-    statusEl.textContent = displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1).replace(/_/g, ' ');
+    statusEl.textContent = (displayStatus === 'active' ? 'In Transit' : displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1).replace(/_/g, ' '));
     statusEl.className = 'status-badge ' + (displayStatus === 'active' ? 'status-transit' : (displayStatus === 'completed' || displayStatus === 'in_storage') ? 'status-delivered' : 'status-pending');
   }
+
+  // A container is never simultaneously "in transit" and "in storage" —
+  // once a trip actively has it moving, storage is by definition released,
+  // no matter what a stale storage record might still say.
+  const tripInTransit = hasTrip && trip.status === 'active';
 
   // Truck & driver panels only apply while a trip is actually associated
   // with this record — a container sitting in storage has neither.
@@ -1095,11 +1115,22 @@ function renderTrackResult(details, query) {
   // object, independent of whether there's also an active trip (e.g. a
   // Full Transport Package booking that's now sitting in storage).
   const storagePanel = document.getElementById('storagePanel');
+  const storageBadgeEl = document.getElementById('storagePanelBadge');
   if (storage) {
     if (storagePanel) storagePanel.style.display = '';
     setText('storageZone', pick(storage, ['zone_name', 'zone']) || '—');
     setText('storageOffloadTime', fmtDateTime(pick(storage, ['offloaded_at', 'offload_time', 'gate_in_time'])) || '—');
-    setText('storageStatus', (pick(storage, ['status', 'storage_status']) || '—'));
+
+    const storageStatusEl = document.getElementById('storageStatus');
+    setText('storageStatus', getStorageStatusLabel(hasTrip, trip, storage));
+    if (tripInTransit) {
+      if (storageStatusEl) { storageStatusEl.classList.add('tdv-released'); storageStatusEl.classList.remove('tdv-in-storage'); }
+      if (storageBadgeEl) { storageBadgeEl.textContent = 'RELEASED'; storageBadgeEl.style.display = ''; storageBadgeEl.className = 'panel-mini-badge badge-released'; }
+    } else {
+      if (storageStatusEl) { storageStatusEl.classList.add('tdv-in-storage'); storageStatusEl.classList.remove('tdv-released'); }
+      if (storageBadgeEl) { storageBadgeEl.textContent = 'CURRENT'; storageBadgeEl.style.display = ''; storageBadgeEl.className = 'panel-mini-badge badge-current'; }
+    }
+
     setText('storageDeliveredBy', pick(storage, ['delivered_by', 'delivered_by_name', 'driver_name']) || '—');
     const storagePhone = pick(storage, ['delivered_by_phone', 'driver_phone']);
     const storagePhoneEl = document.getElementById('storageDeliveredByPhone');
@@ -1338,7 +1369,7 @@ function downloadTrackingReport() {
       const storageRows = [
         ['Zone', pick(storage, ['zone_name', 'zone']) || '—'],
         ['Offload Time', fmtDateTime(pick(storage, ['offloaded_at', 'offload_time', 'gate_in_time'])) || '—'],
-        ['Storage Status', pick(storage, ['status', 'storage_status']) || '—'],
+        ['Storage Status', getStorageStatusLabel(hasTrip, trip, storage)],
         ['Delivered By', pick(storage, ['delivered_by', 'delivered_by_name', 'driver_name']) || '—'],
       ];
       y = pdfKeyValueRows(doc, storageRows, marginX, y, pageWidth);
@@ -1460,7 +1491,7 @@ function downloadTrackingReportAsText(details, query) {
     lines.push('STORAGE DETAILS');
     lines.push('Zone: ' + (pick(storage, ['zone_name', 'zone']) || '—'));
     lines.push('Offload Time: ' + (fmtDateTime(pick(storage, ['offloaded_at', 'offload_time', 'gate_in_time'])) || '—'));
-    lines.push('Storage Status: ' + (pick(storage, ['status', 'storage_status']) || '—'));
+    lines.push('Storage Status: ' + getStorageStatusLabel(hasTrip, trip, storage));
     lines.push('Delivered By: ' + (pick(storage, ['delivered_by', 'delivered_by_name', 'driver_name']) || '—'));
     lines.push('');
   }
@@ -4775,9 +4806,10 @@ window.demoTrack = demoTrack;
       });
   };
 
+  var STORAGE_STATUS_LABELS = { allocated: 'In Storage', in_storage: 'In Storage', released: 'Out of Storage — Dispatched', dispatched: 'Out of Storage — Dispatched' };
   function renderStorageLine(b) {
     if (!b.storage_status) return '';
-    var label = String(b.storage_status).replace(/_/g, ' ');
+    var label = STORAGE_STATUS_LABELS[b.storage_status] || String(b.storage_status).replace(/_/g, ' ');
     return '<div class="gh-booking-route" style="margin-top:4px;">Storage: ' + ghEscapeHtml(label) + '</div>';
   }
 
@@ -4810,7 +4842,7 @@ window.demoTrack = demoTrack;
           (route ? '<div class="gh-booking-route">' + ghEscapeHtml(route) + '</div>' : '') +
           renderStorageLine(b) +
           renderDocChips(docs, ref) +
-          (editable ? '<button class="btn-secondary" style="padding:5px 10px;font-size:11px;margin-top:4px;" onclick="openBookingEditModal(' + jsStrArg(ref) + ')">Edit Booking</button>' : '') +
+          (editable ? '<button class="btn-secondary gh-edit-booking-btn" onclick="openBookingEditModal(' + jsStrArg(ref) + ')">✎ Edit Booking</button>' : '') +
         '</div>' +
         '<div class="gh-booking-status ' + statusClass + '">' + ghEscapeHtml(status) + '</div>' +
       '</div>'

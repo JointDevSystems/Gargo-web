@@ -245,11 +245,71 @@
       .eq('id', zoneId);
     if (zoneUpdateErr) throw new Error(zoneUpdateErr.message || 'Could not reserve storage space');
 
+    // storage_teu is saved on the booking (not just the zone) so that
+    // releaseStorage() later knows exactly how much space to give back —
+    // without it, a dispatch could only guess at the reversal amount.
     const { error: bookingUpdateErr } = await client()
       .from('public_bookings')
-      .update({ storage_status: 'allocated', storage_zone_id: zoneId })
+      .update({ storage_status: 'allocated', storage_zone_id: zoneId, storage_teu: teu })
       .eq('id', bookingId);
     if (bookingUpdateErr) throw new Error(bookingUpdateErr.message || 'Could not update booking status');
+  }
+
+  // Called when a stored container is dispatched (a truck is assigned and
+  // it leaves the depot). Frees the TEU it was holding in its zone and
+  // flips the booking to 'released' so it no longer counts as occupying
+  // yard/storage space — this is what keeps "in storage" and "in transit"
+  // from ever being true for the same container at the same time.
+  async function releaseStorage(bookingId) {
+    const { data: booking, error: bookingErr } = await client()
+      .from('public_bookings')
+      .select('id, storage_status, storage_zone_id, storage_teu')
+      .eq('id', bookingId)
+      .single();
+    if (bookingErr) throw new Error(bookingErr.message || 'Booking not found');
+
+    if (!booking.storage_zone_id || booking.storage_status === 'released') {
+      return { released: false, reason: !booking.storage_zone_id ? 'no_allocation' : 'already_released' };
+    }
+
+    const teu = booking.storage_teu || 0;
+    if (teu > 0) {
+      const { data: zone, error: zoneErr } = await client()
+        .from('depot_storage_zones')
+        .select('*')
+        .eq('id', booking.storage_zone_id)
+        .single();
+      if (zoneErr) throw new Error(zoneErr.message || 'Storage zone not found');
+
+      const newOccupied = Math.max(0, (zone.occupied_teu || 0) - teu);
+      const { error: zoneUpdateErr } = await client()
+        .from('depot_storage_zones')
+        .update({ occupied_teu: newOccupied, updated_at: new Date().toISOString() })
+        .eq('id', booking.storage_zone_id);
+      if (zoneUpdateErr) throw new Error(zoneUpdateErr.message || 'Could not free storage space');
+    }
+
+    const { error: bookingUpdateErr } = await client()
+      .from('public_bookings')
+      .update({ storage_status: 'released' })
+      .eq('id', bookingId);
+    if (bookingUpdateErr) throw new Error(bookingUpdateErr.message || 'Could not update booking status');
+
+    return { released: true };
+  }
+
+  // Powers a "who's actually in the yard right now" list for staff — the
+  // Zone Capacity table only shows aggregate TEU, this shows which specific
+  // bookings/containers are behind those numbers so staff have something
+  // concrete to release when a container is dispatched.
+  async function currentlyInStorage() {
+    const { data, error } = await client()
+      .from('public_bookings')
+      .select('id, full_name, company, container, service_type, storage_zone_id, storage_teu, storage_status, created_at, depot_storage_zones(zone_name)')
+      .in('storage_status', ['allocated', 'in_storage'])
+      .order('created_at', { ascending: true });
+    if (error) throw new Error(error.message || 'Could not load storage occupancy');
+    return data || [];
   }
 
   window.bookingDocs = {
@@ -267,6 +327,8 @@
     verifyDocument,
     rejectDocument,
     allocateStorage,
+    releaseStorage,
+    currentlyInStorage,
     getRequiredDocTypes,
     DOC_TYPES,
     PORT_LOCATIONS,
