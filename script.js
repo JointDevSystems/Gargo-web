@@ -862,9 +862,9 @@ function submitBooking() {
         '<div style="font-size:13px;color:var(--gray-pale);">Booking Reference</div>',
         '<div style="font-size:22px;font-weight:700;color:var(--gold);">' + ref + '</div>',
         '</div>',
-        '<p style="color:var(--gray-pale);line-height:1.7;">Service: <strong style="color:#fff;">' + state.selectedCargoType + '</strong><br>Our team will confirm your booking within 2 hours via the contact details provided.</p>',
+        '<p style="color:var(--gray-pale);line-height:1.7;">Service: <strong style="color:#fff;">' + (state.selectedCargoType || payload.service_type || 'Booking') + '</strong><br>Our team will confirm your booking within 2 hours via the contact details provided.</p>',
         renderDocUploadSection(ref, requiredDocs),
-        '<button class="btn-primary" style="margin-top:16px;width:100%;" onclick="closeModal()">Got It</button>'
+        '<button class="btn-primary" style="margin-top:16px;width:100%;" onclick="closeModal()">GOT IT</button>'
       ].join(''));
     })
     .catch(function (err) {
@@ -909,35 +909,64 @@ const DOC_TYPE_LABELS = {
 };
 
 // Builds the "please upload X" section shown inside the Booking
-// Confirmed modal. requiredDocs is an array from
-// window.bookingDocs.getRequiredDocTypes() — empty array renders nothing.
-function renderDocUploadSection(bookingRef, requiredDocs) {
+// Confirmed modal, and reused inside the Edit Booking modal so a client
+// can (re)upload the same required documents at any time. requiredDocs is
+// an array from window.bookingDocs.getRequiredDocTypes() — empty array
+// renders nothing. existingDocs (optional) lets the caller show current
+// upload status per doc type instead of a blank picker every time.
+function renderDocUploadSection(bookingRef, requiredDocs, existingDocs) {
   if (!requiredDocs || !requiredDocs.length) return '';
+  const byType = {};
+  (existingDocs || []).forEach(function (d) { byType[d.doc_type] = d; });
+
   const rows = requiredDocs.map(function (docType) {
     const label = DOC_TYPE_LABELS[docType] || docType;
-    const inputId = 'docFile_' + docType;
-    const statusId = 'docStatus_' + docType;
+    const inputId = 'docFile_' + docType + '_' + bookingRef;
+    const statusId = 'docStatus_' + docType + '_' + bookingRef;
+    const existing = byType[docType];
+    const existingNote = existing
+      ? '<div style="font-size:11px;color:' + (existing.status === 'rejected' ? '#e05252' : existing.status === 'verified' ? '#4caf50' : 'var(--gold)') + ';margin-top:4px;">Current: ' + ghEscapeHtmlSafe(existing.file_name || 'uploaded file') + ' — ' + ghEscapeHtmlSafe((existing.status || 'pending_review').replace(/_/g, ' ')) + '</div>'
+      : '';
     return (
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
-      '<div style="flex:1;">' +
-      '<div style="font-size:13px;color:#fff;margin-bottom:4px;">' + label + ' <span style="color:var(--gold);">*required</span></div>' +
-      '<input type="file" id="' + inputId + '" accept=".pdf,.jpg,.jpeg,.png" style="font-size:12px;color:var(--gray-pale);" />' +
-      '</div>' +
-      '<button class="btn-primary" style="padding:8px 14px;font-size:12px;" onclick="handleDocUploadClick(\'' + bookingRef + '\',\'' + docType + '\')">Upload</button>' +
-      '</div>' +
-      '<div id="' + statusId + '" style="font-size:12px;margin-bottom:12px;"></div>'
+      '<div style="background:var(--black-4);border:1px solid var(--gray-dark);border-radius:8px;padding:14px 16px;margin-bottom:10px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;">' +
+          '<div style="font-size:12px;font-weight:700;letter-spacing:0.5px;color:#fff;text-transform:uppercase;">' + label + ' <span style="color:var(--gold);">*REQUIRED</span></div>' +
+        '</div>' +
+        existingNote +
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:' + (existingNote ? '10px' : '0') + ';">' +
+          '<label class="gh-file-picker" for="' + inputId + '">CHOOSE FILE</label>' +
+          '<input type="file" id="' + inputId + '" accept=".pdf,.jpg,.jpeg,.png" class="gh-file-input" onchange="ghUpdateFileLabel(this)" />' +
+          '<span class="gh-file-name" id="' + inputId + '_name">No file chosen</span>' +
+          '<button class="btn-primary" style="padding:8px 16px;font-size:11px;letter-spacing:0.8px;" onclick="handleDocUploadClick(\'' + bookingRef + '\',\'' + docType + '\')">UPLOAD</button>' +
+        '</div>' +
+        '<div id="' + statusId + '" style="font-size:12px;margin-top:8px;"></div>' +
+      '</div>'
     );
   }).join('');
 
   return (
     '<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:16px;padding-top:16px;">' +
-    '<div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:10px;">Required Documents</div>' +
+    '<div style="font-size:13px;font-weight:700;letter-spacing:0.6px;color:#fff;text-transform:uppercase;margin-bottom:10px;">Required Documents</div>' +
     '<p style="font-size:12px;color:var(--gray-pale);margin-bottom:12px;">Please upload the following before our team can verify this booking. Accepted: PDF, JPG, PNG.</p>' +
     rows +
     '</div>'
   );
 }
 window.renderDocUploadSection = renderDocUploadSection;
+
+/** Small escaping helper for the doc-upload section (kept local so this file has no load-order dependency on other modules). */
+function ghEscapeHtmlSafe(str) {
+  const d = document.createElement('div');
+  d.textContent = str == null ? '' : String(str);
+  return d.innerHTML;
+}
+
+/** Mirrors the chosen filename next to our styled "Choose File" label, since the native input is visually hidden. */
+function ghUpdateFileLabel(inputEl) {
+  const nameEl = document.getElementById(inputEl.id + '_name');
+  if (nameEl) nameEl.textContent = (inputEl.files && inputEl.files[0]) ? inputEl.files[0].name : 'No file chosen';
+}
+window.ghUpdateFileLabel = ghUpdateFileLabel;
 
 function handleDocUploadClick(bookingRef, docType) {
   const fileInput = document.getElementById('docFile_' + docType);
@@ -1038,6 +1067,12 @@ function getStorageStatusLabel(hasTrip, trip, storage) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
+/** Turns a raw enum-style status ("on_trip") into readable text ("On Trip") for display. */
+function humanizeStatusWord(raw) {
+  if (!raw || raw === '—') return raw || '—';
+  return String(raw).replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+}
+
 function pick(obj, keys) {
   if (!obj) return null;
   for (let i = 0; i < keys.length; i++) {
@@ -1090,8 +1125,8 @@ function renderTrackResult(details, query) {
       || pick(trip, ['truck_reg', 'truckReg', 'vehicle_reg']) || '—');
     setText('truckType', pick(truck, ['type', 'truck_type', 'vehicle_type', 'make'])
       || pick(trip, ['truck_type', 'truckType']) || '—');
-    setText('truckFuel', pick(truck, ['status', 'truck_status', 'vehicle_status'])
-      || pick(trip, ['truck_status', 'truckStatus']) || '—');
+    setText('truckFuel', humanizeStatusWord(pick(truck, ['status', 'truck_status', 'vehicle_status'])
+      || pick(trip, ['truck_status', 'truckStatus']) || '—'));
 
     // Driver info — tolerant of name/phone/licence naming (UK "licence" vs
     // US "license"), and falls back to flat fields on the trip itself.

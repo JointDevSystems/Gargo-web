@@ -1718,9 +1718,10 @@ footer.footer {
   border-radius: 8px;
   padding: 22px;
   margin-bottom: 20px;
-  transition: border-color 0.2s;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
-.truck-panel:hover { border-color: rgba(201,162,39,0.4); }
+.truck-panel:hover { border-color: rgba(201,162,39,0.4); box-shadow: 0 6px 22px rgba(0,0,0,0.24); transform: translateY(-1px); }
 .truck-panel-title { display: flex; align-items: center; gap: 8px; font-family: var(--font-body); font-size: 12px; font-weight: 700; letter-spacing: 0.6px; color: var(--gold); margin-bottom: 16px; text-transform: uppercase; }
 .truck-details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
 .truck-detail-item { padding: 12px 14px; background: var(--black-4); border-radius: 6px; border: 1px solid var(--gray-dark); transition: border-color 0.2s; }
@@ -1729,7 +1730,11 @@ footer.footer {
 .tdv { font-size: 12px; font-weight: 600; color: var(--white); }
 .tdv a { color: var(--gold); text-decoration: none; }
 .tdv.tdv-in-storage { color: #22c55e; }
-.tdv.tdv-released { color: var(--gray-light); }
+.tdv.tdv-released { color: #a8a8b3; }
+
+/* Storage/truck detail tiles: keep long status strings (“Out of Storage —
+   Dispatched”) from looking cramped or breaking mid-word on narrow tiles. */
+.truck-detail-item .tdv { line-height: 1.4; word-break: normal; overflow-wrap: break-word; }
 
 /* Client-portal "Edit Booking" action on each booking row */
 .gh-edit-booking-btn {
@@ -1744,9 +1749,10 @@ footer.footer {
 .panel-mini-badge {
   font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.6px;
   padding: 3px 9px; border-radius: 20px; text-transform: uppercase; margin-left: 4px;
+  vertical-align: middle;
 }
-.panel-mini-badge.badge-current { background: rgba(34,197,94,0.12); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
-.panel-mini-badge.badge-released { background: rgba(136,136,136,0.12); color: var(--gray-light); border: 1px solid var(--gray-dark); }
+.panel-mini-badge.badge-current { background: rgba(34,197,94,0.14); color: #34d976; border: 1px solid rgba(34,197,94,0.35); }
+.panel-mini-badge.badge-released { background: rgba(168,168,179,0.14); color: #c2c2cc; border: 1px solid rgba(168,168,179,0.3); }
 .truck-live-bar {
   display: flex; align-items: center; gap: 8px;
   margin-top: 16px;
